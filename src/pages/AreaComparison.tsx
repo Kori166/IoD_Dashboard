@@ -7,7 +7,7 @@ import { areaSummaries, indicatorCategories, areaTimeseries } from "@/data/mockD
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, Legend,
-  BarChart, Bar,
+  BarChart, Bar, Cell,
 } from "recharts";
 import { X, Plus, ArrowUpDown } from "lucide-react";
 
