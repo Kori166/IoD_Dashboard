@@ -3,8 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import Overview from "./pages/Overview";
+import MapExplorer from "./pages/MapExplorer";
+import IndicatorAnalysis from "./pages/IndicatorAnalysis";
+import AreaComparison from "./pages/AreaComparison";
+import PipelineMethod from "./pages/PipelineMethod";
+import DataSources from "./pages/DataSources";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +20,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <DashboardLayout>
+          <Routes>
+            <Route path="/" element={<Overview />} />
+            <Route path="/map" element={<MapExplorer />} />
+            <Route path="/indicators" element={<IndicatorAnalysis />} />
+            <Route path="/compare" element={<AreaComparison />} />
+            <Route path="/pipeline" element={<PipelineMethod />} />
+            <Route path="/sources" element={<DataSources />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </DashboardLayout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
