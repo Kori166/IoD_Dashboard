@@ -21,9 +21,9 @@ export function GlassCard({ children, className, hover = true, glow = "none", an
   const Wrapper = animate ? motion.div : "div";
   const animateProps = animate
     ? {
-        initial: { opacity: 0, y: 12 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.4, ease: "easeOut" },
+        initial: { opacity: 0, y: 12 } as const,
+        animate: { opacity: 1, y: 0 } as const,
+        transition: { duration: 0.4, ease: "easeOut" as const },
       }
     : {};
 
