@@ -102,9 +102,7 @@ export default function AreaComparison() {
           ))}
         </div>
       </GlassCard>
-
-      <KeyInsight insights={[insight]} />
-
+     
       {/* Scorecards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {selectedAreas.map((area, i) => (
@@ -188,6 +186,8 @@ export default function AreaComparison() {
           </div>
         </GlassCard>
       </div>
+
+      <KeyInsight insights={[insight]} />
 
       {/* Bar comparison */}
       <GlassCard className="p-6">

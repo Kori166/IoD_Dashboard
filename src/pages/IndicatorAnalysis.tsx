@@ -74,17 +74,12 @@ export default function IndicatorAnalysis() {
           </button>
         ))}
       </div>
-
-      <KeyInsight insights={[
-        "Income and Employment indicators have the highest average weight in the composite score.",
-        "Housing and Access to Services show the most geographic variance."
-      ]} />
-
+      
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bar chart - indicator importance */}
         <GlassCard className="p-6">
-          <SectionHeader title="Indicator Contribution" subtitle="Estimated weight in composite score" />
+          <SectionHeader title="Feature Importance" subtitle="Top 10 important features" />
           <div className="h-80 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredImportance} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -211,6 +206,11 @@ export default function IndicatorAnalysis() {
           </table>
         </div>
       </GlassCard>
+
+      <KeyInsight insights={[
+        "Income and Employment indicators have the highest average weight in the composite score.",
+        "Housing and Access to Services show the most geographic variance."
+      ]} />
     </div>
   );
 }

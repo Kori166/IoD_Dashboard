@@ -31,29 +31,22 @@ export default function Overview() {
         className="space-y-3"
       >
         <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-          Replicating Deprivation{" "}
-          <span className="text-primary glow-text-cyan">with Public Data</span>
+          Replicating the Index of Deprivation for{" "}
+          <span className="text-primary glow-text-cyan">Bristol</span>
         </h1>
         <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-          Estimating the UK Index of Multiple Deprivation using only publicly available datasets —
-          reducing reliance on expensive surveys while maintaining analytical fidelity.
+          Estimating the Index of Multiple Deprivation for Bristol using only publicly available datasets to reduce reliance on expensive surveys while maintaining analytical fidelity.
         </p>
       </motion.div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard label="Indicators" value="24" subtitle="Across 8 domains" icon={BarChart3} glow="cyan" />
-        <MetricCard label="Areas Covered" value="30" subtitle="Local Authorities" icon={MapPin} glow="violet" />
-        <MetricCard label="Last Refresh" value="Mar 14" subtitle="Pipeline v2.3" icon={RefreshCw} glow="cyan" />
+        <MetricCard label="LSOAs Covered" value="267" subtitle="LSOAs" icon={MapPin} glow="violet" />
+        <MetricCard label="Last Refresh" value="Mar 19 2026" subtitle="Pipeline v2.3" icon={RefreshCw} glow="cyan" />
         <MetricCard label="Model Version" value="2.3.1" subtitle="Weighted composite" icon={Layers} glow="magenta" />
       </div>
-
-      {/* Key Insight */}
-      <KeyInsight insights={[
-        "Tower Hamlets and Knowsley show the highest estimated deprivation scores, consistent with official IMD rankings.",
-        "Housing and Income indicators contribute most to score variance across Local Authorities."
-      ]} />
-
+    
       {/* Trend Chart + Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend */}
@@ -87,7 +80,7 @@ export default function Overview() {
 
         {/* Rankings */}
         <GlassCard className="p-6">
-          <SectionHeader title="Area Rankings" subtitle="Top & bottom deprivation" />
+          <SectionHeader title="Area Rankings" subtitle="Highest and lowest deprived areas in Bristol." />
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-destructive font-medium mb-2 flex items-center gap-1">
@@ -122,6 +115,12 @@ export default function Overview() {
           </div>
         </GlassCard>
       </div>
+
+      {/* Key Insight */}
+      <KeyInsight insights={[
+        "- Tower Hamlets and Knowsley show the highest estimated deprivation scores, consistent with official IMD rankings.",
+        "- Housing and Income indicators contribute most to score variance across Local Authorities."
+      ]} />
 
       {/* Why This Matters */}
       <GlassCard className="p-6">
