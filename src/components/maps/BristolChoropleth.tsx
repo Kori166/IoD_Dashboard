@@ -1,15 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-type ChoroplethGeoJson = GeoJSON.FeatureCollection<
+type IMDRow = {
+  lsoa_code: string;
+  lsoa_name?: string;
+  imd_score?: number | null;
+  uk_rank?: number | null;
+  uk_decile?: number | null;
+  bristol_rank?: number | null;
+  bristol_decile?: number | null;
+};
+
+type LsoaGeoJson = GeoJSON.FeatureCollection<
   GeoJSON.Geometry,
   {
     lsoa_code?: string;
     lsoa_name?: string;
-    imd_rank?: number | null;
-    imd_decile?: number | null;
+    lsoa_code_11?: string | null;
+    lsoa_name_11?: string | null;
+    longitude?: number | null;
+    latitude?: number | null;
     imd_score?: number | null;
+    uk_rank?: number | null;
+    uk_decile?: number | null;
+    bristol_rank?: number | null;
+    bristol_decile?: number | null;
+    active_rank?: number | null;
+    active_decile?: number | null;
   }
 >;
 
@@ -31,7 +49,9 @@ function getDecileColor(decile?: number | null) {
 }
 
 export default function BristolChoropleth() {
-  const [geojson, setGeojson] = useState<ChoroplethGeoJson | null>(null);
+  const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
+  const [imdRows, setImdRows] = useState<IMDRow[]>([]);
+  const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,26 +59,87 @@ export default function BristolChoropleth() {
       try {
         setError(null);
 
-        const res = await fetch("/data/bristol_imd_choropleth.geojson");
-        if (!res.ok) {
-          throw new Error(`Failed to fetch GeoJSON: ${res.status} ${res.statusText}`);
+        const [geoRes, imdRes] = await Promise.all([
+          fetch("/data/bristol_lsoa.geojson"),
+          fetch("/data/bristol_imd.json"),
+        ]);
+
+        if (!geoRes.ok) {
+          throw new Error(
+            `Failed to fetch bristol_lsoa.geojson: ${geoRes.status} ${geoRes.statusText}`,
+          );
         }
 
-        const data = await res.json();
-
-        if (!data || data.type !== "FeatureCollection" || !Array.isArray(data.features)) {
-          throw new Error("GeoJSON file is not a valid FeatureCollection");
+        if (!imdRes.ok) {
+          throw new Error(
+            `Failed to fetch bristol_imd.json: ${imdRes.status} ${imdRes.statusText}`,
+          );
         }
 
-        setGeojson(data);
+        const geoData = await geoRes.json();
+        const imdData = await imdRes.json();
+
+        if (
+          !geoData ||
+          geoData.type !== "FeatureCollection" ||
+          !Array.isArray(geoData.features)
+        ) {
+          throw new Error("bristol_lsoa.geojson is not a valid FeatureCollection");
+        }
+
+        if (!Array.isArray(imdData)) {
+          throw new Error("bristol_imd.json is not a valid array");
+        }
+
+        setGeojson(geoData);
+        setImdRows(imdData);
       } catch (err) {
-        console.error("Error loading Bristol choropleth:", err);
-        setError(err instanceof Error ? err.message : "Unknown error loading map");
+        console.error("Error loading Bristol choropleth data:", err);
+        setError(
+          err instanceof Error ? err.message : "Unknown error loading map data",
+        );
       }
     }
 
     load();
   }, []);
+
+  const imdByCode = useMemo(() => {
+    return Object.fromEntries(imdRows.map((row) => [row.lsoa_code, row]));
+  }, [imdRows]);
+
+  const mergedGeojson = useMemo(() => {
+    if (!geojson) return null;
+
+    return {
+      ...geojson,
+      features: geojson.features.map((feature: any) => {
+        const props = feature.properties || {};
+        const code = props.lsoa_code;
+        const imd = imdByCode[code];
+
+        const activeRank =
+          rankMode === "bristol" ? imd?.bristol_rank : imd?.uk_rank;
+        const activeDecile =
+          rankMode === "bristol" ? imd?.bristol_decile : imd?.uk_decile;
+
+        return {
+          ...feature,
+          properties: {
+            ...props,
+            imd_score: imd?.imd_score ?? null,
+            uk_rank: imd?.uk_rank ?? null,
+            uk_decile: imd?.uk_decile ?? null,
+            bristol_rank: imd?.bristol_rank ?? null,
+            bristol_decile: imd?.bristol_decile ?? null,
+            active_rank: activeRank ?? null,
+            active_decile: activeDecile ?? null,
+            lsoa_name: imd?.lsoa_name ?? props.lsoa_name ?? "Unknown LSOA",
+          },
+        };
+      }),
+    };
+  }, [geojson, imdByCode, rankMode]);
 
   if (error) {
     return (
@@ -68,7 +149,7 @@ export default function BristolChoropleth() {
     );
   }
 
-  if (!geojson) {
+  if (!mergedGeojson) {
     return (
       <div className="h-[420px] flex items-center justify-center text-sm text-muted-foreground">
         Loading Bristol IMD map...
@@ -78,6 +159,30 @@ export default function BristolChoropleth() {
 
   return (
     <div className="space-y-3">
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setRankMode("bristol")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+            rankMode === "bristol"
+              ? "bg-primary/15 text-primary border-primary/30"
+              : "bg-muted/30 text-muted-foreground border-border/50"
+          }`}
+        >
+          Bristol Rank
+        </button>
+
+        <button
+          onClick={() => setRankMode("uk")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+            rankMode === "uk"
+              ? "bg-primary/15 text-primary border-primary/30"
+              : "bg-muted/30 text-muted-foreground border-border/50"
+          }`}
+        >
+          UK Rank
+        </button>
+      </div>
+
       <div className="h-[420px] w-full overflow-hidden rounded-xl border border-border/40">
         <MapContainer
           center={[51.4545, -2.5879]}
@@ -91,9 +196,9 @@ export default function BristolChoropleth() {
           />
 
           <GeoJSON
-            data={geojson as any}
+            data={mergedGeojson as any}
             style={(feature: any) => ({
-              fillColor: getDecileColor(feature?.properties?.imd_decile),
+              fillColor: getDecileColor(feature?.properties?.active_decile),
               weight: 0.7,
               opacity: 1,
               color: "hsl(220, 30%, 16%)",
@@ -107,15 +212,16 @@ export default function BristolChoropleth() {
                   <div style="font-size:12px;line-height:1.5;">
                     <strong>${props.lsoa_name ?? "Unknown LSOA"}</strong><br/>
                     Code: ${props.lsoa_code ?? "N/A"}<br/>
-                    IMD Rank: ${props.imd_rank ?? "N/A"}<br/>
-                    IMD Decile: ${props.imd_decile ?? "N/A"}<br/>
-                    IMD Score: ${props.imd_score ?? "N/A"}
+                    IMD Score: ${props.imd_score ?? "N/A"}<br/>
+                    UK Rank: ${props.uk_rank ?? "N/A"}<br/>
+                    Bristol Rank: ${props.bristol_rank ?? "N/A"}<br/>
+                    Active Mode: ${rankMode === "bristol" ? "Bristol" : "UK"}
                   </div>
                 `,
                 {
                   sticky: true,
                   opacity: 0.95,
-                }
+                },
               );
 
               layer.on({
@@ -147,6 +253,9 @@ export default function BristolChoropleth() {
         <div className="h-2 w-8 rounded" style={{ background: "#2f669f" }} />
         <div className="h-2 w-8 rounded" style={{ background: "#49b08b" }} />
         <span>Least deprived</span>
+        <span className="ml-2">
+          Viewing by: {rankMode === "bristol" ? "Bristol rank" : "UK rank"}
+        </span>
       </div>
     </div>
   );

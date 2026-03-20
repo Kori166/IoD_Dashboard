@@ -8,14 +8,37 @@ import { areaSummaries } from "@/data/mockData";
 import BristolChoropleth from "@/components/maps/BristolChoropleth";
 import { Link } from "react-router-dom";
 
-const trendData = [
-  { month: "Oct", score: 42.3 },
-  { month: "Nov", score: 43.1 },
-  { month: "Dec", score: 41.8 },
-  { month: "Jan", score: 44.2 },
-  { month: "Feb", score: 43.7 },
-  { month: "Mar", score: 44.5 },
-];
+type BristolIMDRow = {
+  lsoa_code: string;
+  lsoa_name: string;
+  imd_score: number;
+  uk_rank: number;
+  uk_decile: number;
+  bristol_rank: number;
+  bristol_decile: number;
+};
+
+export default function Overview() {
+  const [imdRows, setImdRows] = useState<BristolIMDRow[]>([]);
+  const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol");
+
+  useEffect(() => {
+    async function load() {
+      const res = await fetch("/data/bristol_imd.json");
+      const data = await res.json();
+      setImdRows(data);
+    }
+
+    load();
+  }, []);
+
+  const sortedRows = useMemo(() => {
+    return [...imdRows].sort((a, b) =>
+      rankMode === "bristol"
+        ? a.bristol_rank - b.bristol_rank
+        : a.uk_rank - b.uk_rank,
+    );
+  }, [imdRows, rankMode]);
 
 const mostDeprived = areaSummaries.slice(0, 5);
 const leastDeprived = [...areaSummaries].sort((a, b) => a.deprivation_score - b.deprivation_score).slice(0, 5);
@@ -47,9 +70,38 @@ export default function Overview() {
         <MetricCard label="Model Version" value="2.3.1" subtitle="Weighted composite" icon={Layers} glow="magenta" />
       </div>
     
-      {/* Trend Chart + Rankings */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Indicators"
+          value="24"
+          subtitle="Across 8 domains"
+          icon={BarChart3}
+          glow="cyan"
+        />
+        <MetricCard
+          label="LSOAs Covered"
+          value={imdRows.length ? String(imdRows.length) : "267"}
+          subtitle="LSOAs"
+          icon={MapPin}
+          glow="violet"
+        />
+        <MetricCard
+          label="Last Refresh"
+          value="Mar 19 2026"
+          subtitle="Pipeline v2.3"
+          icon={RefreshCw}
+          glow="cyan"
+        />
+        <MetricCard
+          label="Model Version"
+          value="2.3.1"
+          subtitle="Weighted composite"
+          icon={Layers}
+          glow="magenta"
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Trend */}
         <GlassCard className="lg:col-span-2 p-6">
           <SectionHeader
             title="Bristol IMD Choropleth"
@@ -60,36 +112,85 @@ export default function Overview() {
           </div>
         </GlassCard>
 
-        {/* Rankings */}
         <GlassCard className="p-6">
-          <SectionHeader title="Area Rankings" subtitle="Highest and lowest deprived areas in Bristol." />
+          <SectionHeader
+            title="Area Rankings"
+            subtitle="Highest and lowest deprived areas in Bristol."
+          />
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setRankMode("bristol")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                rankMode === "bristol"
+                  ? "bg-primary/20 text-primary border-primary/30"
+                  : "bg-background/40 text-muted-foreground border-border/50 hover:bg-background/60"
+              }`}
+            >
+              Bristol rank
+            </button>
+            <button
+              type="button"
+              onClick={() => setRankMode("uk")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                rankMode === "uk"
+                  ? "bg-primary/20 text-primary border-primary/30"
+                  : "bg-background/40 text-muted-foreground border-border/50 hover:bg-background/60"
+              }`}
+            >
+              UK rank
+            </button>
+          </div>
+
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-destructive font-medium mb-2 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" /> Most Deprived
               </p>
               <div className="space-y-1.5">
-                {mostDeprived.map((area, i) => (
-                  <div key={area.area_id} className="flex items-center justify-between text-sm">
+                {mostDeprived.map((row, i) => (
+                  <div
+                    key={row.lsoa_code}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span className="text-muted-foreground">
-                      <span className="text-foreground font-medium">{i + 1}.</span> {area.area_name}
+                      <span className="text-foreground font-medium">
+                        {i + 1}.
+                      </span>{" "}
+                      {row.lsoa_name}
                     </span>
-                    <span className="text-destructive font-mono text-xs">{area.deprivation_score}</span>
+                    <span className="text-destructive font-mono text-xs">
+                      {rankMode === "bristol"
+                        ? `Bristol #${row.bristol_rank}`
+                        : `UK #${row.uk_rank}`}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
+
             <div className="border-t border-border/50 pt-4">
               <p className="text-xs uppercase tracking-wider text-success font-medium mb-2 flex items-center gap-1">
                 <TrendingDown className="h-3 w-3" /> Least Deprived
               </p>
               <div className="space-y-1.5">
-                {leastDeprived.map((area, i) => (
-                  <div key={area.area_id} className="flex items-center justify-between text-sm">
+                {leastDeprived.map((row, i) => (
+                  <div
+                    key={row.lsoa_code}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span className="text-muted-foreground">
-                      <span className="text-foreground font-medium">{i + 1}.</span> {area.area_name}
+                      <span className="text-foreground font-medium">
+                        {i + 1}.
+                      </span>{" "}
+                      {row.lsoa_name}
                     </span>
-                    <span className="text-success font-mono text-xs">{area.deprivation_score}</span>
+                    <span className="text-success font-mono text-xs">
+                      {rankMode === "bristol"
+                        ? `Bristol #${row.bristol_rank}`
+                        : `UK #${row.uk_rank}`}
+                    </span>
                   </div>
                 ))}
               </div>
