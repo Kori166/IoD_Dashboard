@@ -4,9 +4,9 @@ import ast
 from pathlib import Path
 
 ROOT = Path(".")
-geo_path = ROOT / "geography_lookup.csv"
-lookup_path = ROOT / "lsoa_2011_2021_lookup.csv"
-imd_path = ROOT / "IoD2025_Ranks_Scores_Deciles.csv"
+geo_path = ROOT / "data" / "raw" / "geography_lookup.csv"
+lookup_path = ROOT / "data" / "raw" / "lsoa_2011_2021_lookup.csv"
+imd_path = ROOT / "data" / "raw" / "IoD2025_Ranks_Scores_Deciles.csv"
 out_path = ROOT / "public" / "data" / "bristol_imd_choropleth.geojson"
 
 # Load files
@@ -46,25 +46,34 @@ merged = geo.merge(
     how="left"
 )
 
-# Join IMD data
+# Join IMD data with explicit suffixes
 merged = merged.merge(
     imd_bristol,
     on="lsoa_code_21",
-    how="left"
+    how="left",
+    suffixes=("_lookup", "_imd")
 )
+
+# Optional debug
+print(merged.columns.tolist())
 
 # Build GeoJSON features
 features = []
 for _, row in merged.iterrows():
-    # geo_shape is stored as a string representation of geometry
     geometry = ast.literal_eval(row["geo_shape"])
+
+    lsoa_name = None
+    if pd.notna(row.get("lsoa_name_21_imd")):
+        lsoa_name = row["lsoa_name_21_imd"]
+    elif pd.notna(row.get("lsoa_name_21_lookup")):
+        lsoa_name = row["lsoa_name_21_lookup"]
 
     feature = {
         "type": "Feature",
         "geometry": geometry,
         "properties": {
             "lsoa_code": row["lsoa_code_21"] if pd.notna(row["lsoa_code_21"]) else row["lsoa_code"],
-            "lsoa_name": row["lsoa_name_21"] if pd.notna(row["lsoa_name_21"]) else None,
+            "lsoa_name": lsoa_name,
             "lsoa_code_11": row["lsoa_code_11"] if pd.notna(row["lsoa_code_11"]) else None,
             "lsoa_name_11": row["lsoa_name_11"] if pd.notna(row["lsoa_name_11"]) else None,
             "imd_score": float(row["imd_score"]) if pd.notna(row["imd_score"]) else None,

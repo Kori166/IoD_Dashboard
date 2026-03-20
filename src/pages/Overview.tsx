@@ -4,8 +4,8 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { GlassCard } from "@/components/ui/glass-card";
 import { KeyInsight } from "@/components/ui/key-insight";
 import { SectionHeader } from "@/components/ui/section-header";
-import { areaSummaries, areaTimeseries } from "@/data/mockData";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { areaSummaries } from "@/data/mockData";
+import BristolChoropleth from "@/components/maps/BristolChoropleth";
 import { Link } from "react-router-dom";
 
 const trendData = [
@@ -51,30 +51,12 @@ export default function Overview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend */}
         <GlassCard className="lg:col-span-2 p-6">
-          <SectionHeader title="Deprivation Score Trend" subtitle="National average over recent months" />
-          <div className="h-64 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData}>
-                <defs>
-                  <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(190, 95%, 55%)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(190, 95%, 55%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="month" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} domain={[38, 48]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(220, 40%, 9%)",
-                    border: "1px solid hsl(220, 30%, 20%)",
-                    borderRadius: "8px",
-                    color: "hsl(210, 20%, 92%)",
-                    fontSize: 12,
-                  }}
-                />
-                <Area type="monotone" dataKey="score" stroke="hsl(190, 95%, 55%)" strokeWidth={2} fill="url(#scoreGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <SectionHeader
+            title="Bristol IMD Choropleth"
+            subtitle="Interactive LSOA-level deprivation map for Bristol"
+          />
+          <div className="mt-4">
+            <BristolChoropleth />
           </div>
         </GlassCard>
 
