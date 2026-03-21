@@ -246,17 +246,26 @@ export default function BristolChoropleth() {
       </div>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-        <span>Most deprived</span>
-        <div className="h-2 w-8 rounded" style={{ background: "#f4effa" }} />
-        <div className="h-2 w-8 rounded" style={{ background: "#cbb4ee" }} />
-        <div className="h-2 w-8 rounded" style={{ background: "#8e60d2" }} />
-        <div className="h-2 w-8 rounded" style={{ background: "#2f669f" }} />
-        <div className="h-2 w-8 rounded" style={{ background: "#49b08b" }} />
-        <span>Least deprived</span>
-        <span className="ml-2">
-          Viewing by: {rankMode === "bristol" ? "Bristol rank" : "UK rank"}
-        </span>
-      </div>
+          <span>Most deprived</span>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((decile) => (
+              <div key={decile} className="flex flex-col items-center gap-1">
+                <div
+                  className="h-5 w-5 rounded"
+                  style={{ background: getDecileColor(decile) }}
+                  title={`Decile ${decile}`}
+                />
+                <span className="text-[10px]">{decile}</span>
+              </div>
+            ))}
+          </div>
+
+          <span>Least deprived</span>
+          <span className="ml-2">
+            Viewing by: {rankMode === "bristol" ? "Bristol rank" : "UK rank"}
+          </span>
+        </div>
     </div>
   );
 }
