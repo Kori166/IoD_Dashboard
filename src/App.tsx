@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Overview from "./pages/Overview";
+import TimeSeries from "./pages/TimeSeries";
 import MapExplorer from "./pages/MapExplorer";
 import IndicatorAnalysis from "./pages/IndicatorAnalysis";
 import AreaComparison from "./pages/AreaComparison";
@@ -23,11 +24,13 @@ const App = () => (
         <DashboardLayout>
           <Routes>
             <Route path="/" element={<Overview />} />
+            <Route path="/time-series" element={<TimeSeries />} />
             <Route path="/map" element={<MapExplorer />} />
             <Route path="/indicators" element={<IndicatorAnalysis />} />
             <Route path="/compare" element={<AreaComparison />} />
             <Route path="/pipeline" element={<PipelineMethod />} />
             <Route path="/sources" element={<DataSources />} />
+            <Route path="/time" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </DashboardLayout>

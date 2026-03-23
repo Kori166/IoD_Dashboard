@@ -13,6 +13,7 @@ import {
 
 const navItems = [
   { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Time Series", url: "/time-series", icon: Clock },
   { title: "Map Explorer", url: "/map", icon: Map },
   { title: "Indicator Analysis", url: "/indicators", icon: BarChart3 },
   { title: "Area Comparison", url: "/compare", icon: GitCompare },
