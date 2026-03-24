@@ -397,9 +397,12 @@ export default function TimeSeries() {
         </GlassCard>
       </div>
 
-      {/* Main page layout with the charts in the wider column and interpretation on the right */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.75fr)_360px] gap-6 items-start">
-        {/* Main chart card containing controls and both charts */}
+      {/* Main content layout:
+          left = charts
+          middle = placeholder for future charts
+          right = selected-area summary */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.85fr)_380px] gap-6 items-start">
+        {/* Main chart card shortened so it no longer fills the whole vertical span */}
         <GlassCard className="p-6">
           <div className="space-y-8">
             {/* Unified control bar so filters live in one obvious place */}
@@ -486,7 +489,6 @@ export default function TimeSeries() {
                 <p className="text-sm text-muted-foreground">Rank over time</p>
               </div>
 
-              {/* Full-width chart wrapper so the chart stretches across the card */}
               <div className="w-full">
                 <ChartContainer
                   config={rankChartConfig}
@@ -498,14 +500,12 @@ export default function TimeSeries() {
                       data={chartData}
                       margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
                     >
-                      {/* Subtle gridlines make the dark chart easier to read */}
                       <CartesianGrid
                         vertical={false}
                         strokeDasharray="3 3"
                         className="opacity-30"
                       />
 
-                      {/* Deduplicated x-axis ticks so each year only appears once in longer views */}
                       <XAxis
                         dataKey="xLabel"
                         tickLine={false}
@@ -515,7 +515,6 @@ export default function TimeSeries() {
                         ticks={xAxisTicks}
                       />
 
-                      {/* Reversed y-axis so lower ranks appear higher up on the chart */}
                       <YAxis
                         tickLine={false}
                         axisLine={false}
@@ -523,17 +522,16 @@ export default function TimeSeries() {
                         allowDecimals={false}
                         domain={[1, Math.max(rankYAxisDomain[1], 10)]}
                         label={{
-                         value: "Rank",
-                            angle: -90,
-                            position: "insideLeft",
-                            style: {
+                          value: "Rank",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: {
                             fill: "hsl(var(--muted-foreground))",
                             fontSize: 12,
-                            },
+                          },
                         }}
-                        />
+                      />
 
-                      {/* Tooltip shows both rank and decile for the selected release */}
                       <ChartTooltip
                         cursor={{
                           stroke: "rgba(255,255,255,0.35)",
@@ -560,7 +558,6 @@ export default function TimeSeries() {
                         }
                       />
 
-                      {/* Marks the latest visible release */}
                       {latestPoint && (
                         <ReferenceLine
                           x={formatXAxisLabel(latestPoint.date, rangePreset)}
@@ -568,7 +565,6 @@ export default function TimeSeries() {
                         />
                       )}
 
-                      {/* Straight line plus dots suits release-based data better than smoothing */}
                       <Line
                         type="linear"
                         dataKey="rank"
@@ -601,7 +597,6 @@ export default function TimeSeries() {
                 <p className="text-sm text-muted-foreground">Decile over time</p>
               </div>
 
-              {/* Full-width chart wrapper so the chart stretches across the card */}
               <div className="w-full">
                 <ChartContainer
                   config={decileChartConfig}
@@ -613,14 +608,12 @@ export default function TimeSeries() {
                       data={chartData}
                       margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
                     >
-                      {/* Subtle gridlines improve readability on the dark background */}
                       <CartesianGrid
                         vertical={false}
                         strokeDasharray="3 3"
                         className="opacity-30"
                       />
 
-                      {/* Deduplicated x-axis ticks so each year only appears once in longer views */}
                       <XAxis
                         dataKey="xLabel"
                         tickLine={false}
@@ -630,7 +623,6 @@ export default function TimeSeries() {
                         ticks={xAxisTicks}
                       />
 
-                      {/* Reversed y-axis so lower deciles appear higher up on the chart */}
                       <YAxis
                         tickLine={false}
                         axisLine={false}
@@ -639,17 +631,16 @@ export default function TimeSeries() {
                         domain={[1, 10]}
                         ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                         label={{
-                            value: "Decile",
-                            angle: -90,
-                            position: "insideLeft",
-                            style: {
+                          value: "Decile",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: {
                             fill: "hsl(var(--muted-foreground))",
                             fontSize: 12,
-                            },
+                          },
                         }}
-                        />
+                      />
 
-                      {/* Tooltip shows decile and rank together for context */}
                       <ChartTooltip
                         cursor={{
                           stroke: "rgba(255,255,255,0.35)",
@@ -676,7 +667,6 @@ export default function TimeSeries() {
                         }
                       />
 
-                      {/* Marks the latest visible release */}
                       {latestPoint && (
                         <ReferenceLine
                           x={formatXAxisLabel(latestPoint.date, rangePreset)}
@@ -684,7 +674,6 @@ export default function TimeSeries() {
                         />
                       )}
 
-                      {/* Step line is a better fit for banded decile changes */}
                       <Line
                         type="stepAfter"
                         dataKey="decile"
@@ -712,85 +701,89 @@ export default function TimeSeries() {
           </div>
         </GlassCard>
 
-                {/* Sidebar summary card */}
-        <div>
-          <GlassCard className="p-6">
-            <div className="space-y-5">
-              <h2 className="text-2xl font-bold text-foreground">
-                {selectedSeries.label}
-              </h2>
+        {/* Placeholder card in the gap below the shorter chart.
+            Leave empty for now so more graphs can be added later. */}
+        <GlassCard className="p-6 min-h-[775px]">
+          <div className="h-full rounded-xl border border-dashed border-border/40 bg-background/10 flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">
+              Additional charts to be added
+            </p>
+          </div>
+        </GlassCard>
 
-              {/* Plain-English narrative summary */}
-              <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-3">
-                <p className="text-sm leading-relaxed text-foreground">
-                  {areaSummary}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Viewed range: {visibleRangeLabel}
+        {/* Sidebar summary card for the selected area */}
+        <GlassCard className="p-6">
+          <div className="space-y-5">
+            <h2 className="text-2xl font-bold text-foreground">
+              {selectedSeries.label}
+            </h2>
+
+            <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-3">
+              <p className="text-lg leading-relaxed text-foreground">
+                {areaSummary}
+              </p>
+              <p className="text-lg text-muted-foreground">
+                Viewed range: {visibleRangeLabel}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div className="rounded-xl border border-border/40 bg-background/20 p-4">
+                <p className="text-xl text-muted-foreground">Rank change</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">
+                  {rankChangeText}
                 </p>
               </div>
 
-              {/* Explicit change interpretation so users do not have to decode sign direction */}
-              <div className="grid grid-cols-1 gap-3">
-                <div className="rounded-xl border border-border/40 bg-background/20 p-4">
-                  <p className="text-sm text-muted-foreground">Rank change</p>
-                  <p className="mt-2 text-base font-semibold text-foreground">
-                    {rankChangeText}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-border/40 bg-background/20 p-4">
-                  <p className="text-sm text-muted-foreground">Decile change</p>
-                  <p className="mt-2 text-base font-semibold text-foreground">
-                    {decileChangeText}
-                  </p>
-                </div>
-
-                {/* Small glossary for terms that are not obvious to every user */}
-                <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-medium text-foreground">
-                      Definitions
-                    </p>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    LSOA: Lower Layer Super Output Area
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Rank: Bristol position, where lower means more deprived
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Decile: grouped band from 1 to 10, where 1 is most deprived
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Comparison: {compareMode.replaceAll("_", " ")}
-                  </p>
-                </div>
+              <div className="rounded-xl border border-border/40 bg-background/20 p-4">
+                <p className="text-xl text-muted-foreground">Decile change</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">
+                  {decileChangeText}
+                </p>
               </div>
             </div>
-          </GlassCard>
-        </div>
-      </div>
-
-      {/* Reading guide placed underneath the full two-column layout */}
-      <GlassCard className="p-5">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="text-base font-semibold text-foreground">
-              Reading this page
-            </h3>
           </div>
+        </GlassCard>
+        
+        {/* Reading and definitions card merged into one shared guidance card */}
+        <GlassCard className="p-5">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">
+                Reading this page
+              </h3>
+            </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            The rank chart shows Bristol position over time, where lower
-            values mean greater deprivation. The decile chart shows whether
-            the area has moved between broader deprivation bands.
-          </p>
-        </div>
-      </GlassCard>        
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              The rank chart shows Bristol position over time, where lower
+              values mean greater deprivation. The decile chart shows whether
+              the area has moved between broader deprivation bands.
+            </p>
+
+            <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">
+                  Definitions
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                LSOA: Lower Layer Super Output Area
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Rank: Bristol position, where lower means more deprived
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Decile: grouped band from 1 to 10, where 1 is most deprived
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Comparison: {compareMode.replaceAll("_", " ")}
+              </p>
+            </div>
+          </div>
+        </GlassCard>
       </div>
     </div>
   );

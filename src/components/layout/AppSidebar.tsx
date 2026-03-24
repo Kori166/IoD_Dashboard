@@ -86,7 +86,7 @@ export function AppSidebar() {
               <Clock className="h-3 w-3" />
               <span>Updated 2h ago</span>
             </div>
-            <StatusBadge status="fresh" label="Pipeline Fresh" />
+            <StatusBadge status="fresh" label="Pipeline Active" />
           </div>
         )}
       </SidebarFooter>
