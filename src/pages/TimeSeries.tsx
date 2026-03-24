@@ -1,10 +1,32 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {ArrowDown, ArrowUp, CalendarRange, Filter, MapPinned, TrendingUp} from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  CalendarRange,
+  Filter,
+  MapPinned,
+  TrendingUp,
+} from "lucide-react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
-type Mode = "rank" | "decile";
 type RangePreset = "6M" | "1Y" | "5Y" | "Max";
 
 type TimePoint = {
@@ -19,6 +41,8 @@ type LsoaSeries = {
   points: TimePoint[];
 };
 
+// Mock data for now.
+// Replace this later with fetched JSON if you have a real time series dataset.
 const mockSeries: LsoaSeries[] = [
   {
     code: "E01014645",
@@ -26,18 +50,18 @@ const mockSeries: LsoaSeries[] = [
     points: [
       { date: "2019-01-01", rank: 8, decile: 1 },
       { date: "2019-07-01", rank: 11, decile: 1 },
-      { date: "2020-01-01", rank: 9, decile: 2 },
-      { date: "2020-07-01", rank: 11.5, decile: 2 },
-      { date: "2021-01-01", rank: 5, decile: 3 },
-      { date: "2021-07-01", rank: 7.5, decile: 4 },
-      { date: "2022-01-01", rank: 6, decile: 2 },
-      { date: "2022-07-01", rank: 10.5, decile: 2 },
-      { date: "2023-01-01", rank: 8, decile: 1 },
-      { date: "2023-07-01", rank: 13.5, decile: 1 },
-      { date: "2024-01-01", rank: 11, decile: 1 },
-      { date: "2024-07-01", rank: 14.5, decile: 1 },
-      { date: "2025-01-01", rank: 11, decile: 1 },
-      { date: "2025-07-18", rank: 12.2, decile: 1 },
+      { date: "2020-01-01", rank: 11, decile: 1 },
+      { date: "2020-07-01", rank: 10, decile: 1 },
+      { date: "2021-01-01", rank: 7, decile: 3 },
+      { date: "2021-07-01", rank: 7, decile: 4 },
+      { date: "2022-01-01", rank: 8, decile: 3 },
+      { date: "2022-07-01", rank: 10, decile: 2 },
+      { date: "2023-01-01", rank: 11, decile: 2 },
+      { date: "2023-07-01", rank: 13, decile: 1 },
+      { date: "2024-01-01", rank: 14, decile: 1 },
+      { date: "2024-07-01", rank: 14, decile: 1 },
+      { date: "2025-01-01", rank: 13, decile: 1 },
+      { date: "2025-07-18", rank: 12, decile: 1 },
     ],
   },
   {
@@ -68,6 +92,21 @@ const mockSeries: LsoaSeries[] = [
   },
 ];
 
+// Shared chart config for the dashboard chart wrapper.
+const rankChartConfig = {
+  rank: {
+    label: "Rank",
+    color: "#22d3ee",
+  },
+} satisfies ChartConfig;
+
+const decileChartConfig = {
+  decile: {
+    label: "Decile",
+    color: "#8b5cf6",
+  },
+} satisfies ChartConfig;
+
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -76,11 +115,28 @@ function formatDisplayDate(date: string) {
   }).format(new Date(date));
 }
 
+function formatXAxisLabel(date: string, rangePreset: RangePreset) {
+  const parsed = new Date(date);
+
+  // For short views, show month labels instead of year labels.
+  if (rangePreset === "6M" || rangePreset === "1Y") {
+    return new Intl.DateTimeFormat("en-GB", {
+      month: "short",
+      year: "2-digit",
+    }).format(parsed);
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+  }).format(parsed);
+}
+
 function getRangeStart(points: TimePoint[], preset: RangePreset) {
   if (!points.length) return null;
-  const lastDate = new Date(points[points.length - 1].date);
 
+  const lastDate = new Date(points[points.length - 1].date);
   const start = new Date(lastDate);
+
   if (preset === "6M") start.setMonth(start.getMonth() - 6);
   if (preset === "1Y") start.setFullYear(start.getFullYear() - 1);
   if (preset === "5Y") start.setFullYear(start.getFullYear() - 5);
@@ -95,90 +151,39 @@ function filterPointsByRange(points: TimePoint[], preset: RangePreset) {
   return points.filter((point) => new Date(point.date) >= start);
 }
 
-function getMetricValue(point: TimePoint, mode: Mode) {
-  return mode === "rank" ? point.rank : point.decile;
-}
-
-function buildChartPath(
-  points: TimePoint[],
-  mode: Mode,
-  width: number,
-  height: number,
-  padding: { top: number; right: number; bottom: number; left: number },
-) {
-  if (!points.length) return "";
-
-  const innerWidth = width - padding.left - padding.right;
-  const innerHeight = height - padding.top - padding.bottom;
-
-  const values = points.map((point) => getMetricValue(point, mode));
-  const minY = 0;
-  const maxY = mode === "rank" ? Math.max(...values, 20) : 10;
-
-  return points
-    .map((point, index) => {
-      const x =
-        padding.left +
-        (index / Math.max(points.length - 1, 1)) * innerWidth;
-
-      const rawValue = getMetricValue(point, mode);
-      const y =
-        padding.top + innerHeight - ((rawValue - minY) / (maxY - minY || 1)) * innerHeight;
-
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-}
-
-function getPointPosition(
-  points: TimePoint[],
-  mode: Mode,
-  width: number,
-  height: number,
-  padding: { top: number; right: number; bottom: number; left: number },
-  pointIndex: number,
-) {
-  const innerWidth = width - padding.left - padding.right;
-  const innerHeight = height - padding.top - padding.bottom;
-
-  const values = points.map((point) => getMetricValue(point, mode));
-  const minY = 0;
-  const maxY = mode === "rank" ? Math.max(...values, 20) : 10;
-
-  const x =
-    padding.left +
-    (pointIndex / Math.max(points.length - 1, 1)) * innerWidth;
-
-  const rawValue = getMetricValue(points[pointIndex], mode);
-  const y =
-    padding.top + innerHeight - ((rawValue - minY) / (maxY - minY || 1)) * innerHeight;
-
-  return { x, y };
+function getIntegerDomain(values: number[], fallbackMax: number) {
+  const maxValue = Math.max(...values, fallbackMax);
+  return [0, Math.ceil(maxValue)];
 }
 
 export default function TimeSeries() {
-  // Current chart mode: rank line or decile step/line.
-  const [mode, setMode] = useState<Mode>("rank");
-
-  // Time range preset for filtering visible points.
+  // Time window used to filter visible chart points.
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
 
-  // Selected LSOA from the dropdown.
+  // Selected LSOA in the sidebar dropdown.
   const [selectedLsoa, setSelectedLsoa] = useState<string>(mockSeries[0].code);
 
-  // Comparison basis for the summary deltas.
+  // Comparison mode for the summary box.
   const [compareMode, setCompareMode] = useState<
     "previous_release" | "custom_year" | "custom_month"
   >("previous_release");
 
+  // Chart sizing controls.
+  const rankChartHeight = 260;
+  const decileChartHeight = 220;
+  const chartMaxWidthClass = "max-w-5xl";
+
+  // Find the currently selected LSOA series.
   const selectedSeries = useMemo(() => {
     return mockSeries.find((item) => item.code === selectedLsoa) ?? mockSeries[0];
   }, [selectedLsoa]);
 
+  // Filter the selected series by the active time range preset.
   const visiblePoints = useMemo(() => {
     return filterPointsByRange(selectedSeries.points, rangePreset);
   }, [selectedSeries, rangePreset]);
 
+  // Current and previous points used for summaries and change indicators.
   const latestPoint = visiblePoints[visiblePoints.length - 1];
   const previousPoint =
     visiblePoints.length > 1 ? visiblePoints[visiblePoints.length - 2] : latestPoint;
@@ -196,42 +201,24 @@ export default function TimeSeries() {
   const rankDelta = previousPoint ? currentRank - previousPoint.rank : 0;
   const decileDelta = previousPoint ? currentDecile - previousPoint.decile : 0;
 
-  const chartWidth = 760;
-  const chartHeight = 420;
-  const chartPadding = { top: 20, right: 24, bottom: 56, left: 56 };
+  // Convert raw points into a format the charts can use directly.
+  const chartData = useMemo(() => {
+    return visiblePoints.map((point) => ({
+      date: point.date,
+      shortDate: formatDisplayDate(point.date),
+      xLabel: formatXAxisLabel(point.date, rangePreset),
+      rank: Math.round(point.rank),
+      decile: Math.round(point.decile),
+    }));
+  }, [visiblePoints, rangePreset]);
 
-  const path = buildChartPath(
-    visiblePoints,
-    mode,
-    chartWidth,
-    chartHeight,
-    chartPadding,
-  );
+  const rankYAxisDomain = useMemo(() => {
+    return getIntegerDomain(chartData.map((point) => point.rank), 10);
+  }, [chartData]);
 
-  const activeIndex = visiblePoints.length - 1;
-  const activePos = getPointPosition(
-    visiblePoints,
-    mode,
-    chartWidth,
-    chartHeight,
-    chartPadding,
-    Math.max(activeIndex, 0),
-  );
-
-  const yMax = mode === "rank"
-    ? Math.max(...visiblePoints.map((point) => point.rank), 20)
-    : 10;
-
-  const yearTicks = useMemo(() => {
-    return visiblePoints.map((point, index) => {
-      const year = new Date(point.date).getFullYear();
-      const isFirstOfYear =
-        index === 0 ||
-        year !== new Date(visiblePoints[index - 1].date).getFullYear();
-
-      return isFirstOfYear ? { index, year } : null;
-    }).filter(Boolean) as { index: number; year: number }[];
-  }, [visiblePoints]);
+  const decileYAxisDomain = useMemo(() => {
+    return [0, 10];
+  }, []);
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
@@ -242,14 +229,18 @@ export default function TimeSeries() {
         transition={{ duration: 0.45 }}
         className="space-y-4"
       >
-        <SectionHeader title="Time Series 2019-2025 LSOA rankings for Bristol" />
-        <p className="text-muted-foreground max-w-5xl text-lg md:text-xl leading-relaxed">
-          Track how a selected Bristol LSOA has changed over time by rank or decile,
-          compare current position to previous releases, and inspect the observed range.
+        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+          Time Series 2019-2025 LSOA rankings for {" "}
+          <span className="text-primary glow-text-cyan">Bristol</span>
+        </h1>
+        <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+          Track how a selected Bristol LSOA changes over time by rank and decile,
+          compare its current position to previous releases, and inspect the
+          observed range across the series.
         </p>
       </motion.div>
 
-      {/* Small summary cards to make the page feel consistent with the dashboard */}
+      {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="p-5">
           <div className="flex items-center justify-between">
@@ -272,7 +263,7 @@ export default function TimeSeries() {
                 Current Rank
               </p>
               <p className="mt-2 text-2xl font-bold text-foreground">
-                {currentRank.toFixed(1)}
+                {Math.round(currentRank)}
               </p>
             </div>
             <TrendingUp className="h-6 w-6 text-primary" />
@@ -285,7 +276,7 @@ export default function TimeSeries() {
               Current Decile
             </p>
             <p className="mt-2 text-2xl font-bold text-foreground">
-              {currentDecile}
+              {Math.round(currentDecile)}
             </p>
           </div>
         </GlassCard>
@@ -305,12 +296,12 @@ export default function TimeSeries() {
         </GlassCard>
       </div>
 
-      {/* Main layout */}
+      {/* Main two-column layout */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.75fr)_360px] gap-6 items-start">
-        {/* Chart panel */}
+        {/* Left column: both charts */}
         <GlassCard className="p-6">
-          <div className="flex flex-col gap-5">
-            {/* Top controls */}
+          <div className="space-y-8">
+            {/* Shared time range controls */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
                 {(["6M", "1Y", "5Y", "Max"] as RangePreset[]).map((preset) => (
@@ -328,165 +319,192 @@ export default function TimeSeries() {
                   </button>
                 ))}
               </div>
+            </div>
 
-              <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
-                <button
-                  type="button"
-                  onClick={() => setMode("rank")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    mode === "rank"
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+            {/* Top chart: Rank */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Rank</h2>
+                <p className="text-sm text-muted-foreground">
+                  Integer ranking over time
+                </p>
+              </div>
+
+              <div className={`w-full ${chartMaxWidthClass}`}>
+                <ChartContainer
+                  config={rankChartConfig}
+                  className="w-full"
+                  style={{ height: `${rankChartHeight}px` }}
                 >
-                  Rank
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("decile")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    mode === "decile"
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Decile
-                </button>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        className="opacity-30"
+                      />
+
+                      <XAxis
+                        dataKey="xLabel"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        minTickGap={24}
+                      />
+
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        allowDecimals={false}
+                        domain={rankYAxisDomain}
+                      />
+
+                      <ChartTooltip
+                        cursor={{
+                          stroke: "rgba(255,255,255,0.35)",
+                          strokeWidth: 1,
+                        }}
+                        content={
+                          <ChartTooltipContent
+                            labelFormatter={(_, payload) => {
+                              const point = payload?.[0]?.payload;
+                              return point?.shortDate ?? "";
+                            }}
+                            formatter={(value) => [
+                              <span className="font-medium text-foreground">
+                                {Math.round(Number(value))}
+                              </span>,
+                              "Rank",
+                            ]}
+                          />
+                        }
+                      />
+
+                      {latestPoint && (
+                        <ReferenceLine
+                          x={formatXAxisLabel(latestPoint.date, rangePreset)}
+                          stroke="rgba(255,255,255,0.18)"
+                        />
+                      )}
+
+                      <Line
+                        type="monotone"
+                        dataKey="rank"
+                        name="rank"
+                        stroke="var(--color-rank)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{
+                          r: 5,
+                          fill: "var(--color-rank)",
+                          stroke: "rgba(255,255,255,0.9)",
+                          strokeWidth: 2,
+                        }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </div>
 
-            {/* SVG chart */}
-            <div className="w-full overflow-x-auto">
-              <svg
-                viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                className="w-full min-w-[680px]"
-                role="img"
-                aria-label="LSOA time series chart"
-              >
-                {/* Axes */}
-                <line
-                  x1={chartPadding.left}
-                  y1={chartPadding.top}
-                  x2={chartPadding.left}
-                  y2={chartHeight - chartPadding.bottom}
-                  stroke="currentColor"
-                  className="text-border"
-                  strokeWidth="1.2"
-                />
-                <line
-                  x1={chartPadding.left}
-                  y1={chartHeight - chartPadding.bottom}
-                  x2={chartWidth - chartPadding.right}
-                  y2={chartHeight - chartPadding.bottom}
-                  stroke="currentColor"
-                  className="text-border"
-                  strokeWidth="1.2"
-                />
+            {/* Bottom chart: Decile */}
+            <div className="space-y-3 border-t border-border/40 pt-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Decile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Integer decile trend over time
+                </p>
+              </div>
 
-                {/* Y labels */}
-                <text
-                  x="18"
-                  y={chartHeight / 2}
-                  transform={`rotate(-90, 18, ${chartHeight / 2})`}
-                  className="fill-muted-foreground"
-                  fontSize="14"
+              <div className={`w-full ${chartMaxWidthClass}`}>
+                <ChartContainer
+                  config={decileChartConfig}
+                  className="w-full"
+                  style={{ height: `${decileChartHeight}px` }}
                 >
-                  {mode === "rank" ? "Rank" : "Decile"}
-                </text>
-
-                <text
-                  x={chartPadding.left - 12}
-                  y={chartPadding.top + 4}
-                  textAnchor="end"
-                  className="fill-muted-foreground"
-                  fontSize="14"
-                >
-                  {yMax}
-                </text>
-
-                <text
-                  x={chartPadding.left - 12}
-                  y={chartHeight - chartPadding.bottom + 4}
-                  textAnchor="end"
-                  className="fill-muted-foreground"
-                  fontSize="14"
-                >
-                  0
-                </text>
-
-                {/* Year ticks */}
-                {yearTicks.map((tick) => {
-                  const x =
-                    chartPadding.left +
-                    (tick.index / Math.max(visiblePoints.length - 1, 1)) *
-                      (chartWidth - chartPadding.left - chartPadding.right);
-
-                  return (
-                    <text
-                      key={`${tick.year}-${tick.index}`}
-                      x={x}
-                      y={chartHeight - 18}
-                      textAnchor="middle"
-                      className="fill-muted-foreground"
-                      fontSize="14"
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
                     >
-                      {tick.year}
-                    </text>
-                  );
-                })}
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        className="opacity-30"
+                      />
 
-                {/* Current point guide line */}
-                <line
-                  x1={activePos.x}
-                  y1={chartPadding.top}
-                  x2={activePos.x}
-                  y2={chartHeight - chartPadding.bottom}
-                  stroke="rgba(34,197,94,0.35)"
-                  strokeDasharray="5 5"
-                />
+                      <XAxis
+                        dataKey="xLabel"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        minTickGap={24}
+                      />
 
-                {/* Main series path */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={mode === "rank" ? "rgb(74 222 128)" : "rgb(34 211 238)"}
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        allowDecimals={false}
+                        domain={decileYAxisDomain}
+                        ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                      />
 
-                {/* Active point */}
-                <circle
-                  cx={activePos.x}
-                  cy={activePos.y}
-                  r="7"
-                  fill="rgb(74 222 128)"
-                />
+                      <ChartTooltip
+                        cursor={{
+                          stroke: "rgba(255,255,255,0.35)",
+                          strokeWidth: 1,
+                        }}
+                        content={
+                          <ChartTooltipContent
+                            labelFormatter={(_, payload) => {
+                              const point = payload?.[0]?.payload;
+                              return point?.shortDate ?? "";
+                            }}
+                            formatter={(value) => [
+                              <span className="font-medium text-foreground">
+                                {Math.round(Number(value))}
+                              </span>,
+                              "Decile",
+                            ]}
+                          />
+                        }
+                      />
 
-                {/* Tooltip-style callout */}
-                <foreignObject
-                  x={Math.min(activePos.x + 10, chartWidth - 170)}
-                  y={Math.max(activePos.y - 50, chartPadding.top + 8)}
-                  width="150"
-                  height="72"
-                >
-                  <div className="rounded-xl border border-border/60 bg-background/85 backdrop-blur-md px-3 py-2 shadow-lg">
-                    <p className="text-lg font-semibold text-foreground">
-                      {mode === "rank"
-                        ? latestPoint.rank.toFixed(1)
-                        : latestPoint.decile}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDisplayDate(latestPoint.date)}
-                    </p>
-                  </div>
-                </foreignObject>
-              </svg>
+                      {latestPoint && (
+                        <ReferenceLine
+                          x={formatXAxisLabel(latestPoint.date, rangePreset)}
+                          stroke="rgba(255,255,255,0.18)"
+                        />
+                      )}
+
+                      <Line
+                        type="stepAfter"
+                        dataKey="decile"
+                        name="decile"
+                        stroke="var(--color-decile)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{
+                          r: 5,
+                          fill: "var(--color-decile)",
+                          stroke: "rgba(255,255,255,0.9)",
+                          strokeWidth: 2,
+                        }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             </div>
           </div>
         </GlassCard>
 
-        {/* Right sidebar */}
+        {/* Right column: filter + summary */}
         <div className="space-y-6">
           {/* Filter card */}
           <GlassCard className="p-5">
@@ -531,18 +549,24 @@ export default function TimeSeries() {
               <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 text-sm md:text-base">
                 <span className="text-muted-foreground">Current Rank</span>
                 <span className="font-semibold text-foreground">
-                  {currentRank.toFixed(1)} / 268
+                  {Math.round(currentRank)} / 268
                 </span>
 
                 <span className="text-muted-foreground">Current Decile</span>
-                <span className="font-semibold text-foreground">{currentDecile}</span>
+                <span className="font-semibold text-foreground">
+                  {Math.round(currentDecile)}
+                </span>
 
-                <span className="text-muted-foreground">Most deprived observed rank</span>
+                <span className="text-muted-foreground">
+                  Most deprived observed rank
+                </span>
                 <span className="font-semibold text-foreground">
                   {mostDeprivedObservedRank} / 268
                 </span>
 
-                <span className="text-muted-foreground">Least deprived observed rank</span>
+                <span className="text-muted-foreground">
+                  Least deprived observed rank
+                </span>
                 <span className="font-semibold text-foreground">
                   {leastDeprivedObservedRank} / 268
                 </span>
@@ -565,7 +589,10 @@ export default function TimeSeries() {
                   value={compareMode}
                   onChange={(e) =>
                     setCompareMode(
-                      e.target.value as "previous_release" | "custom_year" | "custom_month",
+                      e.target.value as
+                        | "previous_release"
+                        | "custom_year"
+                        | "custom_month",
                     )
                   }
                   className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
@@ -590,7 +617,7 @@ export default function TimeSeries() {
                         rankDelta <= 0 ? "text-destructive" : "text-success"
                       }`}
                     >
-                      {rankDelta > 0 ? `+${rankDelta.toFixed(1)}` : rankDelta.toFixed(1)}
+                      {rankDelta > 0 ? `+${Math.round(rankDelta)}` : Math.round(rankDelta)}
                     </span>
                   </div>
                 </div>
@@ -608,7 +635,7 @@ export default function TimeSeries() {
                         decileDelta >= 0 ? "text-success" : "text-destructive"
                       }`}
                     >
-                      {decileDelta > 0 ? `+${decileDelta}` : decileDelta}
+                      {decileDelta > 0 ? `+${Math.round(decileDelta)}` : Math.round(decileDelta)}
                     </span>
                   </div>
                 </div>
