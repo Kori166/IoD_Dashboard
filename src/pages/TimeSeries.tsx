@@ -1,13 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowDown,
-  ArrowUp,
-  CalendarRange,
-  Filter,
-  MapPinned,
-  TrendingUp,
-} from "lucide-react";
+import { Info, TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -19,7 +12,6 @@ import {
 } from "recharts";
 
 import { GlassCard } from "@/components/ui/glass-card";
-import { SectionHeader } from "@/components/ui/section-header";
 import {
   ChartContainer,
   ChartTooltip,
@@ -41,8 +33,8 @@ type LsoaSeries = {
   points: TimePoint[];
 };
 
-// Mock data for now.
-// Replace this later with fetched JSON if you have a real time series dataset.
+// Mock data for layout and interaction.
+// Replace this with fetched data once the real time-series source is available.
 const mockSeries: LsoaSeries[] = [
   {
     code: "E01014645",
@@ -92,7 +84,7 @@ const mockSeries: LsoaSeries[] = [
   },
 ];
 
-// Shared chart config for the dashboard chart wrapper.
+// Shared chart configuration used by the dashboard chart wrapper.
 const rankChartConfig = {
   rank: {
     label: "Rank",
@@ -107,6 +99,7 @@ const decileChartConfig = {
   },
 } satisfies ChartConfig;
 
+// Formats a full release date for tooltips and summaries.
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -115,10 +108,11 @@ function formatDisplayDate(date: string) {
   }).format(new Date(date));
 }
 
+// Formats x-axis labels.
+// Short ranges use month labels, longer ranges use year labels.
 function formatXAxisLabel(date: string, rangePreset: RangePreset) {
   const parsed = new Date(date);
 
-  // For short views, show month labels instead of year labels.
   if (rangePreset === "6M" || rangePreset === "1Y") {
     return new Intl.DateTimeFormat("en-GB", {
       month: "short",
@@ -131,6 +125,7 @@ function formatXAxisLabel(date: string, rangePreset: RangePreset) {
   }).format(parsed);
 }
 
+// Works out the start date for the selected time-range preset.
 function getRangeStart(points: TimePoint[], preset: RangePreset) {
   if (!points.length) return null;
 
@@ -145,63 +140,163 @@ function getRangeStart(points: TimePoint[], preset: RangePreset) {
   return start;
 }
 
+// Filters points down to the currently selected visible time range.
 function filterPointsByRange(points: TimePoint[], preset: RangePreset) {
   const start = getRangeStart(points, preset);
   if (!start) return points;
   return points.filter((point) => new Date(point.date) >= start);
 }
 
+// Builds an integer-only chart domain.
 function getIntegerDomain(values: number[], fallbackMax: number) {
   const maxValue = Math.max(...values, fallbackMax);
   return [0, Math.ceil(maxValue)];
 }
 
+// Returns a simple decile label for the top summary card.
+function getDecileLabel(decile: number) {
+  return `${decile}`;
+}
+
+// Converts rank delta into clear direction language.
+function getRankChangeText(delta: number) {
+  if (delta < 0) return `More deprived by ${Math.abs(delta)} rank`;
+  if (delta > 0) return `Less deprived by ${delta} rank`;
+  return "No rank change";
+}
+
+// Converts decile delta into clear direction language.
+function getDecileChangeText(delta: number) {
+  if (delta < 0) return `More deprived by ${Math.abs(delta)} decile`;
+  if (delta > 0) return `Less deprived by ${delta} decile`;
+  return "No decile change";
+}
+
+// Builds a simple visible period label for the sidebar.
+function getRangeLabel(points: TimePoint[]) {
+  if (!points.length) return "No data";
+  const first = new Date(points[0].date).getFullYear();
+  const last = new Date(points[points.length - 1].date).getFullYear();
+  return `${first} to ${last}`;
+}
+
+// Creates a plain-English summary of the selected area.
+function buildAreaSummary(args: {
+  label: string;
+  currentRank: number;
+  currentDecile: number;
+  minRank: number;
+  maxRank: number;
+  minDecile: number;
+  maxDecile: number;
+}) {
+  const {
+    label,
+    currentRank,
+    currentDecile,
+    minRank,
+    maxRank,
+    minDecile,
+    maxDecile,
+  } = args;
+
+  return `${label} is currently in decile ${currentDecile} and ranks ${currentRank}th most deprived out of 268 Bristol LSOAs. Over the period shown, it has ranged between rank ${minRank} and rank ${maxRank}, and between deciles ${minDecile} and ${maxDecile}.`;
+}
+
+// Builds deduplicated x-axis ticks so each year appears only once in 5Y/Max views.
+function getXAxisTicks(
+  data: { date: string; xLabel: string }[],
+  rangePreset: RangePreset,
+) {
+  if (rangePreset === "6M" || rangePreset === "1Y") {
+    return data.map((point) => point.xLabel);
+  }
+
+  const seen = new Set<string>();
+  const ticks: string[] = [];
+
+  for (const point of data) {
+    if (!seen.has(point.xLabel)) {
+      seen.add(point.xLabel);
+      ticks.push(point.xLabel);
+    }
+  }
+
+  return ticks;
+}
+
 export default function TimeSeries() {
-  // Time window used to filter visible chart points.
+  // Selected visible time range for both charts.
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
 
-  // Selected LSOA in the sidebar dropdown.
+  // Selected LSOA code from the control bar.
   const [selectedLsoa, setSelectedLsoa] = useState<string>(mockSeries[0].code);
 
-  // Comparison mode for the summary box.
+  // Comparison basis used in the interpretation panel.
   const [compareMode, setCompareMode] = useState<
     "previous_release" | "custom_year" | "custom_month"
   >("previous_release");
 
-  // Chart sizing controls.
+  // Central chart sizing controls.
   const rankChartHeight = 260;
   const decileChartHeight = 220;
-  const chartMaxWidthClass = "max-w-5xl";
 
-  // Find the currently selected LSOA series.
+  // Looks up the selected LSOA series.
   const selectedSeries = useMemo(() => {
     return mockSeries.find((item) => item.code === selectedLsoa) ?? mockSeries[0];
   }, [selectedLsoa]);
 
-  // Filter the selected series by the active time range preset.
+  // Applies the selected time window to the series.
   const visiblePoints = useMemo(() => {
     return filterPointsByRange(selectedSeries.points, rangePreset);
   }, [selectedSeries, rangePreset]);
 
-  // Current and previous points used for summaries and change indicators.
+  // Finds the latest and previous visible releases for change calculations.
   const latestPoint = visiblePoints[visiblePoints.length - 1];
   const previousPoint =
     visiblePoints.length > 1 ? visiblePoints[visiblePoints.length - 2] : latestPoint;
 
+  // Pulls rank/decile arrays from the full selected series for summary stats.
   const allRanks = selectedSeries.points.map((point) => point.rank);
   const allDeciles = selectedSeries.points.map((point) => point.decile);
 
+  // Latest current values used across the page.
   const currentRank = latestPoint?.rank ?? 0;
   const currentDecile = latestPoint?.decile ?? 0;
+
+  // Best and worst observed values across the selected area's full history.
   const mostDeprivedObservedRank = Math.min(...allRanks);
   const leastDeprivedObservedRank = Math.max(...allRanks);
   const minDecile = Math.min(...allDeciles);
   const maxDecile = Math.max(...allDeciles);
 
+  // Change since the previous visible release.
   const rankDelta = previousPoint ? currentRank - previousPoint.rank : 0;
   const decileDelta = previousPoint ? currentDecile - previousPoint.decile : 0;
 
-  // Convert raw points into a format the charts can use directly.
+  // Rounded integer labels used everywhere in the UI.
+  const roundedCurrentRank = Math.round(currentRank);
+  const roundedCurrentDecile = Math.round(currentDecile);
+  const roundedRankDelta = Math.round(rankDelta);
+  const roundedDecileDelta = Math.round(decileDelta);
+
+  // Human-readable summaries for the top cards and sidebar.
+  const rankChangeText = getRankChangeText(roundedRankDelta);
+  const decileChangeText = getDecileChangeText(roundedDecileDelta);
+  const visibleRangeLabel = getRangeLabel(visiblePoints);
+
+  // Plain-English interpretation block shown in the sidebar.
+  const areaSummary = buildAreaSummary({
+    label: selectedSeries.label,
+    currentRank: roundedCurrentRank,
+    currentDecile: roundedCurrentDecile,
+    minRank: mostDeprivedObservedRank,
+    maxRank: leastDeprivedObservedRank,
+    minDecile,
+    maxDecile,
+  });
+
+  // Converts visible points into chart-friendly objects with display labels.
   const chartData = useMemo(() => {
     return visiblePoints.map((point) => ({
       date: point.date,
@@ -212,17 +307,19 @@ export default function TimeSeries() {
     }));
   }, [visiblePoints, rangePreset]);
 
+  // Deduplicated axis ticks so long-range views only show each year once.
+  const xAxisTicks = useMemo(() => {
+    return getXAxisTicks(chartData, rangePreset);
+  }, [chartData, rangePreset]);
+
+  // Rank chart domain stays integer-only.
   const rankYAxisDomain = useMemo(() => {
     return getIntegerDomain(chartData.map((point) => point.rank), 10);
   }, [chartData]);
 
-  const decileYAxisDomain = useMemo(() => {
-    return [0, 10];
-  }, []);
-
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
-      {/* Page heading */}
+      {/* Page title and short explanatory intro */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -230,107 +327,167 @@ export default function TimeSeries() {
         className="space-y-4"
       >
         <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
-          Time Series 2019-2025 LSOA rankings for {" "}
+          Time Series 2019-2025 LSOA rankings for{" "}
           <span className="text-primary glow-text-cyan">Bristol</span>
         </h1>
+
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
           Track how a selected Bristol LSOA changes over time by rank and decile,
-          compare its current position to previous releases, and inspect the
-          observed range across the series.
+          compare its current position to earlier releases, and see whether it
+          has become more or less deprived over time.
         </p>
       </motion.div>
 
-      {/* Summary cards */}
+      {/* Top-level insight cards focused on current meaning, not UI state */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                Selected Area
-              </p>
-              <p className="mt-2 text-2xl font-bold text-foreground">
-                {selectedSeries.label}
-              </p>
-            </div>
-            <MapPinned className="h-6 w-6 text-primary" />
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                Current Rank
-              </p>
-              <p className="mt-2 text-2xl font-bold text-foreground">
-                {Math.round(currentRank)}
-              </p>
-            </div>
-            <TrendingUp className="h-6 w-6 text-primary" />
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-5">
-          <div>
+          <div className="space-y-2">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              Current Decile
+              Current rank
             </p>
-            <p className="mt-2 text-2xl font-bold text-foreground">
-              {Math.round(currentDecile)}
+            <p className="text-2xl font-bold text-foreground">
+              {roundedCurrentRank} of 268
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Lower rank = more deprived
             </p>
           </div>
         </GlassCard>
 
         <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                Visible Range
-              </p>
-              <p className="mt-2 text-2xl font-bold text-foreground">
-                {rangePreset}
-              </p>
-            </div>
-            <CalendarRange className="h-6 w-6 text-primary" />
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Current decile
+            </p>
+            <p className="text-2xl font-bold text-foreground">
+              {getDecileLabel(roundedCurrentDecile)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              1 = most deprived, 10 = least deprived
+            </p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-5">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Change since previous release
+            </p>
+            <p className="text-2xl font-bold text-foreground">
+              {rankChangeText}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {decileChangeText}
+            </p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-5">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Best / worst observed position
+            </p>
+            <p className="text-2xl font-bold text-foreground">
+              {mostDeprivedObservedRank} to {leastDeprivedObservedRank}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Rank across the full series
+            </p>
           </div>
         </GlassCard>
       </div>
 
-      {/* Main two-column layout */}
+      {/* Main page layout with the charts in the wider column and interpretation on the right */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.75fr)_360px] gap-6 items-start">
-        {/* Left column: both charts */}
+        {/* Main chart card containing controls and both charts */}
         <GlassCard className="p-6">
           <div className="space-y-8">
-            {/* Shared time range controls */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
-                {(["6M", "1Y", "5Y", "Max"] as RangePreset[]).map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setRangePreset(preset)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      rangePreset === preset
-                        ? "bg-primary/15 text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+            {/* Unified control bar so filters live in one obvious place */}
+            <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
+                {/* LSOA selector */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="lsoa-select-inline"
+                    className="text-sm font-medium text-muted-foreground"
                   >
-                    {preset}
-                  </button>
-                ))}
+                    LSOA
+                  </label>
+                  <select
+                    id="lsoa-select-inline"
+                    value={selectedLsoa}
+                    onChange={(e) => setSelectedLsoa(e.target.value)}
+                    className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
+                  >
+                    {mockSeries.map((item) => (
+                      <option key={item.code} value={item.code}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Shared time range buttons controlling both charts */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Time range
+                  </label>
+                  <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
+                    {(["6M", "1Y", "5Y", "Max"] as RangePreset[]).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setRangePreset(preset)}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          rangePreset === preset
+                            ? "bg-primary/15 text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comparison mode selector used by the interpretation panel */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="compare-mode-inline"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Compare to
+                  </label>
+                  <select
+                    id="compare-mode-inline"
+                    value={compareMode}
+                    onChange={(e) =>
+                      setCompareMode(
+                        e.target.value as
+                          | "previous_release"
+                          | "custom_year"
+                          | "custom_month",
+                      )
+                    }
+                    className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
+                  >
+                    <option value="previous_release">Previous release</option>
+                    <option value="custom_year">Custom year</option>
+                    <option value="custom_month">Custom month</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Top chart: Rank */}
+            {/* Primary rank chart */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">Rank</h2>
-                <p className="text-sm text-muted-foreground">
-                  Integer ranking over time
-                </p>
+                <p className="text-sm text-muted-foreground">Rank over time</p>
               </div>
 
-              <div className={`w-full ${chartMaxWidthClass}`}>
+              {/* Full-width chart wrapper so the chart stretches across the card */}
+              <div className="w-full">
                 <ChartContainer
                   config={rankChartConfig}
                   className="w-full"
@@ -341,28 +498,42 @@ export default function TimeSeries() {
                       data={chartData}
                       margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
                     >
+                      {/* Subtle gridlines make the dark chart easier to read */}
                       <CartesianGrid
                         vertical={false}
                         strokeDasharray="3 3"
                         className="opacity-30"
                       />
 
+                      {/* Deduplicated x-axis ticks so each year only appears once in longer views */}
                       <XAxis
                         dataKey="xLabel"
                         tickLine={false}
                         axisLine={false}
                         tickMargin={10}
                         minTickGap={24}
+                        ticks={xAxisTicks}
                       />
 
+                      {/* Reversed y-axis so lower ranks appear higher up on the chart */}
                       <YAxis
                         tickLine={false}
                         axisLine={false}
                         tickMargin={10}
                         allowDecimals={false}
-                        domain={rankYAxisDomain}
-                      />
+                        domain={[1, Math.max(rankYAxisDomain[1], 10)]}
+                        label={{
+                         value: "Rank",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: {
+                            fill: "hsl(var(--muted-foreground))",
+                            fontSize: 12,
+                            },
+                        }}
+                        />
 
+                      {/* Tooltip shows both rank and decile for the selected release */}
                       <ChartTooltip
                         cursor={{
                           stroke: "rgba(255,255,255,0.35)",
@@ -374,16 +545,22 @@ export default function TimeSeries() {
                               const point = payload?.[0]?.payload;
                               return point?.shortDate ?? "";
                             }}
-                            formatter={(value) => [
-                              <span className="font-medium text-foreground">
-                                {Math.round(Number(value))}
-                              </span>,
-                              "Rank",
+                            formatter={(value, _name, item) => [
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium text-foreground">
+                                  Rank: {Math.round(Number(value))} of 268
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  Decile: {item.payload.decile}
+                                </span>
+                              </div>,
+                              "Release",
                             ]}
                           />
                         }
                       />
 
+                      {/* Marks the latest visible release */}
                       {latestPoint && (
                         <ReferenceLine
                           x={formatXAxisLabel(latestPoint.date, rangePreset)}
@@ -391,13 +568,19 @@ export default function TimeSeries() {
                         />
                       )}
 
+                      {/* Straight line plus dots suits release-based data better than smoothing */}
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="rank"
                         name="rank"
                         stroke="var(--color-rank)"
                         strokeWidth={2.5}
-                        dot={false}
+                        dot={{
+                          r: 3,
+                          fill: "var(--color-rank)",
+                          stroke: "rgba(255,255,255,0.55)",
+                          strokeWidth: 1,
+                        }}
                         activeDot={{
                           r: 5,
                           fill: "var(--color-rank)",
@@ -411,16 +594,15 @@ export default function TimeSeries() {
               </div>
             </div>
 
-            {/* Bottom chart: Decile */}
+            {/* Secondary decile chart */}
             <div className="space-y-3 border-t border-border/40 pt-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">Decile</h2>
-                <p className="text-sm text-muted-foreground">
-                  Integer decile trend over time
-                </p>
+                <p className="text-sm text-muted-foreground">Decile over time</p>
               </div>
 
-              <div className={`w-full ${chartMaxWidthClass}`}>
+              {/* Full-width chart wrapper so the chart stretches across the card */}
+              <div className="w-full">
                 <ChartContainer
                   config={decileChartConfig}
                   className="w-full"
@@ -431,29 +613,43 @@ export default function TimeSeries() {
                       data={chartData}
                       margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
                     >
+                      {/* Subtle gridlines improve readability on the dark background */}
                       <CartesianGrid
                         vertical={false}
                         strokeDasharray="3 3"
                         className="opacity-30"
                       />
 
+                      {/* Deduplicated x-axis ticks so each year only appears once in longer views */}
                       <XAxis
                         dataKey="xLabel"
                         tickLine={false}
                         axisLine={false}
                         tickMargin={10}
                         minTickGap={24}
+                        ticks={xAxisTicks}
                       />
 
+                      {/* Reversed y-axis so lower deciles appear higher up on the chart */}
                       <YAxis
                         tickLine={false}
                         axisLine={false}
                         tickMargin={10}
                         allowDecimals={false}
-                        domain={decileYAxisDomain}
-                        ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                      />
+                        domain={[1, 10]}
+                        ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                        label={{
+                            value: "Decile",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: {
+                            fill: "hsl(var(--muted-foreground))",
+                            fontSize: 12,
+                            },
+                        }}
+                        />
 
+                      {/* Tooltip shows decile and rank together for context */}
                       <ChartTooltip
                         cursor={{
                           stroke: "rgba(255,255,255,0.35)",
@@ -465,16 +661,22 @@ export default function TimeSeries() {
                               const point = payload?.[0]?.payload;
                               return point?.shortDate ?? "";
                             }}
-                            formatter={(value) => [
-                              <span className="font-medium text-foreground">
-                                {Math.round(Number(value))}
-                              </span>,
-                              "Decile",
+                            formatter={(value, _name, item) => [
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium text-foreground">
+                                  Decile: {Math.round(Number(value))}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  Rank: {item.payload.rank} of 268
+                                </span>
+                              </div>,
+                              "Release",
                             ]}
                           />
                         }
                       />
 
+                      {/* Marks the latest visible release */}
                       {latestPoint && (
                         <ReferenceLine
                           x={formatXAxisLabel(latestPoint.date, rangePreset)}
@@ -482,13 +684,19 @@ export default function TimeSeries() {
                         />
                       )}
 
+                      {/* Step line is a better fit for banded decile changes */}
                       <Line
                         type="stepAfter"
                         dataKey="decile"
                         name="decile"
                         stroke="var(--color-decile)"
                         strokeWidth={2.5}
-                        dot={false}
+                        dot={{
+                          r: 3,
+                          fill: "var(--color-decile)",
+                          stroke: "rgba(255,255,255,0.55)",
+                          strokeWidth: 1,
+                        }}
                         activeDot={{
                           r: 5,
                           fill: "var(--color-decile)",
@@ -504,145 +712,85 @@ export default function TimeSeries() {
           </div>
         </GlassCard>
 
-        {/* Right column: filter + summary */}
-        <div className="space-y-6">
-          {/* Filter card */}
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">
-                  Filter by LSOA
-                </h2>
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="lsoa-select"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Select area
-                </label>
-                <select
-                  id="lsoa-select"
-                  value={selectedLsoa}
-                  onChange={(e) => setSelectedLsoa(e.target.value)}
-                  className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-                >
-                  {mockSeries.map((item) => (
-                    <option key={item.code} value={item.code}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </GlassCard>
-
-          {/* Summary card */}
+                {/* Sidebar summary card */}
+        <div>
           <GlassCard className="p-6">
             <div className="space-y-5">
               <h2 className="text-2xl font-bold text-foreground">
                 {selectedSeries.label}
               </h2>
 
-              <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 text-sm md:text-base">
-                <span className="text-muted-foreground">Current Rank</span>
-                <span className="font-semibold text-foreground">
-                  {Math.round(currentRank)} / 268
-                </span>
-
-                <span className="text-muted-foreground">Current Decile</span>
-                <span className="font-semibold text-foreground">
-                  {Math.round(currentDecile)}
-                </span>
-
-                <span className="text-muted-foreground">
-                  Most deprived observed rank
-                </span>
-                <span className="font-semibold text-foreground">
-                  {mostDeprivedObservedRank} / 268
-                </span>
-
-                <span className="text-muted-foreground">
-                  Least deprived observed rank
-                </span>
-                <span className="font-semibold text-foreground">
-                  {leastDeprivedObservedRank} / 268
-                </span>
-
-                <span className="text-muted-foreground">Decile range</span>
-                <span className="font-semibold text-foreground">
-                  {minDecile} to {maxDecile}
-                </span>
+              {/* Plain-English narrative summary */}
+              <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-3">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {areaSummary}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Viewed range: {visibleRangeLabel}
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="compare-mode"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Change from
-                </label>
-                <select
-                  id="compare-mode"
-                  value={compareMode}
-                  onChange={(e) =>
-                    setCompareMode(
-                      e.target.value as
-                        | "previous_release"
-                        | "custom_year"
-                        | "custom_month",
-                    )
-                  }
-                  className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-                >
-                  <option value="previous_release">Previous release</option>
-                  <option value="custom_year">Custom year</option>
-                  <option value="custom_month">Custom month</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
+              {/* Explicit change interpretation so users do not have to decode sign direction */}
+              <div className="grid grid-cols-1 gap-3">
                 <div className="rounded-xl border border-border/40 bg-background/20 p-4">
-                  <p className="text-sm text-muted-foreground">Rank</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {rankDelta <= 0 ? (
-                      <ArrowDown className="h-6 w-6 text-destructive" />
-                    ) : (
-                      <ArrowUp className="h-6 w-6 text-success" />
-                    )}
-                    <span
-                      className={`text-xl font-bold ${
-                        rankDelta <= 0 ? "text-destructive" : "text-success"
-                      }`}
-                    >
-                      {rankDelta > 0 ? `+${Math.round(rankDelta)}` : Math.round(rankDelta)}
-                    </span>
-                  </div>
+                  <p className="text-sm text-muted-foreground">Rank change</p>
+                  <p className="mt-2 text-base font-semibold text-foreground">
+                    {rankChangeText}
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-border/40 bg-background/20 p-4">
-                  <p className="text-sm text-muted-foreground">Decile</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {decileDelta >= 0 ? (
-                      <ArrowUp className="h-6 w-6 text-success" />
-                    ) : (
-                      <ArrowDown className="h-6 w-6 text-destructive" />
-                    )}
-                    <span
-                      className={`text-xl font-bold ${
-                        decileDelta >= 0 ? "text-success" : "text-destructive"
-                      }`}
-                    >
-                      {decileDelta > 0 ? `+${Math.round(decileDelta)}` : Math.round(decileDelta)}
-                    </span>
+                  <p className="text-sm text-muted-foreground">Decile change</p>
+                  <p className="mt-2 text-base font-semibold text-foreground">
+                    {decileChangeText}
+                  </p>
+                </div>
+
+                {/* Small glossary for terms that are not obvious to every user */}
+                <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium text-foreground">
+                      Definitions
+                    </p>
                   </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    LSOA: Lower Layer Super Output Area
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Rank: Bristol position, where lower means more deprived
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Decile: grouped band from 1 to 10, where 1 is most deprived
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Comparison: {compareMode.replaceAll("_", " ")}
+                  </p>
                 </div>
               </div>
             </div>
           </GlassCard>
         </div>
+      </div>
+
+      {/* Reading guide placed underneath the full two-column layout */}
+      <GlassCard className="p-5">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">
+              Reading this page
+            </h3>
+          </div>
+
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            The rank chart shows Bristol position over time, where lower
+            values mean greater deprivation. The decile chart shows whether
+            the area has moved between broader deprivation bands.
+          </p>
+        </div>
+      </GlassCard>        
       </div>
     </div>
   );
