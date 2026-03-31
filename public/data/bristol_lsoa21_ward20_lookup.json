@@ -1,0 +1,1610 @@
+[
+  {
+    "lsoa_code":"E01014485",
+    "lsoa_name":"Bristol 058A",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014486",
+    "lsoa_name":"Bristol 058C",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014487",
+    "lsoa_name":"Bristol 020A",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014488",
+    "lsoa_name":"Bristol 058B",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014489",
+    "lsoa_name":"Bristol 059A",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014491",
+    "lsoa_name":"Bristol 020B",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014492",
+    "lsoa_name":"Bristol 008A",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014493",
+    "lsoa_name":"Bristol 008B",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014494",
+    "lsoa_name":"Bristol 008C",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014495",
+    "lsoa_name":"Bristol 008D",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014496",
+    "lsoa_name":"Bristol 008E",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014497",
+    "lsoa_name":"Bristol 003A",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014498",
+    "lsoa_name":"Bristol 003B",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014499",
+    "lsoa_name":"Bristol 008F",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014500",
+    "lsoa_name":"Bristol 039A",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014501",
+    "lsoa_name":"Bristol 041A",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01014502",
+    "lsoa_name":"Bristol 039B",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014504",
+    "lsoa_name":"Bristol 041B",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01014505",
+    "lsoa_name":"Bristol 041C",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01014506",
+    "lsoa_name":"Bristol 041D",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01014507",
+    "lsoa_name":"Bristol 016A",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014508",
+    "lsoa_name":"Bristol 016B",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014509",
+    "lsoa_name":"Bristol 016C",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014510",
+    "lsoa_name":"Bristol 010A",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014511",
+    "lsoa_name":"Bristol 016D",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014512",
+    "lsoa_name":"Bristol 016E",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014513",
+    "lsoa_name":"Bristol 016F",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014514",
+    "lsoa_name":"Bristol 016G",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014515",
+    "lsoa_name":"Bristol 050A",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014516",
+    "lsoa_name":"Bristol 050B",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014517",
+    "lsoa_name":"Bristol 050C",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014518",
+    "lsoa_name":"Bristol 046A",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014519",
+    "lsoa_name":"Bristol 046B",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014520",
+    "lsoa_name":"Bristol 046C",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014521",
+    "lsoa_name":"Bristol 046D",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014522",
+    "lsoa_name":"Bristol 050D",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014523",
+    "lsoa_name":"Bristol 038A",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014524",
+    "lsoa_name":"Bristol 038B",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014525",
+    "lsoa_name":"Bristol 038C",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014526",
+    "lsoa_name":"Bristol 038D",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014527",
+    "lsoa_name":"Bristol 038E",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014528",
+    "lsoa_name":"Bristol 035A",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014529",
+    "lsoa_name":"Bristol 035B",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014530",
+    "lsoa_name":"Bristol 035C",
+    "ward_code":"E05010890",
+    "ward_name":"Brislington East"
+  },
+  {
+    "lsoa_code":"E01014531",
+    "lsoa_name":"Bristol 035D",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014532",
+    "lsoa_name":"Bristol 035E",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014533",
+    "lsoa_name":"Bristol 043A",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014534",
+    "lsoa_name":"Bristol 043B",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014535",
+    "lsoa_name":"Bristol 043C",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014536",
+    "lsoa_name":"Bristol 043D",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014537",
+    "lsoa_name":"Bristol 035F",
+    "ward_code":"E05010891",
+    "ward_name":"Brislington West"
+  },
+  {
+    "lsoa_code":"E01014538",
+    "lsoa_name":"Bristol 060A",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01014539",
+    "lsoa_name":"Bristol 025A",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014544",
+    "lsoa_name":"Bristol 030A",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014545",
+    "lsoa_name":"Bristol 030B",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014546",
+    "lsoa_name":"Bristol 030C",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014547",
+    "lsoa_name":"Bristol 030D",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014548",
+    "lsoa_name":"Bristol 034A",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014549",
+    "lsoa_name":"Bristol 034B",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014550",
+    "lsoa_name":"Bristol 034C",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014551",
+    "lsoa_name":"Bristol 026A",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014552",
+    "lsoa_name":"Bristol 026B",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014553",
+    "lsoa_name":"Bristol 026C",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014554",
+    "lsoa_name":"Bristol 026D",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014555",
+    "lsoa_name":"Bristol 034D",
+    "ward_code":"E05010893",
+    "ward_name":"Clifton"
+  },
+  {
+    "lsoa_code":"E01014556",
+    "lsoa_name":"Bristol 026E",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014557",
+    "lsoa_name":"Bristol 022A",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014558",
+    "lsoa_name":"Bristol 022B",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014559",
+    "lsoa_name":"Bristol 022C",
+    "ward_code":"E05010894",
+    "ward_name":"Clifton Down"
+  },
+  {
+    "lsoa_code":"E01014560",
+    "lsoa_name":"Bristol 022D",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014561",
+    "lsoa_name":"Bristol 025C",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014562",
+    "lsoa_name":"Bristol 022E",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014563",
+    "lsoa_name":"Bristol 025D",
+    "ward_code":"E05010895",
+    "ward_name":"Cotham"
+  },
+  {
+    "lsoa_code":"E01014564",
+    "lsoa_name":"Bristol 055A",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014565",
+    "lsoa_name":"Bristol 029A",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014566",
+    "lsoa_name":"Bristol 029B",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014567",
+    "lsoa_name":"Bristol 029C",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014568",
+    "lsoa_name":"Bristol 057A",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014569",
+    "lsoa_name":"Bristol 057B",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014570",
+    "lsoa_name":"Bristol 057C",
+    "ward_code":"E05010896",
+    "ward_name":"Easton"
+  },
+  {
+    "lsoa_code":"E01014571",
+    "lsoa_name":"Bristol 012A",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014572",
+    "lsoa_name":"Bristol 019A",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014573",
+    "lsoa_name":"Bristol 019B",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014574",
+    "lsoa_name":"Bristol 057D",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014575",
+    "lsoa_name":"Bristol 019C",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014576",
+    "lsoa_name":"Bristol 019D",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014577",
+    "lsoa_name":"Bristol 012B",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014578",
+    "lsoa_name":"Bristol 044A",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014579",
+    "lsoa_name":"Bristol 045A",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014580",
+    "lsoa_name":"Bristol 045B",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014581",
+    "lsoa_name":"Bristol 045C",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014582",
+    "lsoa_name":"Bristol 045D",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014583",
+    "lsoa_name":"Bristol 044B",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014584",
+    "lsoa_name":"Bristol 045E",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014585",
+    "lsoa_name":"Bristol 044C",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014586",
+    "lsoa_name":"Bristol 012C",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014587",
+    "lsoa_name":"Bristol 012D",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014588",
+    "lsoa_name":"Bristol 013A",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014589",
+    "lsoa_name":"Bristol 013B",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014590",
+    "lsoa_name":"Bristol 013C",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014591",
+    "lsoa_name":"Bristol 013D",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014592",
+    "lsoa_name":"Bristol 013E",
+    "ward_code":"E05010899",
+    "ward_name":"Frome Vale"
+  },
+  {
+    "lsoa_code":"E01014593",
+    "lsoa_name":"Bristol 051A",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014594",
+    "lsoa_name":"Bristol 048A",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014595",
+    "lsoa_name":"Bristol 051B",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014596",
+    "lsoa_name":"Bristol 051C",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014597",
+    "lsoa_name":"Bristol 051D",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014598",
+    "lsoa_name":"Bristol 048B",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014599",
+    "lsoa_name":"Bristol 048C",
+    "ward_code":"E05010889",
+    "ward_name":"Bishopsworth"
+  },
+  {
+    "lsoa_code":"E01014600",
+    "lsoa_name":"Bristol 048D",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014601",
+    "lsoa_name":"Bristol 001A",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01014602",
+    "lsoa_name":"Bristol 001B",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01014603",
+    "lsoa_name":"Bristol 001C",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01014605",
+    "lsoa_name":"Bristol 001E",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01014607",
+    "lsoa_name":"Bristol 047A",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014608",
+    "lsoa_name":"Bristol 047B",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014609",
+    "lsoa_name":"Bristol 047C",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014610",
+    "lsoa_name":"Bristol 047D",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014611",
+    "lsoa_name":"Bristol 052A",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014612",
+    "lsoa_name":"Bristol 052B",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014613",
+    "lsoa_name":"Bristol 047E",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014614",
+    "lsoa_name":"Bristol 047F",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014615",
+    "lsoa_name":"Bristol 011A",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014616",
+    "lsoa_name":"Bristol 006A",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014617",
+    "lsoa_name":"Bristol 011B",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014618",
+    "lsoa_name":"Bristol 011C",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014619",
+    "lsoa_name":"Bristol 017A",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014620",
+    "lsoa_name":"Bristol 011D",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014621",
+    "lsoa_name":"Bristol 017B",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014622",
+    "lsoa_name":"Bristol 021A",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01014623",
+    "lsoa_name":"Bristol 021B",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01014624",
+    "lsoa_name":"Bristol 018A",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01014626",
+    "lsoa_name":"Bristol 021C",
+    "ward_code":"E05010897",
+    "ward_name":"Eastville"
+  },
+  {
+    "lsoa_code":"E01014627",
+    "lsoa_name":"Bristol 021D",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01014629",
+    "lsoa_name":"Bristol 018D",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01014630",
+    "lsoa_name":"Bristol 005A",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014631",
+    "lsoa_name":"Bristol 004A",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014632",
+    "lsoa_name":"Bristol 004B",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014633",
+    "lsoa_name":"Bristol 004C",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014634",
+    "lsoa_name":"Bristol 005B",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014635",
+    "lsoa_name":"Bristol 010B",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014636",
+    "lsoa_name":"Bristol 004D",
+    "ward_code":"E05010904",
+    "ward_name":"Horfield"
+  },
+  {
+    "lsoa_code":"E01014637",
+    "lsoa_name":"Bristol 010C",
+    "ward_code":"E05010888",
+    "ward_name":"Bishopston and Ashley Down"
+  },
+  {
+    "lsoa_code":"E01014638",
+    "lsoa_name":"Bristol 003C",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014639",
+    "lsoa_name":"Bristol 003D",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014640",
+    "lsoa_name":"Bristol 003E",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014641",
+    "lsoa_name":"Bristol 007A",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014642",
+    "lsoa_name":"Bristol 007B",
+    "ward_code":"E05010886",
+    "ward_name":"Avonmouth and Lawrence Weston"
+  },
+  {
+    "lsoa_code":"E01014643",
+    "lsoa_name":"Bristol 007C",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014644",
+    "lsoa_name":"Bristol 007D",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014645",
+    "lsoa_name":"Bristol 042A",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014646",
+    "lsoa_name":"Bristol 042B",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014647",
+    "lsoa_name":"Bristol 044D",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014648",
+    "lsoa_name":"Bristol 042C",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014649",
+    "lsoa_name":"Bristol 042D",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014650",
+    "lsoa_name":"Bristol 044E",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014651",
+    "lsoa_name":"Bristol 042E",
+    "ward_code":"E05010906",
+    "ward_name":"Knowle"
+  },
+  {
+    "lsoa_code":"E01014653",
+    "lsoa_name":"Bristol 055B",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01014654",
+    "lsoa_name":"Bristol 056A",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01014655",
+    "lsoa_name":"Bristol 055C",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01014658",
+    "lsoa_name":"Bristol 056B",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01014659",
+    "lsoa_name":"Bristol 005C",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014660",
+    "lsoa_name":"Bristol 014A",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014661",
+    "lsoa_name":"Bristol 005D",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014662",
+    "lsoa_name":"Bristol 010D",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014663",
+    "lsoa_name":"Bristol 014B",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014664",
+    "lsoa_name":"Bristol 014C",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014665",
+    "lsoa_name":"Bristol 014D",
+    "ward_code":"E05010908",
+    "ward_name":"Lockleaze"
+  },
+  {
+    "lsoa_code":"E01014666",
+    "lsoa_name":"Bristol 017C",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014667",
+    "lsoa_name":"Bristol 017D",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014668",
+    "lsoa_name":"Bristol 020C",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014669",
+    "lsoa_name":"Bristol 020D",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014670",
+    "lsoa_name":"Bristol 020E",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014671",
+    "lsoa_name":"Bristol 020F",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01014672",
+    "lsoa_name":"Bristol 017E",
+    "ward_code":"E05010909",
+    "ward_name":"Redland"
+  },
+  {
+    "lsoa_code":"E01014673",
+    "lsoa_name":"Bristol 027A",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014674",
+    "lsoa_name":"Bristol 027B",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014675",
+    "lsoa_name":"Bristol 027C",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014676",
+    "lsoa_name":"Bristol 027D",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014677",
+    "lsoa_name":"Bristol 033A",
+    "ward_code":"E05010911",
+    "ward_name":"St George Troopers Hill"
+  },
+  {
+    "lsoa_code":"E01014678",
+    "lsoa_name":"Bristol 033B",
+    "ward_code":"E05010911",
+    "ward_name":"St George Troopers Hill"
+  },
+  {
+    "lsoa_code":"E01014679",
+    "lsoa_name":"Bristol 033C",
+    "ward_code":"E05010911",
+    "ward_name":"St George Troopers Hill"
+  },
+  {
+    "lsoa_code":"E01014680",
+    "lsoa_name":"Bristol 033D",
+    "ward_code":"E05010911",
+    "ward_name":"St George Troopers Hill"
+  },
+  {
+    "lsoa_code":"E01014681",
+    "lsoa_name":"Bristol 029D",
+    "ward_code":"E05010912",
+    "ward_name":"St George West"
+  },
+  {
+    "lsoa_code":"E01014682",
+    "lsoa_name":"Bristol 028A",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014683",
+    "lsoa_name":"Bristol 028B",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014684",
+    "lsoa_name":"Bristol 029E",
+    "ward_code":"E05010912",
+    "ward_name":"St George West"
+  },
+  {
+    "lsoa_code":"E01014685",
+    "lsoa_name":"Bristol 028C",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014686",
+    "lsoa_name":"Bristol 028D",
+    "ward_code":"E05010912",
+    "ward_name":"St George West"
+  },
+  {
+    "lsoa_code":"E01014687",
+    "lsoa_name":"Bristol 028E",
+    "ward_code":"E05010910",
+    "ward_name":"St George Central"
+  },
+  {
+    "lsoa_code":"E01014688",
+    "lsoa_name":"Bristol 002A",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014689",
+    "lsoa_name":"Bristol 002B",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014690",
+    "lsoa_name":"Bristol 002C",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014691",
+    "lsoa_name":"Bristol 002D",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014692",
+    "lsoa_name":"Bristol 002E",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014693",
+    "lsoa_name":"Bristol 002F",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01014694",
+    "lsoa_name":"Bristol 002G",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014695",
+    "lsoa_name":"Bristol 036A",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014696",
+    "lsoa_name":"Bristol 036B",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014698",
+    "lsoa_name":"Bristol 036C",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014699",
+    "lsoa_name":"Bristol 036D",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014700",
+    "lsoa_name":"Bristol 036E",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014701",
+    "lsoa_name":"Bristol 036F",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01014702",
+    "lsoa_name":"Bristol 049A",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014703",
+    "lsoa_name":"Bristol 049B",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014704",
+    "lsoa_name":"Bristol 049C",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014705",
+    "lsoa_name":"Bristol 049D",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014706",
+    "lsoa_name":"Bristol 049E",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014707",
+    "lsoa_name":"Bristol 049F",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014708",
+    "lsoa_name":"Bristol 049G",
+    "ward_code":"E05010915",
+    "ward_name":"Stockwood"
+  },
+  {
+    "lsoa_code":"E01014709",
+    "lsoa_name":"Bristol 015A",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014710",
+    "lsoa_name":"Bristol 015B",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014711",
+    "lsoa_name":"Bristol 015C",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014712",
+    "lsoa_name":"Bristol 015D",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014713",
+    "lsoa_name":"Bristol 015E",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014714",
+    "lsoa_name":"Bristol 015F",
+    "ward_code":"E05010916",
+    "ward_name":"Stoke Bishop"
+  },
+  {
+    "lsoa_code":"E01014715",
+    "lsoa_name":"Bristol 009A",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014716",
+    "lsoa_name":"Bristol 009B",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014717",
+    "lsoa_name":"Bristol 009C",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014718",
+    "lsoa_name":"Bristol 009D",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014719",
+    "lsoa_name":"Bristol 006B",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014720",
+    "lsoa_name":"Bristol 006C",
+    "ward_code":"E05010913",
+    "ward_name":"Southmead"
+  },
+  {
+    "lsoa_code":"E01014721",
+    "lsoa_name":"Bristol 006D",
+    "ward_code":"E05010917",
+    "ward_name":"Westbury-on-Trym and Henleaze"
+  },
+  {
+    "lsoa_code":"E01014722",
+    "lsoa_name":"Bristol 052C",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014723",
+    "lsoa_name":"Bristol 052D",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014725",
+    "lsoa_name":"Bristol 052E",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01014726",
+    "lsoa_name":"Bristol 053B",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014727",
+    "lsoa_name":"Bristol 053C",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01014729",
+    "lsoa_name":"Bristol 040A",
+    "ward_code":"E05010898",
+    "ward_name":"Filwood"
+  },
+  {
+    "lsoa_code":"E01014730",
+    "lsoa_name":"Bristol 037A",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014731",
+    "lsoa_name":"Bristol 037B",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014732",
+    "lsoa_name":"Bristol 037C",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014733",
+    "lsoa_name":"Bristol 040B",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014734",
+    "lsoa_name":"Bristol 040C",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014735",
+    "lsoa_name":"Bristol 037D",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01014736",
+    "lsoa_name":"Bristol 040D",
+    "ward_code":"E05010918",
+    "ward_name":"Windmill Hill"
+  },
+  {
+    "lsoa_code":"E01032514",
+    "lsoa_name":"Bristol 053E",
+    "ward_code":"E05010900",
+    "ward_name":"Hartcliffe and Withywood"
+  },
+  {
+    "lsoa_code":"E01032515",
+    "lsoa_name":"Bristol 053F",
+    "ward_code":"E05010902",
+    "ward_name":"Hengrove and Whitchurch Park"
+  },
+  {
+    "lsoa_code":"E01032516",
+    "lsoa_name":"Bristol 001G",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01032517",
+    "lsoa_name":"Bristol 001H",
+    "ward_code":"E05010901",
+    "ward_name":"Henbury and Brentry"
+  },
+  {
+    "lsoa_code":"E01032518",
+    "lsoa_name":"Bristol 018E",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01032519",
+    "lsoa_name":"Bristol 018F",
+    "ward_code":"E05010903",
+    "ward_name":"Hillfields"
+  },
+  {
+    "lsoa_code":"E01033342",
+    "lsoa_name":"Bristol 025E",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033344",
+    "lsoa_name":"Bristol 060D",
+    "ward_code":"E05010905",
+    "ward_name":"Hotwells and Harbourside"
+  },
+  {
+    "lsoa_code":"E01033347",
+    "lsoa_name":"Bristol 059D",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01033348",
+    "lsoa_name":"Bristol 059C",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01033350",
+    "lsoa_name":"Bristol 061D",
+    "ward_code":"E05010905",
+    "ward_name":"Hotwells and Harbourside"
+  },
+  {
+    "lsoa_code":"E01033352",
+    "lsoa_name":"Bristol 054A",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01033353",
+    "lsoa_name":"Bristol 054B",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01033356",
+    "lsoa_name":"Bristol 056C",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01033358",
+    "lsoa_name":"Bristol 054D",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01033359",
+    "lsoa_name":"Bristol 039E",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01033361",
+    "lsoa_name":"Bristol 039F",
+    "ward_code":"E05010914",
+    "ward_name":"Southville"
+  },
+  {
+    "lsoa_code":"E01033362",
+    "lsoa_name":"Bristol 039G",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01033364",
+    "lsoa_name":"Bristol 039H",
+    "ward_code":"E05010887",
+    "ward_name":"Bedminster"
+  },
+  {
+    "lsoa_code":"E01033366",
+    "lsoa_name":"Bristol 059B",
+    "ward_code":"E05010885",
+    "ward_name":"Ashley"
+  },
+  {
+    "lsoa_code":"E01033367",
+    "lsoa_name":"Bristol 025F",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033369",
+    "lsoa_name":"Bristol 056D",
+    "ward_code":"E05010907",
+    "ward_name":"Lawrence Hill"
+  },
+  {
+    "lsoa_code":"E01033370",
+    "lsoa_name":"Bristol 054E",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033902",
+    "lsoa_name":"Bristol 054F",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033903",
+    "lsoa_name":"Bristol 054G",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033904",
+    "lsoa_name":"Bristol 060B",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033905",
+    "lsoa_name":"Bristol 060C",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033906",
+    "lsoa_name":"Bristol 060E",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033907",
+    "lsoa_name":"Bristol 061A",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033908",
+    "lsoa_name":"Bristol 061B",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033909",
+    "lsoa_name":"Bristol 061C",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  },
+  {
+    "lsoa_code":"E01033910",
+    "lsoa_name":"Bristol 061E",
+    "ward_code":"E05010892",
+    "ward_name":"Central"
+  }
+]

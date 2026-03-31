@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Info, TrendingUp } from "lucide-react";
+import { Info, MapPinned, TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -19,70 +19,36 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
+// Time range presets used by the page controls.
 type RangePreset = "6M" | "1Y" | "5Y" | "Max";
 
+// One point in the selected LSOA time series.
 type TimePoint = {
   date: string;
   rank: number;
   decile: number;
 };
 
+// Frontend-ready time series structure for one LSOA.
 type LsoaSeries = {
   code: string;
   label: string;
   points: TimePoint[];
 };
 
-// Mock data for layout and interaction.
-// Replace this with fetched data once the real time-series source is available.
-const mockSeries: LsoaSeries[] = [
-  {
-    code: "E01014645",
-    label: "Bristol 045C",
-    points: [
-      { date: "2019-01-01", rank: 8, decile: 1 },
-      { date: "2019-07-01", rank: 11, decile: 1 },
-      { date: "2020-01-01", rank: 11, decile: 1 },
-      { date: "2020-07-01", rank: 10, decile: 1 },
-      { date: "2021-01-01", rank: 7, decile: 3 },
-      { date: "2021-07-01", rank: 7, decile: 4 },
-      { date: "2022-01-01", rank: 8, decile: 3 },
-      { date: "2022-07-01", rank: 10, decile: 2 },
-      { date: "2023-01-01", rank: 11, decile: 2 },
-      { date: "2023-07-01", rank: 13, decile: 1 },
-      { date: "2024-01-01", rank: 14, decile: 1 },
-      { date: "2024-07-01", rank: 14, decile: 1 },
-      { date: "2025-01-01", rank: 13, decile: 1 },
-      { date: "2025-07-18", rank: 12, decile: 1 },
-    ],
-  },
-  {
-    code: "E01014601",
-    label: "Bristol 001A",
-    points: [
-      { date: "2019-01-01", rank: 21, decile: 3 },
-      { date: "2020-01-01", rank: 23, decile: 3 },
-      { date: "2021-01-01", rank: 18, decile: 2 },
-      { date: "2022-01-01", rank: 22, decile: 3 },
-      { date: "2023-01-01", rank: 19, decile: 2 },
-      { date: "2024-01-01", rank: 17, decile: 2 },
-      { date: "2025-07-18", rank: 15, decile: 2 },
-    ],
-  },
-  {
-    code: "E01014602",
-    label: "Bristol 001B",
-    points: [
-      { date: "2019-01-01", rank: 44, decile: 5 },
-      { date: "2020-01-01", rank: 42, decile: 5 },
-      { date: "2021-01-01", rank: 40, decile: 5 },
-      { date: "2022-01-01", rank: 37, decile: 4 },
-      { date: "2023-01-01", rank: 35, decile: 4 },
-      { date: "2024-01-01", rank: 31, decile: 4 },
-      { date: "2025-07-18", rank: 30, decile: 4 },
-    ],
-  },
-];
+// Ward lookup row loaded from public/data.
+type LsoaWardLookupRow = {
+  lsoa_code: string;
+  lsoa_name?: string;
+  ward_code?: string;
+  ward_name?: string;
+};
+
+// Dropdown option shape.
+type LsoaOption = {
+  code: string;
+  label: string;
+};
 
 // Shared chart configuration used by the dashboard chart wrapper.
 const rankChartConfig = {
@@ -149,7 +115,7 @@ function filterPointsByRange(points: TimePoint[], preset: RangePreset) {
 
 // Builds an integer-only chart domain.
 function getIntegerDomain(values: number[], fallbackMax: number) {
-  const maxValue = Math.max(...values, fallbackMax);
+  const maxValue = values.length ? Math.max(...values, fallbackMax) : fallbackMax;
   return [0, Math.ceil(maxValue)];
 }
 
@@ -183,6 +149,8 @@ function getRangeLabel(points: TimePoint[]) {
 // Creates a plain-English summary of the selected area.
 function buildAreaSummary(args: {
   label: string;
+  wardName?: string | null;
+  hasSeriesData: boolean;
   currentRank: number;
   currentDecile: number;
   minRank: number;
@@ -192,6 +160,8 @@ function buildAreaSummary(args: {
 }) {
   const {
     label,
+    wardName,
+    hasSeriesData,
     currentRank,
     currentDecile,
     minRank,
@@ -200,7 +170,13 @@ function buildAreaSummary(args: {
     maxDecile,
   } = args;
 
-  return `${label} is currently in decile ${currentDecile} and ranks ${currentRank}th most deprived out of 268 Bristol LSOAs. Over the period shown, it has ranged between rank ${minRank} and rank ${maxRank}, and between deciles ${minDecile} and ${maxDecile}.`;
+  const wardText = wardName ? ` It sits within ${wardName} ward (2020).` : "";
+
+  if (!hasSeriesData) {
+    return `${label}.${wardText} Ward data is available, but no time-series data is currently loaded for this LSOA.`;
+  }
+
+  return `${label} is currently in decile ${currentDecile} and ranks ${currentRank}th most deprived out of 268 Bristol LSOAs.${wardText} Over the period shown, it has ranged between rank ${minRank} and rank ${maxRank}, and between deciles ${minDecile} and ${maxDecile}.`;
 }
 
 // Builds deduplicated x-axis ticks so each year appears only once in 5Y/Max views.
@@ -230,45 +206,192 @@ export default function TimeSeries() {
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
 
   // Selected LSOA code from the control bar.
-  const [selectedLsoa, setSelectedLsoa] = useState<string>(mockSeries[0].code);
+  const [selectedLsoa, setSelectedLsoa] = useState<string>("");
 
   // Comparison basis used in the interpretation panel.
   const [compareMode, setCompareMode] = useState<
     "previous_release" | "custom_year" | "custom_month"
   >("previous_release");
 
+  // Loaded synthetic time-series data.
+  const [seriesData, setSeriesData] = useState<LsoaSeries[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(true);
+
+  // Loaded ward lookup data.
+  const [lsoaWardLookup, setLsoaWardLookup] = useState<LsoaWardLookupRow[]>([]);
+  const [lookupLoading, setLookupLoading] = useState(true);
+
   // Central chart sizing controls.
   const rankChartHeight = 260;
   const decileChartHeight = 220;
 
-  // Looks up the selected LSOA series.
+  // Load the synthetic time-series JSON generated from the yearly CSVs.
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSeriesData() {
+      try {
+        const response = await fetch("/data/bristol_lsoa_timeseries_synthetic.json");
+
+        if (!response.ok) {
+          throw new Error(`Failed to load synthetic time-series data: ${response.status}`);
+        }
+
+        const data = (await response.json()) as LsoaSeries[];
+
+        if (isMounted) {
+          setSeriesData(data);
+        }
+      } catch (error) {
+        console.error("Could not load synthetic LSOA time-series data", error);
+        if (isMounted) {
+          setSeriesData([]);
+        }
+      } finally {
+        if (isMounted) {
+          setSeriesLoading(false);
+        }
+      }
+    }
+
+    loadSeriesData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Load the LSOA -> Ward lookup used by the sidebar card.
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWardLookup() {
+      try {
+        const response = await fetch("/data/bristol_lsoa21_ward20_lookup.json");
+
+        if (!response.ok) {
+          throw new Error(`Failed to load ward lookup: ${response.status}`);
+        }
+
+        const data = (await response.json()) as LsoaWardLookupRow[];
+
+        if (isMounted) {
+          setLsoaWardLookup(data);
+        }
+      } catch (error) {
+        console.error("Could not load LSOA to Ward lookup", error);
+        if (isMounted) {
+          setLsoaWardLookup([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLookupLoading(false);
+        }
+      }
+    }
+
+    loadWardLookup();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fast lookup map for time-series data by LSOA code.
+  const seriesByCode = useMemo(() => {
+    return new Map(seriesData.map((item) => [item.code, item]));
+  }, [seriesData]);
+
+  // Build the dropdown from all known LSOAs.
+  // Prefer lookup labels where available, then fall back to series labels.
+  const lsoaOptions = useMemo<LsoaOption[]>(() => {
+    const optionsMap = new Map<string, string>();
+
+    for (const row of lsoaWardLookup) {
+      const code = row.lsoa_code?.trim();
+      const label = row.lsoa_name?.trim();
+
+      if (code) {
+        optionsMap.set(code, label || code);
+      }
+    }
+
+    for (const series of seriesData) {
+      if (!optionsMap.has(series.code)) {
+        optionsMap.set(series.code, series.label);
+      }
+    }
+
+    return Array.from(optionsMap.entries())
+      .map(([code, label]) => ({ code, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "en-GB"));
+  }, [lsoaWardLookup, seriesData]);
+
+  // Set a default selected LSOA once the option list is available.
+  useEffect(() => {
+    if (!selectedLsoa && lsoaOptions.length) {
+      setSelectedLsoa(lsoaOptions[0].code);
+    }
+  }, [selectedLsoa, lsoaOptions]);
+
+  // If the currently selected LSOA is no longer in the option list, reset it.
+  useEffect(() => {
+    if (!lsoaOptions.length) return;
+
+    const stillExists = lsoaOptions.some((option) => option.code === selectedLsoa);
+
+    if (!stillExists) {
+      setSelectedLsoa(lsoaOptions[0].code);
+    }
+  }, [lsoaOptions, selectedLsoa]);
+
+  // Current selected time-series record, if available.
   const selectedSeries = useMemo(() => {
-    return mockSeries.find((item) => item.code === selectedLsoa) ?? mockSeries[0];
-  }, [selectedLsoa]);
+    return seriesByCode.get(selectedLsoa) ?? null;
+  }, [selectedLsoa, seriesByCode]);
 
-  // Applies the selected time window to the series.
+  // Current selected ward lookup record, if available.
+  const selectedWardLookup = useMemo(() => {
+    return lsoaWardLookup.find((row) => row.lsoa_code === selectedLsoa) ?? null;
+  }, [lsoaWardLookup, selectedLsoa]);
+
+  // Best available label for the selected LSOA.
+  const selectedLsoaLabel =
+    selectedWardLookup?.lsoa_name?.trim() ||
+    selectedSeries?.label ||
+    lsoaOptions.find((option) => option.code === selectedLsoa)?.label ||
+    selectedLsoa;
+
+  // Selected ward data for the right-hand card.
+  const selectedWardName = selectedWardLookup?.ward_name?.trim() || null;
+  const selectedWardCode = selectedWardLookup?.ward_code?.trim() || null;
+
+  // Use an empty series if the selected LSOA has no synthetic data yet.
+  const selectedPoints = selectedSeries?.points ?? [];
+
+  // Apply the selected time window to the visible chart data.
   const visiblePoints = useMemo(() => {
-    return filterPointsByRange(selectedSeries.points, rangePreset);
-  }, [selectedSeries, rangePreset]);
+    return filterPointsByRange(selectedPoints, rangePreset);
+  }, [selectedPoints, rangePreset]);
 
-  // Finds the latest and previous visible releases for change calculations.
+  // Find the latest and previous visible releases for change calculations.
   const latestPoint = visiblePoints[visiblePoints.length - 1];
   const previousPoint =
     visiblePoints.length > 1 ? visiblePoints[visiblePoints.length - 2] : latestPoint;
 
-  // Pulls rank/decile arrays from the full selected series for summary stats.
-  const allRanks = selectedSeries.points.map((point) => point.rank);
-  const allDeciles = selectedSeries.points.map((point) => point.decile);
+  // Pull rank/decile arrays from the full selected series for summary stats.
+  const allRanks = selectedPoints.map((point) => point.rank);
+  const allDeciles = selectedPoints.map((point) => point.decile);
 
-  // Latest current values used across the page.
+  // Current visible values used throughout the page.
   const currentRank = latestPoint?.rank ?? 0;
   const currentDecile = latestPoint?.decile ?? 0;
 
   // Best and worst observed values across the selected area's full history.
-  const mostDeprivedObservedRank = Math.min(...allRanks);
-  const leastDeprivedObservedRank = Math.max(...allRanks);
-  const minDecile = Math.min(...allDeciles);
-  const maxDecile = Math.max(...allDeciles);
+  const mostDeprivedObservedRank = allRanks.length ? Math.min(...allRanks) : 0;
+  const leastDeprivedObservedRank = allRanks.length ? Math.max(...allRanks) : 0;
+  const minDecile = allDeciles.length ? Math.min(...allDeciles) : 0;
+  const maxDecile = allDeciles.length ? Math.max(...allDeciles) : 0;
 
   // Change since the previous visible release.
   const rankDelta = previousPoint ? currentRank - previousPoint.rank : 0;
@@ -281,13 +404,21 @@ export default function TimeSeries() {
   const roundedDecileDelta = Math.round(decileDelta);
 
   // Human-readable summaries for the top cards and sidebar.
-  const rankChangeText = getRankChangeText(roundedRankDelta);
-  const decileChangeText = getDecileChangeText(roundedDecileDelta);
+  const rankChangeText = selectedPoints.length
+    ? getRankChangeText(roundedRankDelta)
+    : "No time-series data";
+
+  const decileChangeText = selectedPoints.length
+    ? getDecileChangeText(roundedDecileDelta)
+    : "No time-series data";
+
   const visibleRangeLabel = getRangeLabel(visiblePoints);
 
-  // Plain-English interpretation block shown in the sidebar.
+  // Summary paragraph for the selected area card.
   const areaSummary = buildAreaSummary({
-    label: selectedSeries.label,
+    label: selectedLsoaLabel,
+    wardName: selectedWardName,
+    hasSeriesData: selectedPoints.length > 0,
     currentRank: roundedCurrentRank,
     currentDecile: roundedCurrentDecile,
     minRank: mostDeprivedObservedRank,
@@ -296,7 +427,7 @@ export default function TimeSeries() {
     maxDecile,
   });
 
-  // Converts visible points into chart-friendly objects with display labels.
+  // Convert visible points into chart-friendly objects with display labels.
   const chartData = useMemo(() => {
     return visiblePoints.map((point) => ({
       date: point.date,
@@ -319,7 +450,7 @@ export default function TimeSeries() {
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
-      {/* Page title and short explanatory intro */}
+      {/* Page title and explanatory intro */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -338,7 +469,7 @@ export default function TimeSeries() {
         </p>
       </motion.div>
 
-      {/* Top-level insight cards focused on current meaning, not UI state */}
+      {/* Top summary cards showing current selected LSOA metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="p-5">
           <div className="space-y-2">
@@ -346,7 +477,7 @@ export default function TimeSeries() {
               Current rank
             </p>
             <p className="text-2xl font-bold text-foreground">
-              {roundedCurrentRank} of 268
+              {seriesLoading ? "Loading..." : selectedPoints.length ? `${roundedCurrentRank} of 268` : "No data"}
             </p>
             <p className="text-sm text-muted-foreground">
               Lower rank = more deprived
@@ -360,7 +491,7 @@ export default function TimeSeries() {
               Current decile
             </p>
             <p className="text-2xl font-bold text-foreground">
-              {getDecileLabel(roundedCurrentDecile)}
+              {seriesLoading ? "Loading..." : selectedPoints.length ? getDecileLabel(roundedCurrentDecile) : "No data"}
             </p>
             <p className="text-sm text-muted-foreground">
               1 = most deprived, 10 = least deprived
@@ -374,10 +505,10 @@ export default function TimeSeries() {
               Change since previous release
             </p>
             <p className="text-2xl font-bold text-foreground">
-              {rankChangeText}
+              {seriesLoading ? "Loading..." : rankChangeText}
             </p>
             <p className="text-sm text-muted-foreground">
-              {decileChangeText}
+              {seriesLoading ? "Loading..." : decileChangeText}
             </p>
           </div>
         </GlassCard>
@@ -388,7 +519,11 @@ export default function TimeSeries() {
               Best / worst observed position
             </p>
             <p className="text-2xl font-bold text-foreground">
-              {mostDeprivedObservedRank} to {leastDeprivedObservedRank}
+              {seriesLoading
+                ? "Loading..."
+                : selectedPoints.length
+                  ? `${mostDeprivedObservedRank} to ${leastDeprivedObservedRank}`
+                  : "No data"}
             </p>
             <p className="text-sm text-muted-foreground">
               Rank across the full series
@@ -397,18 +532,15 @@ export default function TimeSeries() {
         </GlassCard>
       </div>
 
-      {/* Main content layout:
-          left = charts
-          middle = placeholder for future charts
-          right = selected-area summary */}
+      {/* Main page layout: charts, placeholder card, and selected-area sidebar */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.85fr)_380px] gap-6 items-start">
-        {/* Main chart card shortened so it no longer fills the whole vertical span */}
+        {/* Main chart panel with LSOA selector and both charts */}
         <GlassCard className="p-6">
           <div className="space-y-8">
-            {/* Unified control bar so filters live in one obvious place */}
+            {/* Unified control bar for LSOA, time range, and comparison mode */}
             <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
-                {/* LSOA selector */}
+                {/* LSOA selector built from all known LSOAs */}
                 <div className="space-y-2">
                   <label
                     htmlFor="lsoa-select-inline"
@@ -422,7 +554,7 @@ export default function TimeSeries() {
                     onChange={(e) => setSelectedLsoa(e.target.value)}
                     className="w-full rounded-lg border border-border/50 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
                   >
-                    {mockSeries.map((item) => (
+                    {lsoaOptions.map((item) => (
                       <option key={item.code} value={item.code}>
                         {item.label}
                       </option>
@@ -453,7 +585,7 @@ export default function TimeSeries() {
                   </div>
                 </div>
 
-                {/* Comparison mode selector used by the interpretation panel */}
+                {/* Comparison selector used in the guidance / summary panel */}
                 <div className="space-y-2">
                   <label
                     htmlFor="compare-mode-inline"
@@ -482,7 +614,7 @@ export default function TimeSeries() {
               </div>
             </div>
 
-            {/* Primary rank chart */}
+            {/* Rank chart */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">Rank</h2>
@@ -490,107 +622,123 @@ export default function TimeSeries() {
               </div>
 
               <div className="w-full">
-                <ChartContainer
-                  config={rankChartConfig}
-                  className="w-full"
-                  style={{ height: `${rankChartHeight}px` }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        className="opacity-30"
-                      />
-
-                      <XAxis
-                        dataKey="xLabel"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        minTickGap={24}
-                        ticks={xAxisTicks}
-                      />
-
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        allowDecimals={false}
-                        domain={[1, Math.max(rankYAxisDomain[1], 10)]}
-                        label={{
-                          value: "Rank",
-                          angle: -90,
-                          position: "insideLeft",
-                          style: {
-                            fill: "hsl(var(--muted-foreground))",
-                            fontSize: 12,
-                          },
-                        }}
-                      />
-
-                      <ChartTooltip
-                        cursor={{
-                          stroke: "rgba(255,255,255,0.35)",
-                          strokeWidth: 1,
-                        }}
-                        content={
-                          <ChartTooltipContent
-                            labelFormatter={(_, payload) => {
-                              const point = payload?.[0]?.payload;
-                              return point?.shortDate ?? "";
-                            }}
-                            formatter={(value, _name, item) => [
-                              <div className="flex flex-col gap-1">
-                                <span className="font-medium text-foreground">
-                                  Rank: {Math.round(Number(value))} of 268
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  Decile: {item.payload.decile}
-                                </span>
-                              </div>,
-                              "Release",
-                            ]}
-                          />
-                        }
-                      />
-
-                      {latestPoint && (
-                        <ReferenceLine
-                          x={formatXAxisLabel(latestPoint.date, rangePreset)}
-                          stroke="rgba(255,255,255,0.18)"
+                {seriesLoading ? (
+                  <div
+                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                    style={{ height: `${rankChartHeight}px` }}
+                  >
+                    Loading time-series data...
+                  </div>
+                ) : chartData.length ? (
+                  <ChartContainer
+                    config={rankChartConfig}
+                    className="w-full"
+                    style={{ height: `${rankChartHeight}px` }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          className="opacity-30"
                         />
-                      )}
 
-                      <Line
-                        type="linear"
-                        dataKey="rank"
-                        name="rank"
-                        stroke="var(--color-rank)"
-                        strokeWidth={2.5}
-                        dot={{
-                          r: 3,
-                          fill: "var(--color-rank)",
-                          stroke: "rgba(255,255,255,0.55)",
-                          strokeWidth: 1,
-                        }}
-                        activeDot={{
-                          r: 5,
-                          fill: "var(--color-rank)",
-                          stroke: "rgba(255,255,255,0.9)",
-                          strokeWidth: 2,
-                        }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                        <XAxis
+                          dataKey="xLabel"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          minTickGap={24}
+                          ticks={xAxisTicks}
+                        />
+
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          allowDecimals={false}
+                          domain={[1, Math.max(rankYAxisDomain[1], 10)]}
+                          label={{
+                            value: "Rank",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: {
+                              fill: "hsl(var(--muted-foreground))",
+                              fontSize: 12,
+                            },
+                          }}
+                        />
+
+                        <ChartTooltip
+                          cursor={{
+                            stroke: "rgba(255,255,255,0.35)",
+                            strokeWidth: 1,
+                          }}
+                          content={
+                            <ChartTooltipContent
+                              labelFormatter={(_, payload) => {
+                                const point = payload?.[0]?.payload;
+                                return point?.shortDate ?? "";
+                              }}
+                              formatter={(value, _name, item) => [
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium text-foreground">
+                                    Rank: {Math.round(Number(value))} of 268
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Decile: {item.payload.decile}
+                                  </span>
+                                </div>,
+                                "Release",
+                              ]}
+                            />
+                          }
+                        />
+
+                        {latestPoint && (
+                          <ReferenceLine
+                            x={formatXAxisLabel(latestPoint.date, rangePreset)}
+                            stroke="rgba(255,255,255,0.18)"
+                          />
+                        )}
+
+                        <Line
+                          type="linear"
+                          dataKey="rank"
+                          name="rank"
+                          stroke="var(--color-rank)"
+                          strokeWidth={2.5}
+                          dot={{
+                            r: 3,
+                            fill: "var(--color-rank)",
+                            stroke: "rgba(255,255,255,0.55)",
+                            strokeWidth: 1,
+                          }}
+                          activeDot={{
+                            r: 5,
+                            fill: "var(--color-rank)",
+                            stroke: "rgba(255,255,255,0.9)",
+                            strokeWidth: 2,
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                ) : (
+                  <div
+                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                    style={{ height: `${rankChartHeight}px` }}
+                  >
+                    No time-series data available for this LSOA yet
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Secondary decile chart */}
+            {/* Decile chart */}
             <div className="space-y-3 border-t border-border/40 pt-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">Decile</h2>
@@ -598,111 +746,126 @@ export default function TimeSeries() {
               </div>
 
               <div className="w-full">
-                <ChartContainer
-                  config={decileChartConfig}
-                  className="w-full"
-                  style={{ height: `${decileChartHeight}px` }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        className="opacity-30"
-                      />
-
-                      <XAxis
-                        dataKey="xLabel"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        minTickGap={24}
-                        ticks={xAxisTicks}
-                      />
-
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        allowDecimals={false}
-                        domain={[1, 10]}
-                        ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                        label={{
-                          value: "Decile",
-                          angle: -90,
-                          position: "insideLeft",
-                          style: {
-                            fill: "hsl(var(--muted-foreground))",
-                            fontSize: 12,
-                          },
-                        }}
-                      />
-
-                      <ChartTooltip
-                        cursor={{
-                          stroke: "rgba(255,255,255,0.35)",
-                          strokeWidth: 1,
-                        }}
-                        content={
-                          <ChartTooltipContent
-                            labelFormatter={(_, payload) => {
-                              const point = payload?.[0]?.payload;
-                              return point?.shortDate ?? "";
-                            }}
-                            formatter={(value, _name, item) => [
-                              <div className="flex flex-col gap-1">
-                                <span className="font-medium text-foreground">
-                                  Decile: {Math.round(Number(value))}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  Rank: {item.payload.rank} of 268
-                                </span>
-                              </div>,
-                              "Release",
-                            ]}
-                          />
-                        }
-                      />
-
-                      {latestPoint && (
-                        <ReferenceLine
-                          x={formatXAxisLabel(latestPoint.date, rangePreset)}
-                          stroke="rgba(255,255,255,0.18)"
+                {seriesLoading ? (
+                  <div
+                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                    style={{ height: `${decileChartHeight}px` }}
+                  >
+                    Loading time-series data...
+                  </div>
+                ) : chartData.length ? (
+                  <ChartContainer
+                    config={decileChartConfig}
+                    className="w-full"
+                    style={{ height: `${decileChartHeight}px` }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 10, right: 18, left: 4, bottom: 6 }}
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          className="opacity-30"
                         />
-                      )}
 
-                      <Line
-                        type="stepAfter"
-                        dataKey="decile"
-                        name="decile"
-                        stroke="var(--color-decile)"
-                        strokeWidth={2.5}
-                        dot={{
-                          r: 3,
-                          fill: "var(--color-decile)",
-                          stroke: "rgba(255,255,255,0.55)",
-                          strokeWidth: 1,
-                        }}
-                        activeDot={{
-                          r: 5,
-                          fill: "var(--color-decile)",
-                          stroke: "rgba(255,255,255,0.9)",
-                          strokeWidth: 2,
-                        }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                        <XAxis
+                          dataKey="xLabel"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          minTickGap={24}
+                          ticks={xAxisTicks}
+                        />
+
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          allowDecimals={false}
+                          domain={[1, 10]}
+                          ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                          label={{
+                            value: "Decile",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: {
+                              fill: "hsl(var(--muted-foreground))",
+                              fontSize: 12,
+                            },
+                          }}
+                        />
+
+                        <ChartTooltip
+                          cursor={{
+                            stroke: "rgba(255,255,255,0.35)",
+                            strokeWidth: 1,
+                          }}
+                          content={
+                            <ChartTooltipContent
+                              labelFormatter={(_, payload) => {
+                                const point = payload?.[0]?.payload;
+                                return point?.shortDate ?? "";
+                              }}
+                              formatter={(value, _name, item) => [
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium text-foreground">
+                                    Decile: {Math.round(Number(value))}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Rank: {item.payload.rank} of 268
+                                  </span>
+                                </div>,
+                                "Release",
+                              ]}
+                            />
+                          }
+                        />
+
+                        {latestPoint && (
+                          <ReferenceLine
+                            x={formatXAxisLabel(latestPoint.date, rangePreset)}
+                            stroke="rgba(255,255,255,0.18)"
+                          />
+                        )}
+
+                        <Line
+                          type="stepAfter"
+                          dataKey="decile"
+                          name="decile"
+                          stroke="var(--color-decile)"
+                          strokeWidth={2.5}
+                          dot={{
+                            r: 3,
+                            fill: "var(--color-decile)",
+                            stroke: "rgba(255,255,255,0.55)",
+                            strokeWidth: 1,
+                          }}
+                          activeDot={{
+                            r: 5,
+                            fill: "var(--color-decile)",
+                            stroke: "rgba(255,255,255,0.9)",
+                            strokeWidth: 2,
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                ) : (
+                  <div
+                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                    style={{ height: `${decileChartHeight}px` }}
+                  >
+                    No time-series data available for this LSOA yet
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </GlassCard>
 
-        {/* Placeholder card in the gap below the shorter chart.
-            Leave empty for now so more graphs can be added later. */}
+        {/* Placeholder card reserved for future charts */}
         <GlassCard className="p-6 min-h-[775px]">
           <div className="h-full rounded-xl border border-dashed border-border/40 bg-background/10 flex items-center justify-center">
             <p className="text-sm text-muted-foreground">
@@ -711,16 +874,37 @@ export default function TimeSeries() {
           </div>
         </GlassCard>
 
-        {/* Sidebar summary card for the selected area */}
+        {/* Right-hand summary card for the selected LSOA */}
         <GlassCard className="p-6">
           <div className="space-y-5">
-            <h2 className="text-2xl font-bold text-foreground">
-              {selectedSeries.label}
-            </h2>
+            <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-foreground">
+                {selectedLsoaLabel || "Loading..."}
+              </h2>
+
+              <div className="rounded-xl border border-border/40 bg-background/20 p-4">
+                <div className="flex items-start gap-3">
+                  <MapPinned className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm uppercase tracking-wider text-muted-foreground">
+                      Ward (2020)
+                    </p>
+                    <p className="text-base font-semibold text-foreground">
+                      {lookupLoading ? "Loading..." : selectedWardName ?? "Ward not available"}
+                    </p>
+                    {selectedWardCode && (
+                      <p className="text-sm text-muted-foreground">
+                        Code: {selectedWardCode}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-3">
               <p className="text-lg leading-relaxed text-foreground">
-                {areaSummary}
+                {seriesLoading ? "Loading area summary..." : areaSummary}
               </p>
               <p className="text-lg text-muted-foreground">
                 Viewed range: {visibleRangeLabel}
@@ -731,21 +915,21 @@ export default function TimeSeries() {
               <div className="rounded-xl border border-border/40 bg-background/20 p-4">
                 <p className="text-xl text-muted-foreground">Rank change</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">
-                  {rankChangeText}
+                  {seriesLoading ? "Loading..." : rankChangeText}
                 </p>
               </div>
 
               <div className="rounded-xl border border-border/40 bg-background/20 p-4">
                 <p className="text-xl text-muted-foreground">Decile change</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">
-                  {decileChangeText}
+                  {seriesLoading ? "Loading..." : decileChangeText}
                 </p>
               </div>
             </div>
           </div>
         </GlassCard>
-        
-        {/* Reading and definitions card merged into one shared guidance card */}
+
+        {/* Guidance card explaining how to interpret the page */}
         <GlassCard className="p-5">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
