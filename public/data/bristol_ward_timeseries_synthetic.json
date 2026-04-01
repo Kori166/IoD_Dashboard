@@ -1,0 +1,1226 @@
+[
+  {
+    "code": "E05010885",
+    "label": "Ashley",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 14,
+        "decile": 5
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 13,
+        "decile": 4
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 14,
+        "decile": 5
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 15,
+        "decile": 5
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 14,
+        "decile": 5
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 14,
+        "decile": 5
+      }
+    ]
+  },
+  {
+    "code": "E05010886",
+    "label": "Avonmouth and Lawrence Weston",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 6,
+        "decile": 2
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 6,
+        "decile": 2
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 6,
+        "decile": 2
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 6,
+        "decile": 2
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 6,
+        "decile": 2
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 5,
+        "decile": 2
+      }
+    ]
+  },
+  {
+    "code": "E05010887",
+    "label": "Bedminster",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 24,
+        "decile": 8
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 23,
+        "decile": 7
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 24,
+        "decile": 8
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 23,
+        "decile": 7
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 24,
+        "decile": 8
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 24,
+        "decile": 8
+      }
+    ]
+  },
+  {
+    "code": "E05010888",
+    "label": "Bishopston and Ashley Down",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 29,
+        "decile": 9
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 30,
+        "decile": 9
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 29,
+        "decile": 9
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 29,
+        "decile": 9
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 30,
+        "decile": 9
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 29,
+        "decile": 9
+      }
+    ]
+  },
+  {
+    "code": "E05010889",
+    "label": "Bishopsworth",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 23,
+        "decile": 7
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 25,
+        "decile": 8
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 25,
+        "decile": 8
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 25,
+        "decile": 8
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 25,
+        "decile": 8
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 25,
+        "decile": 8
+      }
+    ]
+  },
+  {
+    "code": "E05010890",
+    "label": "Brislington East",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 18,
+        "decile": 6
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 18,
+        "decile": 6
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 18,
+        "decile": 6
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 17,
+        "decile": 5
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 17,
+        "decile": 5
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 16,
+        "decile": 5
+      }
+    ]
+  },
+  {
+    "code": "E05010891",
+    "label": "Brislington West",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 25,
+        "decile": 8
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 24,
+        "decile": 8
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 23,
+        "decile": 7
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 24,
+        "decile": 8
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 23,
+        "decile": 7
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 23,
+        "decile": 7
+      }
+    ]
+  },
+  {
+    "code": "E05010892",
+    "label": "Central",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 17,
+        "decile": 5
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 19,
+        "decile": 6
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 16,
+        "decile": 5
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 18,
+        "decile": 6
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 18,
+        "decile": 6
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 17,
+        "decile": 5
+      }
+    ]
+  },
+  {
+    "code": "E05010893",
+    "label": "Clifton",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 30,
+        "decile": 9
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 29,
+        "decile": 9
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 30,
+        "decile": 9
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 31,
+        "decile": 10
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 29,
+        "decile": 9
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 30,
+        "decile": 9
+      }
+    ]
+  },
+  {
+    "code": "E05010894",
+    "label": "Clifton Down",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 32,
+        "decile": 10
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 32,
+        "decile": 10
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 32,
+        "decile": 10
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 32,
+        "decile": 10
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 32,
+        "decile": 10
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 32,
+        "decile": 10
+      }
+    ]
+  },
+  {
+    "code": "E05010895",
+    "label": "Cotham",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 31,
+        "decile": 10
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 31,
+        "decile": 10
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 31,
+        "decile": 10
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 30,
+        "decile": 9
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 31,
+        "decile": 10
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 31,
+        "decile": 10
+      }
+    ]
+  },
+  {
+    "code": "E05010896",
+    "label": "Easton",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 7,
+        "decile": 3
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 7,
+        "decile": 3
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 7,
+        "decile": 3
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 7,
+        "decile": 3
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 7,
+        "decile": 3
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 7,
+        "decile": 3
+      }
+    ]
+  },
+  {
+    "code": "E05010897",
+    "label": "Eastville",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 11,
+        "decile": 4
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 11,
+        "decile": 4
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 11,
+        "decile": 4
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 11,
+        "decile": 4
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 11,
+        "decile": 4
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 11,
+        "decile": 4
+      }
+    ]
+  },
+  {
+    "code": "E05010898",
+    "label": "Filwood",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 3,
+        "decile": 1
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 2,
+        "decile": 1
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 3,
+        "decile": 1
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 3,
+        "decile": 1
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 3,
+        "decile": 1
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 3,
+        "decile": 1
+      }
+    ]
+  },
+  {
+    "code": "E05010899",
+    "label": "Frome Vale",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 13,
+        "decile": 4
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 14,
+        "decile": 5
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 13,
+        "decile": 4
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 13,
+        "decile": 4
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 13,
+        "decile": 4
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 13,
+        "decile": 4
+      }
+    ]
+  },
+  {
+    "code": "E05010900",
+    "label": "Hartcliffe and Withywood",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 1,
+        "decile": 1
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 1,
+        "decile": 1
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 1,
+        "decile": 1
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 1,
+        "decile": 1
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 1,
+        "decile": 1
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 1,
+        "decile": 1
+      }
+    ]
+  },
+  {
+    "code": "E05010901",
+    "label": "Henbury and Brentry",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 8,
+        "decile": 3
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 8,
+        "decile": 3
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 10,
+        "decile": 3
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 8,
+        "decile": 3
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 8,
+        "decile": 3
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 9,
+        "decile": 3
+      }
+    ]
+  },
+  {
+    "code": "E05010902",
+    "label": "Hengrove and Whitchurch Park",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 16,
+        "decile": 5
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 16,
+        "decile": 5
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 17,
+        "decile": 5
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 16,
+        "decile": 5
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 16,
+        "decile": 5
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 18,
+        "decile": 6
+      }
+    ]
+  },
+  {
+    "code": "E05010903",
+    "label": "Hillfields",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 10,
+        "decile": 3
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 10,
+        "decile": 3
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 8,
+        "decile": 3
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 9,
+        "decile": 3
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 10,
+        "decile": 3
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 8,
+        "decile": 3
+      }
+    ]
+  },
+  {
+    "code": "E05010904",
+    "label": "Horfield",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 20,
+        "decile": 6
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 20,
+        "decile": 6
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 20,
+        "decile": 6
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 20,
+        "decile": 6
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 20,
+        "decile": 6
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 20,
+        "decile": 6
+      }
+    ]
+  },
+  {
+    "code": "E05010905",
+    "label": "Hotwells and Harbourside",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 26,
+        "decile": 8
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 26,
+        "decile": 8
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 26,
+        "decile": 8
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 26,
+        "decile": 8
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 26,
+        "decile": 8
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 26,
+        "decile": 8
+      }
+    ]
+  },
+  {
+    "code": "E05010906",
+    "label": "Knowle",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 15,
+        "decile": 5
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 15,
+        "decile": 5
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 15,
+        "decile": 5
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 14,
+        "decile": 5
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 15,
+        "decile": 5
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 15,
+        "decile": 5
+      }
+    ]
+  },
+  {
+    "code": "E05010907",
+    "label": "Lawrence Hill",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 2,
+        "decile": 1
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 3,
+        "decile": 1
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 2,
+        "decile": 1
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 2,
+        "decile": 1
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 2,
+        "decile": 1
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 2,
+        "decile": 1
+      }
+    ]
+  },
+  {
+    "code": "E05010908",
+    "label": "Lockleaze",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 5,
+        "decile": 2
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 5,
+        "decile": 2
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 5,
+        "decile": 2
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 5,
+        "decile": 2
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 5,
+        "decile": 2
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 6,
+        "decile": 2
+      }
+    ]
+  },
+  {
+    "code": "E05010909",
+    "label": "Redland",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 33,
+        "decile": 10
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 33,
+        "decile": 10
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 33,
+        "decile": 10
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 33,
+        "decile": 10
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 33,
+        "decile": 10
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 33,
+        "decile": 10
+      }
+    ]
+  },
+  {
+    "code": "E05010913",
+    "label": "Southmead",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 4,
+        "decile": 2
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 4,
+        "decile": 2
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 4,
+        "decile": 2
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 4,
+        "decile": 2
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 4,
+        "decile": 2
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 4,
+        "decile": 2
+      }
+    ]
+  },
+  {
+    "code": "E05010914",
+    "label": "Southville",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 22,
+        "decile": 7
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 22,
+        "decile": 7
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 22,
+        "decile": 7
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 22,
+        "decile": 7
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 22,
+        "decile": 7
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 22,
+        "decile": 7
+      }
+    ]
+  },
+  {
+    "code": "E05010910",
+    "label": "St George Central",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 9,
+        "decile": 3
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 9,
+        "decile": 3
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 9,
+        "decile": 3
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 10,
+        "decile": 3
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 9,
+        "decile": 3
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 10,
+        "decile": 3
+      }
+    ]
+  },
+  {
+    "code": "E05010911",
+    "label": "St George Troopers Hill",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 27,
+        "decile": 8
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 27,
+        "decile": 8
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 27,
+        "decile": 8
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 27,
+        "decile": 8
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 27,
+        "decile": 8
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 27,
+        "decile": 8
+      }
+    ]
+  },
+  {
+    "code": "E05010912",
+    "label": "St George West",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 12,
+        "decile": 4
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 12,
+        "decile": 4
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 12,
+        "decile": 4
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 12,
+        "decile": 4
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 12,
+        "decile": 4
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 12,
+        "decile": 4
+      }
+    ]
+  },
+  {
+    "code": "E05010915",
+    "label": "Stockwood",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 19,
+        "decile": 6
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 17,
+        "decile": 5
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 19,
+        "decile": 6
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 19,
+        "decile": 6
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 19,
+        "decile": 6
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 19,
+        "decile": 6
+      }
+    ]
+  },
+  {
+    "code": "E05010916",
+    "label": "Stoke Bishop",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 28,
+        "decile": 9
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 28,
+        "decile": 9
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 28,
+        "decile": 9
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 28,
+        "decile": 9
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 28,
+        "decile": 9
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 28,
+        "decile": 9
+      }
+    ]
+  },
+  {
+    "code": "E05010917",
+    "label": "Westbury-on-Trym and Henleaze",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 34,
+        "decile": 10
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 34,
+        "decile": 10
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 34,
+        "decile": 10
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 34,
+        "decile": 10
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 34,
+        "decile": 10
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 34,
+        "decile": 10
+      }
+    ]
+  },
+  {
+    "code": "E05010918",
+    "label": "Windmill Hill",
+    "points": [
+      {
+        "date": "2019-07-01",
+        "rank": 21,
+        "decile": 7
+      },
+      {
+        "date": "2020-07-01",
+        "rank": 21,
+        "decile": 7
+      },
+      {
+        "date": "2021-07-01",
+        "rank": 21,
+        "decile": 7
+      },
+      {
+        "date": "2022-07-01",
+        "rank": 21,
+        "decile": 7
+      },
+      {
+        "date": "2023-07-01",
+        "rank": 21,
+        "decile": 7
+      },
+      {
+        "date": "2024-07-01",
+        "rank": 21,
+        "decile": 7
+      }
+    ]
+  }
+]
