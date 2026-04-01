@@ -962,12 +962,12 @@ export default function TimeSeries() {
                           domain={[Math.max(rankYAxisDomain[1], 10), 1]}
                           reversed
                           label={{
-                            value: "Rank",
+                            value: "",
                             angle: -90,
                             position: "insideLeft",
                             style: {
                               fill: "hsl(var(--muted-foreground))",
-                              fontSize: 12,
+                              fontSize: 14,
                             },
                           }}
                         />
@@ -1118,7 +1118,7 @@ export default function TimeSeries() {
                           reversed
                           ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                           label={{
-                            value: "Decile",
+                            value: "",
                             angle: -90,
                             position: "insideLeft",
                             style: {
