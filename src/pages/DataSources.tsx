@@ -3,46 +3,81 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { sourceMetadata } from "@/data/mockData";
-import { ExternalLink, Database, Globe, Clock, Shield } from "lucide-react";
+import {
+  ExternalLink,
+  Database,
+  Globe,
+  Clock,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Map,
+} from "lucide-react";
+import { MetricCard } from "@/components/ui/metric-card";
 
 export default function DataSources() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <SectionHeader
           title="Data Sources"
           subtitle="All publicly available datasets used in the deprivation estimation pipeline"
         />
       </motion.div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <GlassCard className="p-4 text-center">
-          <Database className="h-5 w-5 text-primary mx-auto mb-2" />
-          <p className="text-xl font-bold text-foreground">{sourceMetadata.length}</p>
-          <p className="text-xs text-muted-foreground">Total Sources</p>
-        </GlassCard>
-        <GlassCard className="p-4 text-center">
-          <Globe className="h-5 w-5 text-secondary mx-auto mb-2" />
-          <p className="text-xl font-bold text-foreground">{sourceMetadata.filter(s => s.public_availability).length}</p>
-          <p className="text-xs text-muted-foreground">Publicly Available</p>
-        </GlassCard>
-        <GlassCard className="p-4 text-center">
-          <Shield className="h-5 w-5 text-success mx-auto mb-2" />
-          <p className="text-xl font-bold text-foreground">{sourceMetadata.filter(s => s.status === "active").length}</p>
-          <p className="text-xs text-muted-foreground">Active Sources</p>
-        </GlassCard>
-        <GlassCard className="p-4 text-center">
-          <Clock className="h-5 w-5 text-accent mx-auto mb-2" />
-          <p className="text-xl font-bold text-foreground">
-            {new Set(sourceMetadata.map(s => s.update_frequency)).size}
-          </p>
-          <p className="text-xs text-muted-foreground">Update Frequencies</p>
-        </GlassCard>
-      </div>
+      {/* Summary Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <MetricCard
+          label="Sources"
+          value={String(sourceMetadata.length)}
+          subtitle="Datasets used"
+          icon={Database}
+          glow="cyan"
+        />
+
+        <MetricCard
+          label="Public Data"
+          value={String(
+            sourceMetadata.filter((s) => s.public_availability).length
+          )}
+          subtitle="Open datasets"
+          icon={Globe}
+          glow="violet"
+        />
+
+        <MetricCard
+          label="Active"
+          value={String(
+            sourceMetadata.filter((s) => s.status === "active").length
+          )}
+          subtitle="Currently in use"
+          icon={Shield}
+          glow="cyan"
+        />
+
+        <MetricCard
+          label="Update Types"
+          value={String(
+            new Set(sourceMetadata.map((s) => s.update_frequency)).size
+          )}
+          subtitle="Distinct schedules"
+          icon={Clock}
+          glow="magenta"
+        />
+      </motion.div>
 
       {/* Source Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {sourceMetadata.map((source, i) => (
           <motion.div
             key={source.source_name}
@@ -50,34 +85,81 @@ export default function DataSources() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
           >
-            <GlassCard hover className="p-5 h-full">
-              <div className="flex items-start justify-between mb-3">
+            <GlassCard hover className="p-4 h-full">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">{source.source_name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{source.category}</p>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {source.source_name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {source.category}
+                  </p>
                 </div>
                 <StatusBadge status={source.status} />
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{source.description}</p>
-              <div className="grid grid-cols-3 gap-3 text-xs">
+
+              {/* Description */}
+              <p className="text-sm text-muted-foreground leading-snug mb-3">
+                {source.description}
+              </p>
+
+              {/* Metadata grid */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                {/* Frequency */}
                 <div>
-                  <span className="text-muted-foreground/60 block mb-0.5">Frequency</span>
-                  <span className="text-foreground font-medium">{source.update_frequency}</span>
+                  <span className="text-muted-foreground/60 block mb-0.5">
+                    Frequency
+                  </span>
+                  <span className="text-foreground font-medium flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 text-accent" />
+                    {source.update_frequency}
+                  </span>
                 </div>
+
+                {/* Coverage */}
                 <div>
-                  <span className="text-muted-foreground/60 block mb-0.5">Coverage</span>
-                  <span className="text-foreground font-medium">{source.coverage}</span>
+                  <span className="text-muted-foreground/60 block mb-0.5">
+                    Coverage
+                  </span>
+                  <span className="text-foreground font-medium flex items-center gap-1.5">
+                    <Map className="h-3 w-3 text-secondary" />
+                    {source.coverage}
+                  </span>
                 </div>
+
+                {/* Access */}
                 <div>
-                  <span className="text-muted-foreground/60 block mb-0.5">Access</span>
-                  <span className="text-success font-medium flex items-center gap-1">
-                    <Globe className="h-3 w-3" /> Public
+                  <span className="text-muted-foreground/60 block mb-0.5">
+                    Access
+                  </span>
+                  <span className="font-medium flex items-center gap-1.5">
+                    <Globe className="h-3 w-3 text-secondary" />
+                    {source.public_availability ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 text-success" />
+                        <span className="text-success">Public</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Restricted
+                        </span>
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-border/30">
-                <a href={source.link} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                  <ExternalLink className="h-3 w-3" /> View source documentation
+
+              {/* Link */}
+              <div className="mt-3 pt-2 border-t border-border/30">
+                <a
+                  href={source.link}
+                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View source documentation
                 </a>
               </div>
             </GlassCard>
