@@ -80,7 +80,7 @@ export default function Overview() {
           value="24"
           subtitle="Across 7 domains"
           icon={BarChart3}
-          glow="cyan"
+          glow="cyan"          
         />
         <MetricCard
           label="LSOAs Covered"
