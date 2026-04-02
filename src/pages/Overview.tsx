@@ -161,7 +161,7 @@ export default function Overview() {
       </div>
 
       {/* Main content area: map left, local authority profile middle, rankings right. */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)_minmax(320px,0.9fr)] gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)_minmax(320px,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
         {/* Map card kept slightly narrower but taller. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
