@@ -32,6 +32,11 @@ type LsoaGeoJson = GeoJSON.FeatureCollection<
   }
 >;
 
+type BristolChoroplethProps = {
+  highlightedDecile?: number | null;
+  onLegendHoverChange?: (decile: number | null) => void;
+};
+
 // Returns a fill colour for a given deprivation decile.
 // Lower deciles are more deprived, higher deciles are less deprived.
 function getDecileColor(decile?: number | null) {
@@ -53,7 +58,10 @@ function getDecileColor(decile?: number | null) {
   return palette[decile] ?? "#1f2937";
 }
 
-export default function BristolChoropleth() {
+export default function BristolChoropleth({
+  highlightedDecile = null,
+  onLegendHoverChange,
+}: BristolChoroplethProps) {
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null); // Raw GeoJSON map boundary data.
   const [imdRows, setImdRows] = useState<IMDRow[]>([]); // Raw IMD rows loaded from the companion JSON file.
   const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol"); // Controls whether the map colours and labels use Bristol ranking or UK ranking.
@@ -198,7 +206,7 @@ export default function BristolChoropleth() {
       </div>
 
       {/* Main map container with fixed height and clipped rounded border. */}
-      <div className="h-[420px] w-full overflow-hidden rounded-xl border border-border/40">
+      <div className="h-[450px] w-full overflow-hidden rounded-xl border border-border/40">
         <MapContainer
           center={[51.4545, -2.5879]}
           zoom={11}
@@ -211,15 +219,23 @@ export default function BristolChoropleth() {
           />
 
           <GeoJSON
-            key={rankMode}
+            key={`${rankMode}-${highlightedDecile ?? "none"}`}
             data={mergedGeojson as any}
-            style={(feature: any) => ({
-              fillColor: getDecileColor(feature?.properties?.active_decile),
-              weight: 0.7,
-              opacity: 1,
-              color: "hsl(220, 30%, 16%)",
-              fillOpacity: 0.9,
-            })}
+            style={(feature: any) => {
+              const featureDecile = feature?.properties?.active_decile;
+              const isHighlighted =
+                highlightedDecile !== null && featureDecile === highlightedDecile;
+              const isDimmed =
+                highlightedDecile !== null && featureDecile !== highlightedDecile;
+
+              return {
+                fillColor: getDecileColor(featureDecile),
+                weight: isHighlighted ? 1.8 : 0.7,
+                opacity: 1,
+                color: isHighlighted ? "hsl(190, 95%, 55%)" : "hsl(220, 30%, 16%)",
+                fillOpacity: isDimmed ? 0.28 : isHighlighted ? 1 : 0.9,
+              };
+            }}
             onEachFeature={(feature: any, layer: any) => {
               const props = feature.properties || {};
               const rankLabel = rankMode === "bristol" ? "Bristol Rank" : "UK Rank";
@@ -244,16 +260,22 @@ export default function BristolChoropleth() {
               layer.on({
                 mouseover: (e: any) => {
                   e.target.setStyle({
-                    weight: 1.5,
+                    weight: 1.8,
                     color: "hsl(190, 95%, 55%)",
                     fillOpacity: 1,
                   });
                 },
                 mouseout: (e: any) => {
+                  const featureDecile = props.active_decile;
+                  const isHighlighted =
+                    highlightedDecile !== null && featureDecile === highlightedDecile;
+                  const isDimmed =
+                    highlightedDecile !== null && featureDecile !== highlightedDecile;
+
                   e.target.setStyle({
-                    weight: 0.7,
-                    color: "hsl(220, 30%, 16%)",
-                    fillOpacity: 0.9,
+                    weight: isHighlighted ? 1.8 : 0.7,
+                    color: isHighlighted ? "hsl(190, 95%, 55%)" : "hsl(220, 30%, 16%)",
+                    fillOpacity: isDimmed ? 0.28 : isHighlighted ? 1 : 0.9,
                   });
                 },
               });
@@ -268,10 +290,24 @@ export default function BristolChoropleth() {
 
         <div className="flex items-center gap-1">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((decile) => (
-            <div key={decile} className="flex flex-col items-center gap-1">
+            <div
+              key={decile}
+              className="flex flex-col items-center gap-1"
+              onMouseEnter={() => onLegendHoverChange?.(decile)}
+              onMouseLeave={() => onLegendHoverChange?.(null)}
+            >
               <div
-                className="h-5 w-5 rounded"
-                style={{ background: getDecileColor(decile) }}
+                className="h-5 w-5 rounded transition-all"
+                style={{
+                  background: getDecileColor(decile),
+                  opacity:
+                    highlightedDecile === null || highlightedDecile === decile ? 1 : 0.35,
+                  outline:
+                    highlightedDecile === decile
+                      ? "1.5px solid rgba(255,255,255,0.9)"
+                      : "none",
+                  cursor: "pointer",
+                }}
                 title={`Decile ${decile}`}
               />
               <span className="text-[10px]">{decile}</span>

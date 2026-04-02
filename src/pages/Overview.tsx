@@ -1,6 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, MapPin, RefreshCw, Layers, TrendingUp, TrendingDown, ArrowRight} from "lucide-react";
+import {
+  BarChart3,
+  MapPin,
+  RefreshCw,
+  Layers,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import { MetricCard } from "@/components/ui/metric-card";
 import { GlassCard } from "@/components/ui/glass-card";
 import { KeyInsight } from "@/components/ui/key-insight";
@@ -19,12 +38,29 @@ type BristolIMDRow = {
   bristol_decile: number;
 };
 
+// Decile palette aligned with the dashboard legend.
+const DECILE_COLORS: Record<number, string> = {
+  1: "#F4EFFA",
+  2: "#E6DAF6",
+  3: "#D2BDF0",
+  4: "#BE9BE8",
+  5: "#A378DE",
+  6: "#845EC9",
+  7: "#5E5AB8",
+  8: "#395F97",
+  9: "#286379",
+  10: "#429B7E",
+};
+
 export default function Overview() {
   // Stores the full set of IMD rows used across the page.
   const [imdRows, setImdRows] = useState<BristolIMDRow[]>([]);
 
   // Controls whether rankings are shown relative to Bristol or the whole UK.
   const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol");
+
+  // Shared hover state so the profile bars and map legend can both highlight the map.
+  const [hoveredDecile, setHoveredDecile] = useState<number | null>(null);
 
   // Load the IMD data once when the page first renders.
   useEffect(() => {
@@ -53,6 +89,25 @@ export default function Overview() {
   // Bottom 5 least deprived areas, reversed so the least deprived shows first.
   const leastDeprived = [...sortedRows].slice(-5).reverse();
 
+  // Build the local authority profile showing the share of Bristol LSOAs in each decile.
+  const localAuthorityProfileData = useMemo(() => {
+    const total = imdRows.length;
+
+    return Array.from({ length: 10 }, (_, index) => {
+      const decile = index + 1;
+      const count = imdRows.filter((row) => row.bristol_decile === decile).length;
+      const percentage = total ? (count / total) * 100 : 0;
+
+      return {
+        decile,
+        label: `Decile ${decile}`,
+        count,
+        percentage: Number(percentage.toFixed(1)),
+        color: DECILE_COLORS[decile],
+      };
+    });
+  }, [imdRows]);
+
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
       {/* Intro header with a small entrance animation. */}
@@ -80,7 +135,7 @@ export default function Overview() {
           value="24"
           subtitle="Across 7 domains"
           icon={BarChart3}
-          glow="cyan"          
+          glow="cyan"
         />
         <MetricCard
           label="LSOAs Covered"
@@ -105,10 +160,10 @@ export default function Overview() {
         />
       </div>
 
-      {/* Main content area: map on the left, ranked area lists on the right. */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <GlassCard className="lg:col-span-2 p-6">
-          {/* Section heading for the choropleth map. */}
+      {/* Main content area: map left, local authority profile middle, rankings right. */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)_minmax(320px,0.9fr)] gap-6 items-start">
+        {/* Map card kept slightly narrower but taller. */}
+        <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">
               Deprivation Across Bristol
@@ -118,14 +173,102 @@ export default function Overview() {
             </p>
           </div>
 
-          {/* Embedded map component that visualises LSOA deprivation levels. */}
-          <div className="mt-4">
-            <BristolChoropleth />
+          {/* Embedded map component with a taller display area. */}
+          <div className="mt-4 min-h-[555px]">
+            <BristolChoropleth
+              highlightedDecile={hoveredDecile}
+              onLegendHoverChange={setHoveredDecile}
+            />
           </div>
         </GlassCard>
 
+        {/* Local Authority Profile card showing the share of LSOAs by Bristol decile. */}
         <GlassCard className="p-6">
-          {/* Section heading for the ranked area lists. */}
+          <div className="space-y-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              Local Authority Profile
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+              % of Bristol LSOAs in each Bristol-relative deprivation decile.
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <p className="text-sm text-muted-foreground">More deprived</p>
+
+            <div style={{ height: 460 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={localAuthorityProfileData}
+                  layout="vertical"
+                  margin={{ top: 8, right: 18, left: 8, bottom: 2 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    className="opacity-20"
+                  />
+
+                  <XAxis
+                    type="number"
+                    tickFormatter={(value) => `${value}%`}
+                    domain={[0, "dataMax + 2"]}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="label"
+                    width={72}
+                    tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    formatter={(value, _name, item) => [
+                      `${value}% (${item.payload.count} LSOAs)`,
+                      item.payload.label,
+                    ]}
+                    contentStyle={{
+                      backgroundColor: "rgba(8, 15, 30, 0.96)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "12px",
+                      color: "white",
+                    }}
+                  />
+
+                  <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
+                    {localAuthorityProfileData.map((row) => (
+                      <Cell
+                        key={row.decile}
+                        fill={row.color}
+                        fillOpacity={
+                          hoveredDecile === null || hoveredDecile === row.decile ? 1 : 0.35
+                        }
+                        stroke={
+                          hoveredDecile === row.decile ? "rgba(255,255,255,0.85)" : "none"
+                        }
+                        strokeWidth={hoveredDecile === row.decile ? 1.5 : 0}
+                        style={{ cursor: "pointer" }}
+                        onMouseEnter={() => setHoveredDecile(row.decile)}
+                        onMouseLeave={() => setHoveredDecile(null)}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <p className="text-sm text-muted-foreground">Less deprived</p>
+          </div>
+        </GlassCard>
+
+        {/* Rankings card remains the right-hand column. */}
+        <GlassCard className="p-6 min-h-[695px]">
           <div className="space-y-2">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">
               Area Rankings
@@ -164,9 +307,8 @@ export default function Overview() {
           {/* Lists of the highest and lowest deprived areas under the selected mode. */}
           <div className="mt-5 space-y-6">
             <div>
-              {/* Top-ranked deprived areas. */}
               <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">
-                <TrendingUp className="h-10 w-10" /> Most Deprived Areas 
+                <TrendingUp className="h-10 w-10" /> Most Deprived Areas
               </p>
               <div className="space-y-1.5">
                 {mostDeprived.map((row, i) => (
@@ -191,7 +333,6 @@ export default function Overview() {
             </div>
 
             <div className="border-t border-border/50 pt-4">
-              {/* Bottom-ranked deprived areas, meaning the least deprived. */}
               <p className="text-xl uppercase tracking-wider text-success font-bold mb-2 flex items-center gap-3">
                 <TrendingDown className="h-10 w-10" /> Least Deprived Areas
               </p>
@@ -229,7 +370,6 @@ export default function Overview() {
       />
 
       <GlassCard className="p-6">
-        {/* Context section explaining why the project is useful. */}
         <SectionHeader title="Why This Matters" />
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
