@@ -68,19 +68,14 @@ areaSummaries.sort((a, b) => b.deprivation_score - a.deprivation_score);
 areaSummaries.forEach((a, i) => { a.deprivation_rank = i + 1; });
 
 export const indicatorCategories = [
-  "Income", "Employment", "Education", "Health",
-  "Housing", "Access to Services", "Crime", "Environment"
-];
+  "Income & Employment", "Housing", "Access to Services", "Crime", "Health & Environment"];
 
 export const indicatorNames: Record<string, string[]> = {
-  "Income": ["Universal Credit Claims", "Child Poverty Rate", "Pension Credit Uptake"],
-  "Employment": ["JSA Claimant Rate", "Economic Inactivity Rate", "Long-term Unemployment"],
-  "Education": ["KS4 Attainment Gap", "Adult Skills Deprivation", "School Absence Rate"],
-  "Health": ["Emergency Hospital Admissions", "Life Expectancy Gap", "Mental Health Prevalence"],
+  "Income & Employment": ["Universal Credit Claims", "Child Poverty Rate", "Pension Credit Uptake"],
   "Housing": ["Overcrowding Rate", "Homelessness Applications", "Fuel Poverty %"],
   "Access to Services": ["Broadband Speed Score", "GP Distance Score", "Public Transport Access"],
   "Crime": ["Recorded Crime Rate", "Anti-social Behaviour Rate", "Domestic Abuse Rate"],
-  "Environment": ["Air Quality Index", "Green Space Access", "Flood Risk Score"],
+  "Health & Environment": ["Air Quality Index", "Green Space Access", "Flood Risk Score"],
 };
 
 export const allIndicators = Object.entries(indicatorNames).flatMap(([cat, names]) =>
