@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -9,7 +9,8 @@ import {
 } from "@/data/mockData";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  ScatterChart, Scatter, Cell, AreaChart, Area,
+  ScatterChart, Scatter, Cell, Line, AreaChart, Area, ComposedChart,
+  Label,
 } from "recharts";
 
 const chartTooltipStyle = {
@@ -27,17 +28,94 @@ const indicatorImportance = allIndicators.map(ind => ({
   category: ind.category,
   weight: Math.round(Math.random() * 100) / 10,
   change: Math.round((Math.random() - 0.5) * 4 * 10) / 10,
-})).sort((a, b) => b.weight - a.weight).slice(0, 12);
+})).sort((a, b) => b.weight - a.weight).slice(0, 10);
 
 // Mock scatter data
 const scatterData = areaSummaries.map(a => ({
-  x: Math.round(Math.random() * 80 * 10) / 10,
-  y: a.deprivation_score,
+  x: a.deprivation_score,
+  y: Math.round(Math.random() * 80 * 10) / 10,
   name: a.area_name,
-}));
+}))
+.sort((a,b) => a.x - b.x);
+
+// Spearman 
+const getSpearman = (data) => {
+  const rank = (arr) => {
+    const sorted = [...arr]
+      .map((v, i) => ({ v, i }))
+      .sort((a, b) => a.v - b.v);
+
+    const ranks = Array(arr.length);
+    sorted.forEach((item, idx) => {
+      ranks[item.i] = idx + 1;
+    });
+
+    return ranks;
+  };
+
+  const xRanks = rank(data.map(d => d.x));
+  const yRanks = rank(data.map(d => d.y));
+
+  const n = data.length;
+
+  const dSquaredSum = xRanks.reduce((sum, r, i) => {
+    const d = r - yRanks[i];
+    return sum + d * d;
+  }, 0);
+
+  return 1 - (6 * dSquaredSum) / (n * (n * n - 1));
+};
+
+// LOWESS 
+const lowess = (data, bandwidth = 0.3) => {
+  const sorted = [...data].sort((a, b) => a.x - b.x);
+  const n = sorted.length;
+  const result = [];
+
+  const tricube = (t) => {
+    const absT = Math.abs(t);
+    if (absT >= 1) return 0;
+    return Math.pow(1 - Math.pow(absT, 3), 3);
+  };
+
+  for (let i = 0; i < n; i++) {
+    const x0 = sorted[i].x;
+
+    const distances = sorted.map(d => Math.abs(d.x - x0));
+    const maxDist = distances.sort((a, b) => a - b)[Math.floor(bandwidth * n)];
+
+    let sumWeights = 0;
+    let sumWX = 0;
+    let sumWY = 0;
+
+    for (let j = 0; j < n; j++) {
+      const dist = Math.abs(sorted[j].x - x0) / maxDist;
+      const w = tricube(dist);
+
+      sumWeights += w;
+      sumWX += w * sorted[j].x;
+      sumWY += w * sorted[j].y;
+    }
+
+    const y0 = sumWY / sumWeights;
+
+    result.push({ x: x0, y: y0 });
+  }
+
+  return result;
+};
 
 export default function IndicatorAnalysis() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const processed = useMemo(() => {
+    const sorted = [...scatterData].sort((a, b) => a.x - b.x);
+
+    return {
+      sortedData: sorted,
+      lowessLine: lowess(sorted, 0.3),
+      rho: getSpearman(sorted),
+    };
+  }, [scatterData]);
 
   const filteredImportance = selectedCategory
     ? indicatorImportance.filter(i => i.category === selectedCategory)
@@ -51,8 +129,7 @@ export default function IndicatorAnalysis() {
           subtitle="Explore how public indicators contribute to the composite deprivation estimate"
         />
       </motion.div>
-
-      {/* Category filter */}
+{/* Category filter */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setSelectedCategory(null)}
@@ -75,16 +152,56 @@ export default function IndicatorAnalysis() {
         ))}
       </div>
       
-      {/* Charts row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+        {/* Insights */}
+        <div className="lg:col-span-2">
+          <KeyInsight insights={[
+            "Income and Employment indicators have the highest average weight in the composite score.",
+            "Housing and Access to Services show the most geographic variance.",
+            "More Interesting Facts",
+            "more",
+            "MORE",
+            "Have another"
+          ]} />
+        </div>
+
+        {/* Top 5 indicator table */}
+        <GlassCard className="p-4">
+          <SectionHeader
+            title="Top 5 Indicators"
+            subtitle="Highest contribution weights"
+          />
+
+          <div className="mt-3">
+            <table className="w-full text-xs">
+              <tbody>
+                {indicatorImportance.slice(0, 5).map((ind, i) => (
+                  <tr key={i} className="border-b border-border/30">
+                    <td className="py-1 pr-2 truncate">{ind.fullName}</td>
+                    <td className="py-1 text-right font-mono text-primary">
+                      {ind.weight}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </GlassCard>
+
+      </div>
+
+      {/* Row 1 - feature importance & score dist */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bar chart - indicator importance */}
+
+        {/* Feature Importance */}
         <GlassCard className="p-6">
-          <SectionHeader title="Feature Importance" subtitle="Top 10 important features" />
+          <SectionHeader title="Feature Importance" subtitle="Top 10 most important features" />
           <div className="h-80 mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredImportance} layout="vertical" margin={{ left: 10, right: 20 }}>
+              <BarChart data={filteredImportance} layout="vertical" margin={{right: 20, left : 10}}>
                 <XAxis type="number" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={120} />
+                <YAxis type="category" dataKey="fullName" width={120} stroke="hsl(215, 15%, 35%)" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={chartTooltipStyle} />
                 <Bar dataKey="weight" radius={[0, 4, 4, 0]} fill="hsl(190, 95%, 55%)" opacity={0.8} />
               </BarChart>
@@ -92,32 +209,10 @@ export default function IndicatorAnalysis() {
           </div>
         </GlassCard>
 
-        {/* Scatter plot */}
-        <GlassCard className="p-6">
-          <SectionHeader title="Indicator vs Deprivation" subtitle="Universal Credit Claims vs Overall Score" />
-          <div className="h-80 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ bottom: 10 }}>
-                <XAxis dataKey="x" name="Indicator" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: "Indicator Value", position: "bottom", fill: "hsl(215, 15%, 45%)", fontSize: 11 }} />
-                <YAxis dataKey="y" name="Score" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: "Deprivation Score", angle: -90, position: "insideLeft", fill: "hsl(215, 15%, 45%)", fontSize: 11 }} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Scatter data={scatterData}>
-                  {scatterData.map((_, i) => (
-                    <Cell key={i} fill={`hsl(${190 + (i * 3) % 120}, 70%, 55%)`} opacity={0.6} />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* Distribution + Correlation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Distribution */}
+        {/* Score Distribution */}
         <GlassCard className="p-6">
           <SectionHeader title="Score Distribution" subtitle="Density of deprivation scores across areas" />
-          <div className="h-64 mt-4">
+          <div className="h-80 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={deprivationDistribution}>
                 <defs>
@@ -139,78 +234,140 @@ export default function IndicatorAnalysis() {
             </ResponsiveContainer>
           </div>
         </GlassCard>
+      </div>
 
-        {/* Correlation Heatmap */}
+      {/* Indicator v Dep & Cor Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+        {/* Indicator Scatter */}
+<GlassCard className="p-6">
+  <SectionHeader
+    title="Indicator vs Deprivation"
+    subtitle="Impact of Universal Credit Claims on Deprivation Scores"
+  />
+
+  <div className="h-80 mt-4">
+    <ResponsiveContainer width="100%" height="100%">
+      <ComposedChart margin={{ bottom: 10 }}>
+        <XAxis
+          type="number"
+          dataKey="x"
+          domain={['dataMin', 'dataMax']}
+          stroke="hsl(215, 15%, 35%)"
+          tick={{ fontSize: 11 }}
+          axisLine={false}
+          tickLine={false}
+        >
+          <Label
+           value="Number of Universal Credit Claimants"
+           position="insideBottom"
+           offset={-5}
+           style={{textAnchor: "middle", fill: "hsl(215, 15%, 65%", fontSize: 12}}
+          />
+        </XAxis>
+        <YAxis
+          type="number"
+          dataKey="y"
+          stroke="hsl(215, 15%, 35%)"
+          tick={{ fontSize: 11 }}
+          axisLine={false}
+          tickLine={false}
+        >
+         <Label
+           value="Deprivation Score"
+           angle={-90}
+           position="insideLeft"
+           style={{textAnchor: "middle", fill:"hsl(215, 15%, 65%", fontSize: 12}}
+         />
+        </YAxis>
+        <Tooltip contentStyle={chartTooltipStyle} />
+
+        {/* Scatter points */}
+        <Scatter data={processed.sortedData}>
+          {processed.sortedData.map((_, i) => (
+            <Cell
+              key={i}
+              fill={`hsl(${190 + (i * 3) % 120}, 70%, 55%)`}
+              opacity={0.6}
+            />
+          ))}
+        </Scatter>
+
+        {/* ✅ LOWESS line */}
+        <Line
+          type="monotone"
+          data={processed.lowessLine}
+          dataKey="y"
+          stroke="white"
+          dot={false}
+          strokeWidth={2}
+          isAnimationActive={false}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
+  </div>
+
+  {/* Spearman correlation */}
+  <div className="text-xs text-muted-foreground mt-2">
+    Spearman’s ρ: {processed.rho.toFixed(2)}
+  </div>
+</GlassCard>
+
+        {/* Correlation Matrix */}
         <GlassCard className="p-6">
-          <SectionHeader title="Correlation Matrix" subtitle="Inter-indicator domain correlations" />
+          <SectionHeader
+            title="Correlation Matrix"
+            subtitle="Correlation between individual domains"
+          />
+
           <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[400px]">
-              <div className="grid gap-0.5" style={{ gridTemplateColumns: `80px repeat(${indicatorCategories.length}, 1fr)` }}>
+            <div className="min-w-[600px]">
+              <div
+                className="grid gap-0.5"
+                style={{
+                  gridTemplateColumns: `80px repeat(${indicatorCategories.length}, 90px)`
+                }}
+              >
                 <div />
+
                 {indicatorCategories.map(cat => (
-                  <div key={cat} className="text-[9px] text-muted-foreground text-center font-medium truncate px-0.5">
-                    {cat.slice(0, 5)}
+                  <div
+                    key={cat}
+                    className="text-[9px] text-muted-foreground text-center font-medium px-1 origin-bottom whitespace-nowrap"
+                  >
+                    {cat}
                   </div>
                 ))}
+
                 {correlationMatrix.map((row, i) => (
-                  <>
-                    <div key={`label-${i}`} className="text-[9px] text-muted-foreground font-medium flex items-center truncate">
-                      {indicatorCategories[i].slice(0, 8)}
+                  <div key={i} className="contents">
+                    <div className="text-[9px] text-muted-foreground font-medium flex items-center pr-2 whitespace-normal break-words">
+                      {indicatorCategories[i]}
                     </div>
+
                     {row.map((val, j) => (
                       <div
                         key={`${i}-${j}`}
                         className="aspect-square rounded-sm flex items-center justify-center text-[9px] font-mono"
                         style={{
                           backgroundColor: `hsl(${190 + val * 70}, ${40 + val * 40}%, ${15 + val * 20}%)`,
-                          color: val > 0.6 ? "hsl(210, 20%, 92%)" : "hsl(215, 15%, 50%)",
+                          color: val > 0.6
+                            ? "hsl(210, 20%, 92%)"
+                            : "hsl(215, 15%, 50%)",
                         }}
                         title={`${indicatorCategories[i]} × ${indicatorCategories[j]}: ${val}`}
                       >
                         {val.toFixed(1)}
                       </div>
                     ))}
-                  </>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
         </GlassCard>
+
       </div>
-
-      {/* Ranked Table */}
-      <GlassCard className="p-6">
-        <SectionHeader title="Indicator Table" subtitle="All indicators ranked by estimated contribution weight" />
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Indicator</th>
-                <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Category</th>
-                <th className="text-right py-2 px-3 text-xs text-muted-foreground font-medium">Weight</th>
-                <th className="text-right py-2 px-3 text-xs text-muted-foreground font-medium">Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              {indicatorImportance.map((ind, i) => (
-                <tr key={i} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                  <td className="py-2.5 px-3 font-medium text-foreground">{ind.fullName}</td>
-                  <td className="py-2.5 px-3 text-muted-foreground">{ind.category}</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-primary">{ind.weight}</td>
-                  <td className={`py-2.5 px-3 text-right font-mono ${ind.change > 0 ? "text-destructive" : "text-success"}`}>
-                    {ind.change > 0 ? "+" : ""}{ind.change}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </GlassCard>
-
-      <KeyInsight insights={[
-        "Income and Employment indicators have the highest average weight in the composite score.",
-        "Housing and Access to Services show the most geographic variance."
-      ]} />
     </div>
   );
 }
