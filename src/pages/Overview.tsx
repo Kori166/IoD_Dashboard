@@ -117,7 +117,7 @@ export default function Overview() {
         transition={{ duration: 0.6 }}
         className="space-y-4"
       >
-        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+        <h1 className="text-3xl md:text-3xl font-bold text-foreground tracking-tight">
           Replicating the Index of Deprivation for{" "}
           <span className="text-primary glow-text-cyan">Bristol</span>
         </h1>
@@ -165,10 +165,10 @@ export default function Overview() {
         {/* Map card kept slightly narrower but taller. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Deprivation Across Bristol
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base md:text-m text-muted-foreground leading-relaxed">
               Interactive LSOA-level map comparing Bristol’s deprivation locally and nationally.
             </p>
           </div>
@@ -185,10 +185,10 @@ export default function Overview() {
         {/* Local Authority Profile card showing the share of LSOAs by Bristol decile. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Local Authority Profile
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base md:text-m text-muted-foreground leading-relaxed">
               % of Bristol LSOAs in each Bristol-relative deprivation decile.
             </p>
           </div>
@@ -270,10 +270,10 @@ export default function Overview() {
         {/* Rankings card remains the right-hand column. */}
         <GlassCard className="p-6 min-h-[695px]">
           <div className="space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Area Rankings
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base md:text-m text-muted-foreground leading-relaxed">
               Highest and lowest deprived areas in Bristol.
             </p>
           </div>
@@ -402,21 +402,6 @@ export default function Overview() {
         </div>
       </GlassCard>
 
-      {/* Navigation links to deeper parts of the app. */}
-      <div className="flex gap-4">
-        <Link
-          to="/map"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors border border-primary/20"
-        >
-          Explore the Map <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link
-          to="/indicators"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-secondary/15 text-secondary text-sm font-medium hover:bg-secondary/25 transition-colors border border-secondary/20"
-        >
-          Analyze Indicators <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
     </div>
   );
 }

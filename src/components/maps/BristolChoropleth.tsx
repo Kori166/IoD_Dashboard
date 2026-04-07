@@ -285,7 +285,7 @@ export default function BristolChoropleth({
       </div>
 
       {/* Legend showing the decile colour scale and the currently selected mode. */}
-      <div className="flex items-top gap-5 text-m text-muted-foreground flex-wrap">
+      <div className="flex items-top gap-5 text-xs text-muted-foreground flex-wrap">
         <span>Most Deprived</span>
 
         <div className="flex items-center gap-1">
@@ -316,9 +316,6 @@ export default function BristolChoropleth({
         </div>
 
         <span>Least Deprived</span>
-        <span className="ml-2">
-          Viewing by: {rankMode === "bristol" ? "Bristol decile" : "UK decile"}
-        </span>
       </div>
     </div>
   );
