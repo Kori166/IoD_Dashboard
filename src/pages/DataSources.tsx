@@ -17,17 +17,19 @@ import { MetricCard } from "@/components/ui/metric-card";
 
 export default function DataSources() {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 w-full">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <SectionHeader
-          title="Data Sources"
-          subtitle="All publicly available datasets used in the deprivation estimation pipeline"
-        />
+        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+          Data Sources        
+        </h1>
+        <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+          All publically available datasets used in the deprivation estimation pipeline
+        </p>
       </motion.div>
 
       {/* Summary Cards */}
@@ -89,10 +91,10 @@ export default function DataSources() {
               {/* Header */}
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {source.source_name}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {source.category}
                   </p>
                 </div>
@@ -156,6 +158,8 @@ export default function DataSources() {
               <div className="mt-3 pt-2 border-t border-border/30">
                 <a
                   href={source.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
                 >
                   <ExternalLink className="h-3 w-3" />
@@ -166,6 +170,18 @@ export default function DataSources() {
           </motion.div>
         ))}
       </div>
+            <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <GlassCard className="p-6 w-full">
+          <p className="text-lg font-medium mb-2">Data Caveats</p>
+          <textarea
+            placeholder="Notes - wards changing in 2028 etc."
+            className="w-full min-h-[75px] bg-transparent outline-none resize-none text-sm"
+          />
+        </GlassCard>
+      </motion.div>
     </div>
   );
 }
