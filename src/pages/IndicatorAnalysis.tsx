@@ -122,18 +122,20 @@ export default function IndicatorAnalysis() {
     : indicatorImportance;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 w-full">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <SectionHeader
-          title="Indicator Analysis"
-          subtitle="Explore how public indicators contribute to the composite deprivation estimate"
-        />
+       <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+          Feature Analysis     
+        </h1>
+        <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+          Explore how public indicators contribute to the composite deprivation estimate
+        </p>
       </motion.div>
 {/* Category filter */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+          className={`px-3 py-1.5 rounded-lg text-lg font-medium transition-colors border ${
             !selectedCategory ? "bg-primary/15 text-primary border-primary/30" : "bg-muted/30 text-muted-foreground border-border/50 hover:bg-muted/50"
           }`}
         >
@@ -143,52 +145,13 @@ export default function IndicatorAnalysis() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+            className={`px-3 py-1.5 rounded-lg text-lg font-medium transition-colors border ${
               selectedCategory === cat ? "bg-primary/15 text-primary border-primary/30" : "bg-muted/30 text-muted-foreground border-border/50 hover:bg-muted/50"
             }`}
           >
             {cat}
           </button>
         ))}
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-        {/* Insights */}
-        <div className="lg:col-span-2">
-          <KeyInsight insights={[
-            "Income and Employment indicators have the highest average weight in the composite score.",
-            "Housing and Access to Services show the most geographic variance.",
-            "More Interesting Facts",
-            "more",
-            "MORE",
-            "Have another"
-          ]} />
-        </div>
-
-        {/* Top 5 indicator table */}
-        <GlassCard className="p-4">
-          <SectionHeader
-            title="Top 5 Indicators"
-            subtitle="Highest contribution weights"
-          />
-
-          <div className="mt-3">
-            <table className="w-full text-xs">
-              <tbody>
-                {indicatorImportance.slice(0, 5).map((ind, i) => (
-                  <tr key={i} className="border-b border-border/30">
-                    <td className="py-1 pr-2 truncate">{ind.fullName}</td>
-                    <td className="py-1 text-right font-mono text-primary">
-                      {ind.weight}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
-
       </div>
 
       {/* Row 1 - feature importance & score dist */}
@@ -197,7 +160,7 @@ export default function IndicatorAnalysis() {
         {/* Feature Importance */}
         <GlassCard className="p-6">
           <SectionHeader title="Feature Importance" subtitle="Top 10 most important features" />
-          <div className="h-80 mt-4">
+          <div className="h-80 mt-4 flex justify-centre items-center h-[450px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredImportance} layout="vertical" margin={{right: 20, left : 10}}>
                 <XAxis type="number" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -208,36 +171,64 @@ export default function IndicatorAnalysis() {
             </ResponsiveContainer>
           </div>
         </GlassCard>
-
-        {/* Score Distribution */}
+ {/* Correlation Matrix */}
         <GlassCard className="p-6">
-          <SectionHeader title="Score Distribution" subtitle="Density of deprivation scores across areas" />
-          <div className="h-80 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={deprivationDistribution}>
-                <defs>
-                  <linearGradient id="distGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(190, 95%, 55%)" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(190, 95%, 55%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="distGrad2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(260, 60%, 55%)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(260, 60%, 55%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="score" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Area type="monotone" dataKey="count" stroke="hsl(190, 95%, 55%)" fill="url(#distGrad)" strokeWidth={2} name="All Areas" />
-                <Area type="monotone" dataKey="countUrban" stroke="hsl(260, 60%, 55%)" fill="url(#distGrad2)" strokeWidth={1.5} name="Urban" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <SectionHeader
+            title="Correlation Matrix"
+            subtitle="Correlation between individual domains"
+          />
+
+          <div className="mt-4 flex justify-center">
+            <div className="min-w-[600px]">
+              <div
+                className="grid gap-0.5"
+                style={{
+                  gridTemplateColumns: `80px repeat(${indicatorCategories.length}, 90px)`
+                }}
+              >
+                <div />
+
+                {indicatorCategories.map(cat => (
+                  <div
+                    key={cat}
+                    className="text-[9px] text-muted-foreground text-center font-medium px-1 origin-bottom whitespace-nowrap"
+                  >
+                    {cat}
+                  </div>
+                ))}
+
+                {correlationMatrix.map((row, i) => (
+                  <div key={i} className="contents">
+                    <div className="text-[9px] text-muted-foreground font-medium flex items-center pr-2 whitespace-normal break-words">
+                      {indicatorCategories[i]}
+                    </div>
+
+                    {row.map((val, j) => (
+                      <div
+                        key={`${i}-${j}`}
+                        className="aspect-square rounded-sm flex items-center justify-center text-[9px] font-mono"
+                        style={{
+                          backgroundColor: `hsl(${190 + val * 70}, ${40 + val * 40}%, ${15 + val * 20}%)`,
+                          color: val > 0.6
+                            ? "hsl(210, 20%, 92%)"
+                            : "hsl(215, 15%, 50%)",
+                        }}
+                        title={`${indicatorCategories[i]} × ${indicatorCategories[j]}: ${val}`}
+                      >
+                        {val.toFixed(1)}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </GlassCard>
+       
       </div>
 
       {/* Indicator v Dep & Cor Matrix */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div>
 
         {/* Indicator Scatter */}
 <GlassCard className="p-6">
@@ -246,9 +237,9 @@ export default function IndicatorAnalysis() {
     subtitle="Impact of Universal Credit Claims on Deprivation Scores"
   />
 
-  <div className="h-80 mt-4">
+  <div className="h-80 mt-4 flex justify-center">
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart margin={{ bottom: 10 }}>
+      <ComposedChart margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
         <XAxis
           type="number"
           dataKey="x"
@@ -308,65 +299,10 @@ export default function IndicatorAnalysis() {
   </div>
 
   {/* Spearman correlation */}
-  <div className="text-xs text-muted-foreground mt-2">
+  <div className="text-sm text-muted-foreground mt-2">
     Spearman’s ρ: {processed.rho.toFixed(2)}
   </div>
 </GlassCard>
-
-        {/* Correlation Matrix */}
-        <GlassCard className="p-6">
-          <SectionHeader
-            title="Correlation Matrix"
-            subtitle="Correlation between individual domains"
-          />
-
-          <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[600px]">
-              <div
-                className="grid gap-0.5"
-                style={{
-                  gridTemplateColumns: `80px repeat(${indicatorCategories.length}, 90px)`
-                }}
-              >
-                <div />
-
-                {indicatorCategories.map(cat => (
-                  <div
-                    key={cat}
-                    className="text-[9px] text-muted-foreground text-center font-medium px-1 origin-bottom whitespace-nowrap"
-                  >
-                    {cat}
-                  </div>
-                ))}
-
-                {correlationMatrix.map((row, i) => (
-                  <div key={i} className="contents">
-                    <div className="text-[9px] text-muted-foreground font-medium flex items-center pr-2 whitespace-normal break-words">
-                      {indicatorCategories[i]}
-                    </div>
-
-                    {row.map((val, j) => (
-                      <div
-                        key={`${i}-${j}`}
-                        className="aspect-square rounded-sm flex items-center justify-center text-[9px] font-mono"
-                        style={{
-                          backgroundColor: `hsl(${190 + val * 70}, ${40 + val * 40}%, ${15 + val * 20}%)`,
-                          color: val > 0.6
-                            ? "hsl(210, 20%, 92%)"
-                            : "hsl(215, 15%, 50%)",
-                        }}
-                        title={`${indicatorCategories[i]} × ${indicatorCategories[j]}: ${val}`}
-                      >
-                        {val.toFixed(1)}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-
       </div>
     </div>
   );
