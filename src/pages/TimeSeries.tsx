@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
   ArrowDown,
@@ -150,22 +151,66 @@ function getChangeDirection(delta: number): ChangeDirection {
   return "flat";
 }
 
-function buildSparklinePath(values: number[], width: number, height: number) {
-  if (!values.length) return "";
-  if (values.length === 1) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "");
+  const safe =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : normalized;
+
+  const bigint = Number.parseInt(safe, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function buildSparklinePoints(values: number[], width: number, height: number) {
+  if (!values.length) return [];
+
+  if (values.length === 1) {
+    return [
+      { x: 0, y: height / 2 },
+      { x: width, y: height / 2 },
+    ];
+  }
 
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
   const stepX = width / (values.length - 1);
 
-  return values
-    .map((value, index) => {
-      const x = index * stepX;
-      const y = height - ((value - min) / range) * height;
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
+  return values.map((value, index) => {
+    const x = index * stepX;
+    const y = height - ((value - min) / range) * height;
+    return { x, y };
+  });
+}
+
+function buildSparklinePath(values: number[], width: number, height: number) {
+  const points = buildSparklinePoints(values, width, height);
+  if (!points.length) return "";
+
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
     .join(" ");
+}
+
+function buildSparklineAreaPath(values: number[], width: number, height: number) {
+  const points = buildSparklinePoints(values, width, height);
+  if (!points.length) return "";
+
+  const linePart = points
+    .map((point, index) => `${index === 0 ? "L" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+    .join(" ");
+
+  return `M ${points[0].x.toFixed(2)} ${height} ${linePart} L ${points[points.length - 1].x.toFixed(
+    2,
+  )} ${height} Z`;
 }
 
 function ChangeText({ delta }: { delta: number }) {
@@ -205,6 +250,15 @@ export default function TimeSeries() {
   const [lsoaLoading, setLsoaLoading] = useState(true);
   const [wardLoading, setWardLoading] = useState(true);
   const [lookupLoading, setLookupLoading] = useState(true);
+
+  const searchAnchorRef = useRef<HTMLDivElement | null>(null);
+  const searchDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const [dropdownRect, setDropdownRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const rankChartHeight = 380;
   const decileChartHeight = 220;
@@ -438,7 +492,7 @@ export default function TimeSeries() {
     return values;
   }, [mainRankChartData, selectedSeriesMeta]);
 
-  const rankYAxisDomain = useMemo(() => getIntegerDomain(mainRankValues, 10), [mainRankValues]);
+  const rankChartFloor = useMemo(() => Math.max(getIntegerDomain(mainRankValues, 10)[1], 10), [mainRankValues]);
 
   const decileChartData = useMemo(
     () =>
@@ -510,6 +564,44 @@ export default function TimeSeries() {
     setActiveSearchIndex((current) => Math.min(current, flattenedSearchResults.length - 1));
   }, [flattenedSearchResults]);
 
+  useEffect(() => {
+    if (!searchOpen || !searchAnchorRef.current) return;
+
+    const updatePosition = () => {
+      const rect = searchAnchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      setDropdownRect({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (searchAnchorRef.current?.contains(target)) return;
+      if (searchDropdownRef.current?.contains(target)) return;
+      setSearchOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [searchOpen]);
+
   const selectedAreasSummary = useMemo(() => {
     const rows = selectedSeriesMeta
       .map((meta, index) => {
@@ -521,6 +613,7 @@ export default function TimeSeries() {
         const start = points[0];
         const end = points[points.length - 1];
         const delta = Math.round(end.rank - start.rank);
+        const sparkValues = points.map((point) => point.rank);
 
         return {
           index,
@@ -533,11 +626,8 @@ export default function TimeSeries() {
           startRank: Math.round(start.rank),
           endRank: Math.round(end.rank),
           delta,
-          sparklinePath: buildSparklinePath(
-            points.map((point) => point.rank),
-            96,
-            24,
-          ),
+          sparklinePath: buildSparklinePath(sparkValues, 96, 24),
+          sparklineAreaPath: buildSparklineAreaPath(sparkValues, 96, 24),
         };
       })
       .filter(Boolean) as {
@@ -552,6 +642,7 @@ export default function TimeSeries() {
       endRank: number;
       delta: number;
       sparklinePath: string;
+      sparklineAreaPath: string;
     }[];
 
     if (sortMode === "change") {
@@ -604,6 +695,7 @@ export default function TimeSeries() {
     if (item.kind === "Ward") toggleSelectedWard(item.code);
 
     setSearchOpen(false);
+    setSearchInput("");
   }
 
   function handleSelectionToggle(code: string) {
@@ -639,551 +731,631 @@ export default function TimeSeries() {
     setRangePreset("Max");
     setSortMode("selection");
     setSearchInput("");
+    setSearchOpen(false);
     setSelectedLsoas(lsoaOptions.length ? [lsoaOptions[0].code] : []);
     setSelectedWards(wardOptions.length ? [wardOptions[0].code] : []);
   }
 
-  return (
-    <div className="space-y-6 w-full max-w-none px-1 xl:px-2">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        className="space-y-3"
-      >
-        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
-          Time Series 2019-2025 rankings for <span className="text-primary glow-text-cyan">Bristol</span>
-        </h1>
-
-        <p className="text-muted-foreground text-base md:text-lg">
-          Compare selected LSOAs and wards over time with rank as the primary focus.
-        </p>
-
-        {primaryLatest && primarySeries ? (
-          <p className="text-sm text-muted-foreground">
-            {primarySeries.label} · Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)} ·{" "}
-            <span className="text-foreground/90">
-              {primaryDelta < 0 ? `↓ ${Math.abs(primaryDelta)} place` : primaryDelta > 0 ? `↑ ${primaryDelta} place` : "No change"} since last release
-            </span>
-          </p>
-        ) : null}
-      </motion.div>
-
-      <GlassCard className="p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
-            {(["LSOA", "Ward"] as GeographyMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setGeographyMode(mode)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  geographyMode === mode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
-          <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
-            {(["5Y", "Max"] as RangePreset[]).map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setRangePreset(preset)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  rangePreset === preset ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border/50 bg-background/30 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-primary/40"
+  const searchDropdown =
+    searchOpen && dropdownRect
+      ? createPortal(
+          <div
+            ref={searchDropdownRef}
+            className="fixed z-[100] rounded-xl border border-border/50 bg-background/95 p-2 shadow-2xl backdrop-blur-sm"
+            style={{
+              top: dropdownRect.top,
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+            }}
           >
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </button>
-        </div>
+            {flattenedSearchResults.length ? (
+              <div className="max-h-72 overflow-y-auto space-y-2">
+                <div>
+                  <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">LSOAs</p>
+                  <div className="space-y-1">
+                    {searchResults.lsoaResults.map((result) => {
+                      const flatIndex = flattenedSearchResults.findIndex(
+                        (item) => item.kind === result.kind && item.code === result.code,
+                      );
+                      const active = flatIndex === activeSearchIndex;
 
-        <div className="mt-4 relative">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={searchInput}
-              onFocus={() => setSearchOpen(true)}
-              onChange={(event) => {
-                setSearchInput(event.target.value);
-                setSearchOpen(true);
-              }}
-              onKeyDown={(event) => {
-                if (!flattenedSearchResults.length) return;
-
-                if (event.key === "ArrowDown") {
-                  event.preventDefault();
-                  setSearchOpen(true);
-                  setActiveSearchIndex((current) => (current + 1) % flattenedSearchResults.length);
-                }
-
-                if (event.key === "ArrowUp") {
-                  event.preventDefault();
-                  setSearchOpen(true);
-                  setActiveSearchIndex((current) =>
-                    current === 0 ? flattenedSearchResults.length - 1 : current - 1,
-                  );
-                }
-
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleSearchSelect(flattenedSearchResults[activeSearchIndex]);
-                }
-
-                if (event.key === "Escape") {
-                  setSearchOpen(false);
-                }
-              }}
-              className="w-full rounded-xl border border-border/50 bg-background/30 px-10 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
-              placeholder="Search LSOAs or Wards…"
-              aria-label="Search LSOAs or Wards"
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                onClick={() => setSearchInput("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            ) : null}
-          </div>
-
-          {searchOpen ? (
-            <div className="absolute z-20 mt-2 w-full rounded-xl border border-border/50 bg-background/95 p-2 shadow-2xl backdrop-blur-sm">
-              {flattenedSearchResults.length ? (
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  <div>
-                    <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">LSOAs</p>
-                    <div className="space-y-1">
-                      {searchResults.lsoaResults.map((result) => {
-                        const flatIndex = flattenedSearchResults.findIndex(
-                          (item) => item.kind === result.kind && item.code === result.code,
-                        );
-                        const active = flatIndex === activeSearchIndex;
-
-                        return (
-                          <button
-                            key={`${result.kind}-${result.code}`}
-                            type="button"
-                            onMouseEnter={() => setActiveSearchIndex(flatIndex)}
-                            onClick={() => handleSearchSelect(result)}
-                            className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                              active ? "bg-primary/15" : "hover:bg-background/50"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-medium text-foreground">{result.label}</span>
-                              {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{result.subLabel}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Wards</p>
-                    <div className="space-y-1">
-                      {searchResults.wardResults.map((result) => {
-                        const flatIndex = flattenedSearchResults.findIndex(
-                          (item) => item.kind === result.kind && item.code === result.code,
-                        );
-                        const active = flatIndex === activeSearchIndex;
-
-                        return (
-                          <button
-                            key={`${result.kind}-${result.code}`}
-                            type="button"
-                            onMouseEnter={() => setActiveSearchIndex(flatIndex)}
-                            onClick={() => handleSearchSelect(result)}
-                            className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                              active ? "bg-primary/15" : "hover:bg-background/50"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-medium text-foreground">{result.label}</span>
-                              {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{result.subLabel}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <button
+                          key={`${result.kind}-${result.code}`}
+                          type="button"
+                          onMouseEnter={() => setActiveSearchIndex(flatIndex)}
+                          onClick={() => handleSearchSelect(result)}
+                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                            active ? "bg-primary/15" : "hover:bg-background/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">{result.label}</span>
+                            {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{result.subLabel}</p>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              ) : (
-                <p className="px-2 py-8 text-center text-sm text-muted-foreground">No matching LSOAs or wards</p>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </GlassCard>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_360px] gap-6 items-start">
-        <div className="space-y-6">
-          <GlassCard className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground">Rank over time</h2>
-                <p className="text-xs text-muted-foreground">Lower rank = more deprived</p>
+                <div>
+                  <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Wards</p>
+                  <div className="space-y-1">
+                    {searchResults.wardResults.map((result) => {
+                      const flatIndex = flattenedSearchResults.findIndex(
+                        (item) => item.kind === result.kind && item.code === result.code,
+                      );
+                      const active = flatIndex === activeSearchIndex;
+
+                      return (
+                        <button
+                          key={`${result.kind}-${result.code}`}
+                          type="button"
+                          onMouseEnter={() => setActiveSearchIndex(flatIndex)}
+                          onClick={() => handleSearchSelect(result)}
+                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                            active ? "bg-primary/15" : "hover:bg-background/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">{result.label}</span>
+                            {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{result.subLabel}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
+            ) : (
+              <p className="px-2 py-8 text-center text-sm text-muted-foreground">No matching LSOAs or wards</p>
+            )}
+          </div>,
+          document.body,
+        )
+      : null;
 
-              {!!selectedSeriesMeta.length && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedSeriesMeta.map((item) => (
-                    <button
-                      key={item.code}
-                      type="button"
-                      onMouseEnter={() => setHoveredCode(item.code)}
-                      onMouseLeave={() => setHoveredCode(null)}
-                      onFocus={() => setHoveredCode(item.code)}
-                      onBlur={() => setHoveredCode(null)}
-                      className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
-                        hoveredCode === item.code
-                          ? "border-primary/60 bg-primary/10"
-                          : "border-border/30 bg-background/20"
-                      }`}
-                    >
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs text-foreground">{item.label}</span>
-                    </button>
-                  ))}
+  return (
+    <>
+      <div className="space-y-6 w-full max-w-none px-1 xl:px-2">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="space-y-3"
+        >
+          <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+            Time Series 2019-2025 rankings for <span className="text-primary glow-text-cyan">Bristol</span>
+          </h1>
+
+          <p className="text-muted-foreground text-base md:text-lg">
+            Compare selected LSOAs and wards over time with rank as the primary focus.
+          </p>
+
+          {primaryLatest && primarySeries ? (
+            <p className="text-sm text-muted-foreground">
+              {primarySeries.label} · Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)} ·{" "}
+              <span className="text-foreground/90">
+                {primaryDelta < 0
+                  ? `↓ ${Math.abs(primaryDelta)} place`
+                  : primaryDelta > 0
+                    ? `↑ ${primaryDelta} place`
+                    : "No change"}{" "}
+                since last release
+              </span>
+            </p>
+          ) : null}
+        </motion.div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.9fr)_360px] gap-6 items-start">
+          <div className="space-y-6">
+            <GlassCard className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-foreground">Rank over time</h2>
+                  <p className="text-xs text-muted-foreground">Lower rank = more deprived</p>
                 </div>
-              )}
 
-              <div className="w-full">
+                {!!selectedSeriesMeta.length && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSeriesMeta.map((item) => (
+                      <button
+                        key={item.code}
+                        type="button"
+                        onMouseEnter={() => setHoveredCode(item.code)}
+                        onMouseLeave={() => setHoveredCode(null)}
+                        onFocus={() => setHoveredCode(item.code)}
+                        onBlur={() => setHoveredCode(null)}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
+                          hoveredCode === item.code
+                            ? "border-primary/60 bg-primary/10"
+                            : "border-border/30 bg-background/20"
+                        }`}
+                      >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs text-foreground">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="w-full">
+                  {pageLoading ? (
+                    <div
+                      className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                      style={{ height: `${rankChartHeight}px` }}
+                    >
+                      Loading time-series data...
+                    </div>
+                  ) : !selectedSeries.length ? (
+                    <div
+                      className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                      style={{ height: `${rankChartHeight}px` }}
+                    >
+                      No areas selected
+                    </div>
+                  ) : mainRankChartData.length ? (
+                    <ChartContainer config={rankChartConfig} className="w-full" style={{ height: `${rankChartHeight}px` }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={mainRankChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
+                          <defs>
+                            {selectedSeriesMeta.map((series) => (
+                              <linearGradient
+                                key={`gradient-${series.code}`}
+                                id={`gradient-${series.code}`}
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                              >
+                                <stop offset="0%" stopColor={series.color} stopOpacity={0.22} />
+                                <stop offset="100%" stopColor={series.color} stopOpacity={0} />
+                              </linearGradient>
+                            ))}
+                          </defs>
+
+                          <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} ticks={xAxisTicks} />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            allowDecimals={false}
+                            domain={[rankChartFloor, 1]}
+                            reversed
+                          />
+
+                          <Tooltip
+                            cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+
+                              const row = payload[0]?.payload as Record<string, unknown>;
+                              const dateLabel = typeof row.shortDate === "string" ? row.shortDate : "";
+
+                              const items = selectedSeriesMeta
+                                .map((series) => {
+                                  const value = row[series.code];
+                                  if (typeof value !== "number") return null;
+
+                                  return {
+                                    code: series.code,
+                                    label: String(row[`${series.code}__label`] ?? series.label),
+                                    ward: row[`${series.code}__ward`],
+                                    decile: row[`${series.code}__decile`],
+                                    rank: Math.round(value),
+                                    color: series.color,
+                                  };
+                                })
+                                .filter(Boolean)
+                                .sort((a, b) => a!.rank - b!.rank);
+
+                              return (
+                                <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
+                                  <p className="mb-2 text-sm font-medium text-foreground">{dateLabel}</p>
+                                  <div className="space-y-2">
+                                    {items.map((item) => (
+                                      <div key={item!.code} className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span
+                                              className="h-2.5 w-2.5 rounded-full"
+                                              style={{ backgroundColor: item!.color }}
+                                            />
+                                            <span className="truncate text-sm text-foreground">{item!.label}</span>
+                                          </div>
+                                          {item!.ward ? (
+                                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                              {String(item!.ward)}
+                                            </p>
+                                          ) : null}
+                                        </div>
+                                        <p className="shrink-0 text-xs text-muted-foreground">
+                                          Rank {item!.rank} · Decile {String(item!.decile ?? "n/a")}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+
+                          {selectedSeriesMeta.map((series) => (
+                            <Area
+                              key={`${series.code}-area`}
+                              type="linear"
+                              dataKey={series.code}
+                              baseValue={rankChartFloor}
+                              stroke="none"
+                              fill={`url(#gradient-${series.code})`}
+                              isAnimationActive={false}
+                              fillOpacity={hoveredCode && hoveredCode !== series.code ? 0.05 : 1}
+                            />
+                          ))}
+
+                          {selectedSeriesMeta.map((series) => {
+                            const muted = hoveredCode && hoveredCode !== series.code;
+                            return (
+                              <Line
+                                key={`${series.code}-line`}
+                                type="linear"
+                                dataKey={series.code}
+                                stroke={series.color}
+                                strokeWidth={muted ? 1.5 : 2.8}
+                                strokeOpacity={muted ? 0.25 : 1}
+                                dot={false}
+                                activeDot={{
+                                  r: 5,
+                                  fill: series.color,
+                                  stroke: "rgba(255,255,255,0.9)",
+                                  strokeWidth: 2,
+                                }}
+                                connectNulls={false}
+                              />
+                            );
+                          })}
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  ) : (
+                    <div
+                      className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                      style={{ height: `${rankChartHeight}px` }}
+                    >
+                      No time-series data available for the selected set
+                    </div>
+                  )}
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-5">
+              <div className="space-y-3 border-t border-border/0">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-foreground">Decile (secondary)</h2>
+                  <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
+                </div>
+
                 {pageLoading ? (
                   <div
                     className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                    style={{ height: `${rankChartHeight}px` }}
+                    style={{ height: `${decileChartHeight}px` }}
                   >
                     Loading time-series data...
                   </div>
-                ) : !selectedSeries.length ? (
-                  <div
-                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                    style={{ height: `${rankChartHeight}px` }}
-                  >
-                    No areas selected
-                  </div>
-                ) : mainRankChartData.length ? (
-                  <ChartContainer config={rankChartConfig} className="w-full" style={{ height: `${rankChartHeight}px` }}>
+                ) : decileChartData.length ? (
+                  <ChartContainer config={decileChartConfig} className="w-full" style={{ height: `${decileChartHeight}px` }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={mainRankChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
-                        <defs>
-                          {selectedSeriesMeta.map((series) => (
-                            <linearGradient key={`gradient-${series.code}`} id={`gradient-${series.code}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={series.color} stopOpacity={0.2} />
-                              <stop offset="100%" stopColor={series.color} stopOpacity={0.02} />
-                            </linearGradient>
-                          ))}
-                        </defs>
-
+                      <ComposedChart data={decileChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
-                        <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} ticks={xAxisTicks} />
+                        <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} />
                         <YAxis
                           tickLine={false}
                           axisLine={false}
                           tickMargin={10}
                           allowDecimals={false}
-                          domain={[Math.max(rankYAxisDomain[1], 10), 1]}
+                          domain={[10, 1]}
                           reversed
+                          ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                         />
-
                         <Tooltip
                           cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
                           content={({ active, payload }) => {
                             if (!active || !payload?.length) return null;
-
                             const row = payload[0]?.payload as Record<string, unknown>;
-                            const dateLabel = typeof row.shortDate === "string" ? row.shortDate : "";
-                            const items = payload
-                              .filter((item) => typeof item.value === "number" && !String(item.dataKey).includes("__area"))
-                              .sort((a, b) => Number(a.value) - Number(b.value));
-
                             return (
                               <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
-                                <p className="text-sm font-medium text-foreground mb-2">{dateLabel}</p>
-                                <div className="space-y-2">
-                                  {items.map((item) => {
-                                    const code = String(item.dataKey).replace("__line", "");
-                                    const label = String(row[`${code}__label`] ?? code);
-                                    const decile = row[`${code}__decile`];
-                                    return (
-                                      <div key={code} className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2">
-                                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                                          <span className="text-sm text-foreground">{label}</span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                          Rank {Math.round(Number(item.value))} · Decile {decile ?? "n/a"}
-                                        </p>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                                <p className="text-sm font-medium text-foreground">{String(row.shortDate ?? "")}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas}
+                                </p>
                               </div>
                             );
                           }}
                         />
-
-                        {selectedSeriesMeta.map((series) => (
-                          <Area
-                            key={`${series.code}-area`}
-                            type="linear"
-                            dataKey={series.code}
-                            stroke="none"
-                            fill={`url(#gradient-${series.code})`}
-                            isAnimationActive={false}
-                            fillOpacity={hoveredCode && hoveredCode !== series.code ? 0.05 : 1}
-                          />
-                        ))}
-
-                        {selectedSeriesMeta.map((series) => {
-                          const muted = hoveredCode && hoveredCode !== series.code;
-                          return (
-                            <Line
-                              key={`${series.code}-line`}
-                              type="linear"
-                              dataKey={series.code}
-                              stroke={series.color}
-                              strokeWidth={muted ? 1.5 : 2.8}
-                              strokeOpacity={muted ? 0.25 : 1}
-                              dot={false}
-                              activeDot={{ r: 5, fill: series.color, stroke: "rgba(255,255,255,0.9)", strokeWidth: 2 }}
-                              connectNulls={false}
-                            />
-                          );
-                        })}
+                        <Line type="stepAfter" dataKey="decile" stroke="var(--color-decile)" strokeWidth={2.5} dot={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                 ) : (
                   <div
                     className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                    style={{ height: `${rankChartHeight}px` }}
+                    style={{ height: `${decileChartHeight}px` }}
                   >
-                    No time-series data available for the selected set
+                    No decile data for the primary selected area
                   </div>
                 )}
               </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
+          </div>
 
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Selected areas summary</h3>
+          <div className="space-y-6">
+            <GlassCard className="p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
+                  {(["LSOA", "Ward"] as GeographyMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setGeographyMode(mode)}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        geographyMode === mode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
+                  {(["5Y", "Max"] as RangePreset[]).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setRangePreset(preset)}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        rangePreset === preset ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setSortMode((current) => (current === "selection" ? "change" : "selection"))}
-                  className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={resetFilters}
+                  className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border/50 bg-background/30 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-primary/40"
                 >
-                  <ChevronsUpDown className="h-3.5 w-3.5" />
-                  {sortMode === "selection" ? "Selection order" : "Largest change"}
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {selectedAreasSummary.map((item) => (
-                  <div
-                    key={item.code}
-                    onMouseEnter={() => setHoveredCode(item.code)}
-                    onMouseLeave={() => setHoveredCode(null)}
-                    className={`rounded-xl border px-3 py-3 transition-colors ${
-                      hoveredCode === item.code ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                          <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {item.code}
-                          {item.wardName ? ` · ${item.wardName}` : ""}
-                        </p>
-                      </div>
-                      <div className="h-6 w-[98px]">
-                        <svg viewBox="0 0 96 24" className="h-6 w-[98px]" role="img" aria-label={`Rank trend for ${item.label}`}>
-                          <path d={item.sparklinePath} fill="none" stroke={item.color} strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                    </div>
+              <div className="mt-4" ref={searchAnchorRef}>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={searchInput}
+                    onFocus={() => setSearchOpen(true)}
+                    onChange={(event) => {
+                      setSearchInput(event.target.value);
+                      setSearchOpen(true);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!flattenedSearchResults.length && event.key !== "Escape") return;
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                      <span className="text-muted-foreground">
-                        {item.startYear} → {item.endYear}: {item.startRank} → {item.endRank}
-                      </span>
-                      <TrendIcon direction={getChangeDirection(item.delta)} />
-                      <ChangeText delta={item.delta} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setSearchOpen(true);
+                        setActiveSearchIndex((current) => (current + 1) % flattenedSearchResults.length);
+                      }
 
-          <GlassCard className="p-5">
-            <div className="space-y-3 border-t border-border/0">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">Decile (secondary)</h2>
-                <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
-              </div>
+                      if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setSearchOpen(true);
+                        setActiveSearchIndex((current) =>
+                          current === 0 ? flattenedSearchResults.length - 1 : current - 1,
+                        );
+                      }
 
-              {pageLoading ? (
-                <div
-                  className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                  style={{ height: `${decileChartHeight}px` }}
-                >
-                  Loading time-series data...
+                      if (event.key === "Enter" && flattenedSearchResults.length) {
+                        event.preventDefault();
+                        handleSearchSelect(flattenedSearchResults[activeSearchIndex]);
+                      }
+
+                      if (event.key === "Escape") {
+                        setSearchOpen(false);
+                      }
+                    }}
+                    className="w-full rounded-xl border border-border/50 bg-background/30 px-10 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
+                    placeholder="Search LSOAs or Wards…"
+                    aria-label="Search LSOAs or Wards"
+                  />
+                  {searchInput ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchInput("");
+                        setSearchOpen(false);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
                 </div>
-              ) : decileChartData.length ? (
-                <ChartContainer config={decileChartConfig} className="w-full" style={{ height: `${decileChartHeight}px` }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={decileChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} />
-                      <YAxis tickLine={false} axisLine={false} tickMargin={10} allowDecimals={false} domain={[10, 1]} reversed ticks={[1,2,3,4,5,6,7,8,9,10]} />
-                      <Tooltip
-                        cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
-                        content={({ active, payload }) => {
-                          if (!active || !payload?.length) return null;
-                          const row = payload[0]?.payload as Record<string, unknown>;
-                          return (
-                            <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
-                              <p className="text-sm font-medium text-foreground">{String(row.shortDate ?? "")}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas}
-                              </p>
-                            </div>
-                          );
-                        }}
-                      />
-                      <Line type="stepAfter" dataKey="decile" stroke="var(--color-decile)" strokeWidth={2.5} dot={false} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              ) : (
-                <div
-                  className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                  style={{ height: `${decileChartHeight}px` }}
-                >
-                  No decile data for the primary selected area
-                </div>
-              )}
-            </div>
-          </GlassCard>
-        </div>
-
-        <div className="space-y-6">
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Primary selected {geographyMode}</h3>
-                {primarySeries && primaryLatest ? (
-                  <div className="mt-2 rounded-xl border border-border/40 bg-background/20 p-3">
-                    <p className="text-sm font-semibold text-foreground">{primarySeries.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{primarySeries.code}</p>
-                    {geographyMode === "LSOA" ? (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Ward: {lsoaWardByLsoaCode.get(primarySeries.code)?.ward_name?.trim() ?? "Not available"}
-                      </p>
-                    ) : null}
-                    <p className="text-sm text-foreground mt-2">
-                      Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">Lower rank indicates higher deprivation.</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground mt-2">No primary area selected.</p>
-                )}
               </div>
+            </GlassCard>
 
-              <div>
+            <GlassCard className="p-5">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-foreground">Selected {geographyMode}s</h4>
-                  <p className="text-xs text-muted-foreground">{activeSelectedCodes.length} of {MAX_SELECTION}</p>
+                  <h3 className="text-lg font-semibold text-foreground">Selected areas summary</h3>
+                  <button
+                    type="button"
+                    onClick={() => setSortMode((current) => (current === "selection" ? "change" : "selection"))}
+                    className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronsUpDown className="h-3.5 w-3.5" />
+                    {sortMode === "selection" ? "Selection order" : "Largest change"}
+                  </button>
                 </div>
 
-                <div className="mt-2 space-y-2">
-                  {selectedListData.selected.map((item) => {
-                    const checked = activeSelectedCodes.includes(item.code);
-                    const meta = getOptionMeta(item);
-                    const color = seriesColorMap.get(item.code) ?? SERIES_PALETTE[0];
-                    const active = hoveredCode === item.code;
-                    return (
-                      <button
-                        key={item.code}
-                        type="button"
-                        onClick={() => handleSelectionToggle(item.code)}
-                        onMouseEnter={() => setHoveredCode(item.code)}
-                        onMouseLeave={() => setHoveredCode(null)}
-                        className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
-                          active ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20 hover:bg-background/30"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex items-start gap-2">
-                            <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-foreground">{item.label}</p>
-                              <p className="truncate text-xs text-muted-foreground">{meta.secondary}</p>
-                              <p className="truncate text-xs text-muted-foreground">{meta.rankDecile}</p>
-                            </div>
+                <div className="space-y-2">
+                  {selectedAreasSummary.map((item) => (
+                    <div
+                      key={item.code}
+                      onMouseEnter={() => setHoveredCode(item.code)}
+                      onMouseLeave={() => setHoveredCode(null)}
+                      className={`rounded-xl border px-3 py-3 transition-colors ${
+                        hoveredCode === item.code ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                            <p className="text-sm font-semibold text-foreground">{item.label}</p>
                           </div>
-                          <span className="text-xs text-primary">{checked ? "Selected" : ""}</span>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {item.code}
+                            {item.wardName ? ` · ${item.wardName}` : ""}
+                          </p>
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                        <div className="h-6 w-[98px]">
+                          <svg viewBox="0 0 96 24" className="h-6 w-[98px]" role="img" aria-label={`Rank trend for ${item.label}`}>
+                            <defs>
+                              <linearGradient id={`spark-gradient-${item.code}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={hexToRgba(item.color, 0.24)} />
+                                <stop offset="100%" stopColor={hexToRgba(item.color, 0)} />
+                              </linearGradient>
+                            </defs>
+                            <path d={item.sparklineAreaPath} fill={`url(#spark-gradient-${item.code})`} />
+                            <path
+                              d={item.sparklinePath}
+                              fill="none"
+                              stroke={item.color}
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+                      </div>
 
-              <div className="border-t border-border/40 pt-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Available</p>
-                <div className="max-h-64 overflow-y-auto space-y-2">
-                  {selectedListData.available.map((item) => {
-                    const meta = getOptionMeta(item);
-                    const disableUnchecked = activeSelectedCodes.length >= MAX_SELECTION;
-                    return (
-                      <button
-                        key={item.code}
-                        type="button"
-                        disabled={disableUnchecked}
-                        onClick={() => handleSelectionToggle(item.code)}
-                        className={`w-full rounded-lg border border-border/30 px-3 py-2 text-left transition-colors ${
-                          disableUnchecked ? "opacity-50 cursor-not-allowed" : "bg-background/20 hover:bg-background/30"
-                        }`}
-                      >
-                        <p className="truncate text-sm text-foreground">{item.label}</p>
-                        <p className="truncate text-xs text-muted-foreground">{meta.secondary}</p>
-                      </button>
-                    );
-                  })}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <span className="text-muted-foreground">
+                          {item.startYear} → {item.endYear}: {item.startRank} → {item.endRank}
+                        </span>
+                        <TrendIcon direction={getChangeDirection(item.delta)} />
+                        <ChangeText delta={item.delta} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
+          </div>
+
+          <div className="space-y-6">
+            <GlassCard className="p-5">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Primary selected {geographyMode}</h3>
+                  {primarySeries && primaryLatest ? (
+                    <div className="mt-2 rounded-xl border border-border/40 bg-background/20 p-3">
+                      <p className="text-sm font-semibold text-foreground">{primarySeries.label}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{primarySeries.code}</p>
+                      {geographyMode === "LSOA" ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Ward: {lsoaWardByLsoaCode.get(primarySeries.code)?.ward_name?.trim() ?? "Not available"}
+                        </p>
+                      ) : null}
+                      <p className="mt-2 text-sm text-foreground">
+                        Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">Lower rank indicates higher deprivation.</p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">No primary area selected.</p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground">Selected {geographyMode}s</h4>
+                    <p className="text-xs text-muted-foreground">{activeSelectedCodes.length} of {MAX_SELECTION}</p>
+                  </div>
+
+                  <div className="mt-2 space-y-2">
+                    {selectedListData.selected.map((item) => {
+                      const checked = activeSelectedCodes.includes(item.code);
+                      const meta = getOptionMeta(item);
+                      const color = seriesColorMap.get(item.code) ?? SERIES_PALETTE[0];
+                      const active = hoveredCode === item.code;
+                      return (
+                        <button
+                          key={item.code}
+                          type="button"
+                          onClick={() => handleSelectionToggle(item.code)}
+                          onMouseEnter={() => setHoveredCode(item.code)}
+                          onMouseLeave={() => setHoveredCode(null)}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
+                            active ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20 hover:bg-background/30"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex items-start gap-2">
+                              <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">{item.label}</p>
+                                <p className="truncate text-xs text-muted-foreground">{meta.secondary}</p>
+                                <p className="truncate text-xs text-muted-foreground">{meta.rankDecile}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-primary">{checked ? "Selected" : ""}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="border-t border-border/40 pt-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Available</p>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {selectedListData.available.map((item) => {
+                      const meta = getOptionMeta(item);
+                      const disableUnchecked = activeSelectedCodes.length >= MAX_SELECTION;
+                      return (
+                        <button
+                          key={item.code}
+                          type="button"
+                          disabled={disableUnchecked}
+                          onClick={() => handleSelectionToggle(item.code)}
+                          className={`w-full rounded-lg border border-border/30 px-3 py-2 text-left transition-colors ${
+                            disableUnchecked ? "opacity-50 cursor-not-allowed" : "bg-background/20 hover:bg-background/30"
+                          }`}
+                        >
+                          <p className="truncate text-sm text-foreground">{item.label}</p>
+                          <p className="truncate text-xs text-muted-foreground">{meta.secondary}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
         </div>
       </div>
-    </div>
+
+      {searchDropdown}
+    </>
   );
 }
