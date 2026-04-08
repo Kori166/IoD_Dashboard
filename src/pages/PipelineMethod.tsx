@@ -30,12 +30,14 @@ const colorMap: Record<string, string> = {
 
 export default function PipelineMethod() {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 w-full">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <SectionHeader
-          title="Pipeline & Methodology"
-          subtitle="How we fetch, process, and combine public data into deprivation estimates"
-        />
+        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+          Pipeline & Methodology      
+        </h1>
+        <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+          How we fetch, process, and combine public data into deprivation estimates
+        </p>
       </motion.div>
 
       {/* Pipeline Flow */}
@@ -57,7 +59,7 @@ export default function PipelineMethod() {
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <span className="text-xs font-mono text-muted-foreground">Step {step.id}</span>
+                      <span className="text-lg font-mono text-muted-foreground">Step {step.id}</span>
                       <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
                     </div>
                   </div>
@@ -73,21 +75,21 @@ export default function PipelineMethod() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard glow="cyan" className="p-5">
           <Code2 className="h-5 w-5 text-primary mb-3" />
-          <h3 className="text-sm font-semibold text-foreground mb-1">Modular Python Pipeline</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-1">Modular Python Pipeline</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Each data source has its own fetcher and processor module, making the pipeline extensible and maintainable.
           </p>
         </GlassCard>
         <GlassCard glow="violet" className="p-5">
           <GitBranch className="h-5 w-5 text-secondary mb-3" />
-          <h3 className="text-sm font-semibold text-foreground mb-1">Orchestration Layer</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-1">Orchestration Layer</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             A central orchestrator coordinates fetching, processing, and output generation on a configurable schedule.
           </p>
         </GlassCard>
         <GlassCard glow="magenta" className="p-5">
           <Clock className="h-5 w-5 text-accent mb-3" />
-          <h3 className="text-sm font-semibold text-foreground mb-1">Frequent Refresh</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-1">Frequent Refresh</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Unlike the official IMD (updated every ~5 years), our pipeline can refresh monthly as new public data becomes available.
           </p>
@@ -99,7 +101,7 @@ export default function PipelineMethod() {
         <SectionHeader title="Why Public Data?" />
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-primary">Reducing Survey Dependence</h4>
+            <h4 className="text-lg font-semibold text-primary">Reducing Survey Dependence</h4>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Traditional deprivation indices rely on expensive, infrequent surveys and restricted administrative data.
               By using publicly available datasets, we can create more timely estimates at a fraction of the cost while
@@ -107,7 +109,7 @@ export default function PipelineMethod() {
             </p>
           </div>
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-secondary">Update Cadence</h4>
+            <h4 className="text-lg font-semibold text-secondary">Update Cadence</h4>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Many public datasets (DWP, ONS, Police.uk) are updated monthly or quarterly. This allows our pipeline to
               produce near real-time deprivation estimates, capturing rapid changes in economic and social conditions.
@@ -121,7 +123,7 @@ export default function PipelineMethod() {
         <SectionHeader title="Detailed Methodology" subtitle="Expand sections for technical detail" />
         <Accordion type="single" collapsible className="mt-4">
           <AccordionItem value="methodology" className="border-border/50">
-            <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary">
+            <AccordionTrigger className="text-lg font-medium text-foreground hover:text-primary">
               Scoring Methodology
             </AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
@@ -132,7 +134,7 @@ export default function PipelineMethod() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="transforms" className="border-border/50">
-            <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary">
+            <AccordionTrigger className="text-lg font-medium text-foreground hover:text-primary">
               Transformation Steps
             </AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
@@ -142,7 +144,7 @@ export default function PipelineMethod() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="indicators" className="border-border/50">
-            <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary">
+            <AccordionTrigger className="text-lg font-medium text-foreground hover:text-primary">
               Indicator Engineering
             </AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
@@ -152,7 +154,7 @@ export default function PipelineMethod() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="caveats" className="border-border/50">
-            <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary">
+            <AccordionTrigger className="text-lg font-medium text-foreground hover:text-primary">
               <span className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-warning" />
                 Caveats & Limitations
