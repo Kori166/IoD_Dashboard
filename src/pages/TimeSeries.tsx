@@ -4,6 +4,8 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
+  ChevronDown,
+  ChevronUp,
   Info,
   MapPinned,
   Minus,
@@ -24,6 +26,11 @@ import {
 } from "recharts";
 
 import { GlassCard } from "@/components/ui/glass-card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   ChartContainer,
   ChartTooltip,
@@ -217,6 +224,24 @@ function getInstabilityScore(series: AreaSeries) {
   return Math.max(...ranks) - Math.min(...ranks);
 }
 
+function buildSparklinePath(values: number[], width: number, height: number) {
+  if (!values.length) return "";
+  if (values.length === 1) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = width / (values.length - 1);
+
+  return values
+    .map((value, index) => {
+      const x = index * stepX;
+      const y = height - ((value - min) / range) * height;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
 function getDecileColor(decile: number | null | undefined) {
   if (!decile) return DECILE_COLORS[10];
   return DECILE_COLORS[decile] ?? DECILE_COLORS[10];
@@ -253,6 +278,7 @@ function ChangeIndicator({
 }
 
 export default function TimeSeries() {
+  const [isHowToReadOpen, setIsHowToReadOpen] = useState(false);
   const [geographyMode, setGeographyMode] = useState<GeographyMode>("LSOA");
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
   const [selectionMetric, setSelectionMetric] = useState<SelectionMetric>("rank");
@@ -649,11 +675,21 @@ export default function TimeSeries() {
 
   const dynamicLsoas = useMemo(() => {
     return [...lsoaSeriesData]
-      .map((series) => ({
-        code: series.code,
-        label: series.label,
-        instability: getInstabilityScore(series),
-      }))
+      .map((series) => {
+        const ranks = series.points.map((point) => Math.round(point.rank));
+        const minRank = ranks.length ? Math.min(...ranks) : 0;
+        const maxRank = ranks.length ? Math.max(...ranks) : 0;
+
+        return {
+          code: series.code,
+          label: series.label,
+          instability: getInstabilityScore(series),
+          minRank,
+          maxRank,
+          sparklinePath: buildSparklinePath(ranks, 90, 20),
+        };
+      })
+
       .sort((a, b) => b.instability - a.instability)
       .slice(0, 5);
   }, [lsoaSeriesData]);
@@ -792,10 +828,58 @@ export default function TimeSeries() {
         transition={{ duration: 0.45 }}
         className="space-y-4"
       >
-        <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
-          Time Series 2019-2025 rankings for{" "}
-          <span className="text-primary glow-text-cyan">Bristol</span>
-        </h1>
+        <div className="flex flex-wrap items-start gap-3">
+          <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
+            Time Series 2019-2025 rankings for{" "}
+            <span className="text-primary glow-text-cyan">Bristol</span>
+          </h1>
+
+          <Collapsible
+            open={isHowToReadOpen}
+            onOpenChange={setIsHowToReadOpen}
+            className="w-full md:w-auto md:relative"
+          >
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/30 px-3 py-2 text-sm font-medium text-foreground hover:bg-background/50 transition-colors"
+                aria-label="Toggle how to read this page panel"
+              >
+                <Info className="h-4 w-4 text-primary" />
+                How to read this page
+                {isHowToReadOpen ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="mt-2 md:absolute md:z-20 md:max-w-md">
+              <GlassCard className="p-4">
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    The line charts show Bristol-relative rank and decile over time.
+                    Lower rank means greater deprivation within Bristol for the
+                    selected geography.
+                  </p>
+
+                  <div className="rounded-xl border border-border/40 bg-background/20 p-3 space-y-1.5">
+                    <p className="text-sm text-muted-foreground">
+                      LSOA: Lower Layer Super Output Area
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Rank: Bristol-relative position, where lower means more deprived
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Decile: grouped Bristol-relative band from 1 to 10
+                    </p>
+                  </div>
+                </div>
+              </GlassCard>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
 
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
           Compare deprivation rank and decile over time across Bristol LSOAs and wards,
@@ -1357,120 +1441,74 @@ export default function TimeSeries() {
                   </p>
                 </div>
               ) : null}
-            </div>
-          </GlassCard>
-
-          {/* Current selection bar chart */}
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Current selection
+              <div className="border-t border-border/40 pt-5 space-y-4">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold text-foreground">
+                    5 LSOAs with the largest rank range
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Horizontal comparison of selected {geographyMode === "LSOA" ? "LSOAs" : "wards"}
+                    Measured as max rank minus min rank across the full available
+                    period.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    View
-                  </label>
-                  <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
-                    {(["rank", "decile"] as SelectionMetric[]).map((metric) => (
-                      <button
-                        key={metric}
-                        type="button"
-                        onClick={() => setSelectionMetric(metric)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          selectionMetric === metric
-                            ? "bg-primary/15 text-primary"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {metric === "rank" ? "Rank" : "Decile"}
-                      </button>
-                    ))}
+                <div className="rounded-xl border border-border/40 bg-background/20 px-3 py-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+                    <span>LSOA</span>
+                    <span>Range</span>
                   </div>
                 </div>
-              </div>
 
-              <div style={{ height: barChartHeight }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={selectionBarData}
-                    layout="vertical"
-                    margin={{ top: 8, right: 16, left: 16, bottom: 8 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      horizontal={false}
-                      className="opacity-20"
-                    />
-                    <XAxis
-                      type="number"
-                      domain={
-                        selectionMetric === "rank"
-                          ? [0, "dataMax + 1"]
-                          : [0, 10]
-                      }
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      width={140}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <Tooltip
-                      formatter={(value, _name, item) => {
-                        if (selectionMetric === "rank") {
-                          return [`Rank ${value}`, item.payload.label];
-                        }
-                        return [`Decile ${value}`, item.payload.label];
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                      {selectionBarData.map((item) => (
-                        <Cell key={item.code} fill={item.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-2.5">
+                  {dynamicLsoas.map((item) => (
+                    <div
+                      key={item.code}
+                      className="rounded-xl border border-border/40 bg-background/20 px-3 py-3"
+                    >
+                      <div className="grid grid-cols-[minmax(0,1fr)_92px_auto] items-center gap-3">
+                        <div className="min-w-0">
+                          <p className="text-base font-semibold text-foreground truncate">
+                            {item.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{item.code}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {item.maxRank} → {item.minRank}
+                          </p>
+                        </div>
+
+                        <div className="h-5 w-[92px]">
+                          <svg
+                            viewBox="0 0 90 20"
+                            className="h-5 w-[92px]"
+                            role="img"
+                            aria-label={`Rank trend for ${item.label}`}
+                          >
+                            <path
+                              d={item.sparklinePath}
+                              fill="none"
+                              stroke="rgba(168, 85, 247, 0.95)"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-lg font-semibold text-foreground leading-tight">
+                            {Math.round(item.instability)}
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-tight">
+                            places
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </GlassCard>
-
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">
-                  5 Most Dynamic LSOAs
-                </h2>
-              </div>
-
-              <div className="space-y-3">
-                {dynamicLsoas.map((item) => (
-                  <div
-                    key={item.code}
-                    className="rounded-xl border border-border/40 bg-background/20 p-3 flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">{item.code}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-foreground">
-                        {item.instability} rank change
-                      </p>
-                      <p className="text-xs text-muted-foreground">Full period spread</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
+          </GlassCard>        
+          
         </div>
 
         {/* Right summary column */}
@@ -1612,82 +1650,8 @@ export default function TimeSeries() {
                 </>
               )}
             </div>
-          </GlassCard>
-
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Highest vs lowest ranked
-              </h2>
-
-              {highestRankedArea && lowestRankedArea ? (
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-border/40 bg-background/20 p-4 flex items-start gap-3">
-                    <ArrowUp className="h-5 w-5 text-red-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm uppercase tracking-wider text-muted-foreground">
-                        Most deprived
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {highestRankedArea.label}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Rank {highestRankedArea.rank}, decile {highestRankedArea.decile}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-border/40 bg-background/20 p-4 flex items-start gap-3">
-                    <ArrowDown className="h-5 w-5 text-emerald-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm uppercase tracking-wider text-muted-foreground">
-                        Least deprived
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {lowestRankedArea.label}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Rank {lowestRankedArea.rank}, decile {lowestRankedArea.decile}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No ranked comparison available.
-                </p>
-              )}
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-5">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" />
-                <h3 className="text-base font-semibold text-foreground">
-                  Reading this page
-                </h3>
-              </div>
-
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                The line charts show Bristol-relative rank and decile over time.
-                Lower rank means greater deprivation within Bristol for the selected
-                geography.
-              </p>
-
-              <div className="rounded-xl border border-border/40 bg-background/20 p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  LSOA: Lower Layer Super Output Area
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Rank: Bristol-relative position, where lower means more deprived
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Decile: grouped Bristol-relative band from 1 to 10
-                </p>
-              </div>
-            </div>
-          </GlassCard>
+          </GlassCard>        
+          
         </div>
       </div>
     </div>
