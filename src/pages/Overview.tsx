@@ -36,6 +36,8 @@ type BristolIMDRow = {
   uk_decile: number;
   bristol_rank: number;
   bristol_decile: number;
+  ward_name: string;
+  ward_lsoa: string;
 };
 
 // Decile palette aligned with the dashboard legend.
@@ -161,7 +163,7 @@ export default function Overview() {
       </div>
 
       {/* Main content area: map left, local authority profile middle, rankings right. */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)_minmax(320px,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
         {/* Map card kept slightly narrower but taller. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
@@ -268,7 +270,7 @@ export default function Overview() {
         </GlassCard>
 
         {/* Rankings card remains the right-hand column. */}
-        <GlassCard className="p-6 min-h-[695px]">
+        <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Area Rankings
@@ -305,70 +307,71 @@ export default function Overview() {
           </div>
 
           {/* Lists of the highest and lowest deprived areas under the selected mode. */}
-          <div className="mt-5 space-y-6">
-            <div>
-              <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">
-                <TrendingUp className="h-10 w-10" /> Most Deprived Areas
-              </p>
-              <div className="space-y-1.5">
-                {mostDeprived.map((row, i) => (
-                  <div
-                    key={row.lsoa_code}
-                    className="flex items-center justify-between text-base md:text-lg"
-                  >
-                    <span className="text-muted-foreground">
-                      <span className="text-foreground font-medium">
-                        {i + 1}.
-                      </span>{" "}
-                      {row.lsoa_name}
-                    </span>
-                    <span className="text-destructive font-bold text-sm md:text-base">
-                      {rankMode === "bristol"
-                        ? `Bristol #${row.bristol_rank}`
-                        : `UK #${row.uk_rank}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border/50 pt-4">
-              <p className="text-xl uppercase tracking-wider text-success font-bold mb-2 flex items-center gap-3">
-                <TrendingDown className="h-10 w-10" /> Least Deprived Areas
-              </p>
-              <div className="space-y-1.5">
-                {leastDeprived.map((row, i) => (
-                  <div
-                    key={row.lsoa_code}
-                    className="flex items-center justify-between text-base md:text-lg"
-                  >
-                    <span className="text-muted-foreground">
-                      <span className="text-foreground font-medium">
-                        {i + 1}.
-                      </span>{" "}
-                      {row.lsoa_name}
-                    </span>
-                    <span className="text-success font-bold text-sm md:text-base">
-                      {rankMode === "bristol"
-                        ? `Bristol #${row.bristol_rank}`
-                        : `UK #${row.uk_rank}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+<div className="mt-5 space-y-6">
+  <div>
+    <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">
+      <TrendingUp className="h-10 w-10" /> Most Deprived Areas
+    </p>
+    <div className="space-y-1.5">
+      {mostDeprived.map((row, i) => (
+        <div
+          key={row.ward_lsoa}
+          className="flex w-full items-start gap-2 text-base md:text-xs"
+        >
+          <div className="flex-1 min-w-0">
+            <span className="text-muted-foreground text-sm md:text-base leading-tight">
+              <span className="text-foreground font-medium">
+                {i + 1}.
+              </span>{" "}
+              {row.ward_lsoa}
+            </span>
           </div>
-        </GlassCard>
-      </div>
 
-      {/* Short callout box summarising the key takeaways from the page. */}
-      <KeyInsight
-        insights={[
-          "- Bristol rankings are now driven from the loaded IMD JSON rather than mock area summaries.",
-          "- You can switch between Bristol-relative and UK-wide ranking to compare local and national deprivation patterns.",
-        ]}
-      />
+          <div className="text-right flex-shrink-0">
+            <span className="text-destructive font-bold text-xs md:text-base whitespace-nowrap">
+              {rankMode === "bristol"
+                ? `#${row.bristol_rank}`
+                : `#${row.uk_rank}`}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
 
+  <div className="border-t border-border/50 pt-4">
+    <p className="text-xl uppercase tracking-wider text-success font-bold mb-2 flex items-center gap-3">
+      <TrendingDown className="h-10 w-10" /> Least Deprived Areas
+    </p>
+    <div className="space-y-1.5">
+      {leastDeprived.map((row, i) => (
+        <div
+          key={row.ward_lsoa}
+          className="flex w-full items-start gap-2 overflow-hidden text-base md:text-xs"
+        >
+          <div className="flex-1 min-w-0">
+            <span className="text-muted-foreground text-sm md:text-base leading-tight">
+              <span className="text-foreground font-medium">
+                {i + 1}.
+              </span>{" "}
+              {row.ward_lsoa}
+            </span>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            <span className="text-success font-bold text-xs md:text-base whitespace-nowrap">
+              {rankMode === "bristol"
+                ? `#${row.bristol_rank}`
+                : `#${row.uk_rank}`}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+</GlassCard>
+</div>
       <GlassCard className="p-6">
         <SectionHeader title="Why This Matters" />
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-6">

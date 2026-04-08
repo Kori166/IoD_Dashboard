@@ -10,6 +10,7 @@ type IMDRow = {
   uk_decile?: number | null;
   bristol_rank?: number | null;
   bristol_decile?: number | null;
+  ward_name?: string | null;
 };
 
 // GeoJSON structure for Bristol LSOA boundaries plus the extra properties
@@ -156,6 +157,7 @@ export default function BristolChoropleth({
             active_rank: activeRank,
             active_decile: activeDecile,
             lsoa_name: imd?.lsoa_name ?? props.lsoa_name ?? "Unknown LSOA",
+            ward_name: imd?.ward_name ?? null,
           },
         };
       }),
@@ -243,19 +245,20 @@ export default function BristolChoropleth({
                 rankMode === "bristol" ? "Bristol Decile" : "UK Decile";
 
               layer.bindTooltip(
-                `
-                  <div style="font-size:12px;line-height:1.5;">
-                    <strong>${props.lsoa_name ?? "Unknown LSOA"}</strong><br/>
-                    Code: ${props.lsoa_code ?? "N/A"}<br/>
-                    ${rankLabel}: ${props.active_rank ?? "N/A"}<br/>
-                    ${decileLabel}: ${props.active_decile ?? "N/A"}
-                  </div>
-                `,
-                {
-                  sticky: true,
-                  opacity: 0.95,
-                },
-              );
+  `
+    <div style="font-size:12px;line-height:1.5;">
+      <strong>${props.lsoa_name ?? "Unknown LSOA"}</strong><br/>
+      Ward: ${props.ward_name ?? "N/A"}<br/>
+      Code: ${props.lsoa_code ?? "N/A"}<br/>
+      ${rankLabel}: ${props.active_rank ?? "N/A"}<br/>
+      ${decileLabel}: ${props.active_decile ?? "N/A"}
+    </div>
+  `,
+  {
+    sticky: true,
+    opacity: 0.95,
+  }
+);
 
               layer.on({
                 mouseover: (e: any) => {
