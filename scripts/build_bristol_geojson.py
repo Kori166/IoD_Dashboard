@@ -4,9 +4,10 @@ import ast
 from pathlib import Path
 
 ROOT = Path(".")
-geo_path = ROOT / "data" / "raw" / "geography_lookup.csv"
-lookup_path = ROOT / "data" / "raw" / "lsoa_2011_2021_lookup.csv"
-imd_path = ROOT / "data" / "raw" / "IoD2025_Ranks_Scores_Deciles.csv"
+geo_path = ROOT / "data" / "input" / "geography_lookup.csv"
+lookup_path = ROOT / "data" / "input" / "lsoa_2011_2021_lookup.csv"
+imd_path = ROOT / "data" / "input" / "IoD2025_Ranks_Scores_Deciles.csv"
+ward_path = ROOT / "data" / "input" / "lsoa11_ward20_lookup.csv"
 
 geojson_out_path = ROOT / "public" / "data" / "bristol_lsoa.geojson"
 imd_out_path = ROOT / "public" / "data" / "bristol_imd.json"
@@ -14,6 +15,19 @@ imd_out_path = ROOT / "public" / "data" / "bristol_imd.json"
 geo = pd.read_csv(geo_path)
 lookup = pd.read_csv(lookup_path)
 imd = pd.read_csv(imd_path)
+ward = pd.read_csv(ward_path)
+
+# Rename LSOA column in ward & change "and" for "&"
+
+ward = ward.rename(columns={"LSOA11CD" : "lsoa_code_11"})
+ward["WD20NM"] = ward["WD20NM"].str.replace(" and ", " & ", regex=False)
+
+# Convert to 2021 LSOAs
+ward = ward.merge(
+    lookup[["lsoa_code_11", "lsoa_code_21"]],
+    on="lsoa_code_11",
+    how="left"
+)
 
 # Filter to Bristol only
 imd_bristol = imd[
@@ -39,6 +53,13 @@ imd_bristol = imd_bristol[
     }
 )
 
+#Merge ward into BRS IMD
+imd_bristol = imd_bristol.merge(
+    ward[["lsoa_code_21", "WD20NM"]],
+    on="lsoa_code_21",
+    how="left"
+)
+
 # Bristol-only rank and decile
 imd_bristol = imd_bristol.sort_values("uk_rank", ascending=True).reset_index(drop=True)
 imd_bristol["bristol_rank"] = imd_bristol.index + 1
@@ -51,11 +72,21 @@ imd_bristol["bristol_decile"] = pd.qcut(
     duplicates="drop"
 ) + 1
 
+#Add ward-lsoa column
+imd_bristol["ward_lsoa"] = imd_bristol["WD20NM"] + " - " + imd_bristol["lsoa_name_21"].str[-4:]
+
 # Geometry join
 merged_geo = geo.merge(
     lookup,
     left_on="lsoa_code",
     right_on="lsoa_code_21",
+    how="left"
+)
+
+# Ward join
+merged_geo = merged_geo.merge(
+    ward[["lsoa_code_21", "WD20NM"]],
+    on="lsoa_code_21",
     how="left"
 )
 
@@ -74,6 +105,7 @@ for _, row in merged_geo.iterrows():
             "lsoa_name_11": row["lsoa_name_11"] if pd.notna(row["lsoa_name_11"]) else None,
             "longitude": float(row["longitude"]) if pd.notna(row["longitude"]) else None,
             "latitude": float(row["latitude"]) if pd.notna(row["latitude"]) else None,
+            "WD20NM": row["WD20NM"]
         },
     }
     features.append(feature)
@@ -93,11 +125,14 @@ imd_json = imd_bristol[
         "uk_decile",
         "bristol_rank",
         "bristol_decile",
+        "WD20NM",
+        "ward_lsoa"
     ]
 ].rename(
     columns={
         "lsoa_code_21": "lsoa_code",
         "lsoa_name_21": "lsoa_name",
+        "WD20NM" : "ward_name"
     }
 ).to_dict(orient="records")
 
