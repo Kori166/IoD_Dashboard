@@ -151,8 +151,8 @@ function getLatestVisiblePoint(series: AreaSeries, rangePreset: RangePreset) {
 }
 
 function getChangeDirection(delta: number): ChangeDirection {
-  if (delta > 0) return "up";
-  if (delta < 0) return "down";
+  if (delta < 0) return "up";
+  if (delta > 0) return "down";
   return "flat";
 }
 
@@ -220,17 +220,17 @@ function buildSparklineAreaPath(values: number[], width: number, height: number)
 
 function ChangeText({ delta }: { delta: number }) {
   if (delta < 0) {
-    return <span className="text-red-300">↓ {Math.abs(delta)} places (more deprived)</span>;
+    return <span className="font-medium text-red-300">{Math.abs(delta)} places (more deprived)</span>;
   }
   if (delta > 0) {
-    return <span className="text-emerald-300">↑ {delta} places (less deprived)</span>;
+    return <span className="font-medium text-emerald-300">{delta} places (less deprived)</span>;
   }
   return <span className="text-muted-foreground">No net change</span>;
 }
 
 function TrendIcon({ direction }: { direction: ChangeDirection }) {
-  if (direction === "up") return <ArrowUp className="h-4 w-4 text-emerald-400" />;
-  if (direction === "down") return <ArrowDown className="h-4 w-4 text-red-400" />;
+  if (direction === "up") return <ArrowUp className="h-4 w-4 text-red-500" />;
+  if (direction === "down") return <ArrowDown className="h-4 w-4 text-emerald-500" />;
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 }
 
@@ -890,12 +890,8 @@ export default function TimeSeries() {
           </h1>
 
           <p className="text-muted-foreground text-base md:text-lg">
-            Compare selected LSOAs and wards over time with rank as the primary focus.
-          </p>
-
-          <p className="text-sm text-muted-foreground">
-            {lsoaOptions.length} LSOAs total · {wardOptions.length} wards total
-          </p>
+            Compare selected LSOAs and Wards over time with rank as the primary focus.
+          </p>          
 
           {primaryLatest && primarySeries ? (
             <p className="text-sm text-muted-foreground">
@@ -1103,7 +1099,7 @@ export default function TimeSeries() {
 
                 <div className="border-t border-border/40 pt-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-foreground">Primary Focus Decile</h3>
+                    <h3 className="text-base font-semibold text-foreground">Main Selection Decile</h3>
                     <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
                   </div>
 
@@ -1362,7 +1358,7 @@ export default function TimeSeries() {
             <GlassCard className="p-5">
               <div className="space-y-4">                
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Primary Focus</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Main Selection</h3>
 
                   {primarySeries && primaryLatest ? (
                     <div className="mt-3 rounded-2xl border border-cyan-400/60 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_rgba(0,0,0,0)_38%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.96))] p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_10px_30px_rgba(0,0,0,0.35)]">
