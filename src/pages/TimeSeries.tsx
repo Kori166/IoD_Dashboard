@@ -492,6 +492,16 @@ export default function TimeSeries() {
 
   const primaryDelta = primaryLatest && primaryPrevious ? Math.round(primaryLatest.rank - primaryPrevious.rank) : 0;
 
+  const primaryRangeStart = primaryVisiblePoints[0] ?? null;
+  const primaryRangeDelta =
+    primaryLatest && primaryRangeStart
+      ? Math.round(primaryLatest.rank - primaryRangeStart.rank)
+      : 0;
+
+  const primaryRangeLabel = primaryRangeStart
+    ? new Intl.DateTimeFormat("en-GB", { year: "numeric" }).format(new Date(primaryRangeStart.date))
+    : "";
+
   const mainRankChartData = useMemo(() => {
     if (!selectedSeries.length) return [];
 
@@ -551,6 +561,22 @@ export default function TimeSeries() {
       })),
     [primaryVisiblePoints],
   );
+
+  const currentFocusSparkline = useMemo(() => {
+  if (!primaryVisiblePoints.length) {
+    return {
+      linePath: "",
+      areaPath: "",
+    };
+  }
+
+  const rankValues = primaryVisiblePoints.map((point) => Math.round(point.rank));
+
+  return {
+    linePath: buildSparklinePath(rankValues, 140, 40),
+    areaPath: buildSparklineAreaPath(rankValues, 140, 40),
+  };
+}, [primaryVisiblePoints]);
 
   const activeSearchBase = useMemo(() => {
     if (geographyMode === "LSOA") {
@@ -1077,7 +1103,7 @@ export default function TimeSeries() {
 
                 <div className="border-t border-border/40 pt-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-foreground">Primary area decile</h3>
+                    <h3 className="text-base font-semibold text-foreground">Primary Focus Decile</h3>
                     <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
                   </div>
 
@@ -1256,7 +1282,7 @@ export default function TimeSeries() {
             <GlassCard className="p-5">
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold text-foreground">Selected areas summary</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Selected Areas Summary</h3>
 
                   <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Sort By</span>
@@ -1334,35 +1360,118 @@ export default function TimeSeries() {
 
           <div className="space-y-6">
             <GlassCard className="p-5">
-              <div className="space-y-4">
+              <div className="space-y-4">                
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Primary selected {geographyMode}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Primary Focus</h3>
+
                   {primarySeries && primaryLatest ? (
-                    <div className="mt-2 rounded-xl border border-border/40 bg-background/20 p-3">
-                      <p className="text-sm font-semibold text-foreground">{primarySeries.label}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{primarySeries.code}</p>
-                      {geographyMode === "LSOA" ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Ward: {lsoaWardByLsoaCode.get(primarySeries.code)?.ward_name?.trim() ?? "Not available"}
-                        </p>
-                      ) : null}
-                      <p className="mt-2 text-sm text-foreground">
-                        Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">Lower rank indicates higher deprivation.</p>
+                    <div className="mt-3 rounded-2xl border border-cyan-400/60 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_rgba(0,0,0,0)_38%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.96))] p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_10px_30px_rgba(0,0,0,0.35)]">
+                      <div className="space-y-4">
+                        <div className="min-w-0 w-full">
+                          <p className="w-full text-3xl font-semibold leading-tight tracking-tight text-foreground break-words">
+                            {primarySeries.label}
+                          </p>
+
+                          <p className="mt-2 w-full text-sm leading-5 text-muted-foreground break-words">
+                            {primarySeries.code}
+                            {geographyMode === "LSOA"
+                              ? ` · ${lsoaWardByLsoaCode.get(primarySeries.code)?.ward_name?.trim() ?? "Ward n/a"}`
+                              : ""}
+                          </p>
+
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <span className="rounded-lg border border-border/40 bg-background/30 px-3 py-2 text-2xl font-medium text-foreground">
+                              Rank {Math.round(primaryLatest.rank)}
+                            </span>
+
+                            <span
+                              className="rounded-lg border px-3 py-2 text-2xl font-medium"
+                              style={{
+                                borderColor: `${hexToRgba(
+                                  DECILE_COLORS[Math.round(primaryLatest.decile)] ?? DECILE_COLORS[10],
+                                  0.35,
+                                )}`,
+                                backgroundColor: `${hexToRgba(
+                                  DECILE_COLORS[Math.round(primaryLatest.decile)] ?? DECILE_COLORS[10],
+                                  0.12,
+                                )}`,
+                                color: DECILE_COLORS[Math.round(primaryLatest.decile)] ?? DECILE_COLORS[10],
+                              }}
+                            >
+                              Decile {Math.round(primaryLatest.decile)}
+                            </span>
+                          </div>
+
+                          <div className="mt-4 flex items-start gap-2 text-sm">
+                            {primaryRangeDelta < 0 ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-red-500">
+                                <ArrowUp className="h-4 w-4 shrink-0 text-red-500" />
+                                <span>{Math.abs(primaryRangeDelta)}</span>
+                              </span>
+                            ) : primaryRangeDelta > 0 ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-emerald-300">
+                                <ArrowDown className="h-4 w-4 shrink-0 text-emerald-400" />
+                                <span>{primaryRangeDelta}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 font-medium text-muted-foreground">
+                                <Minus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                <span>0</span>
+                              </span>
+                            )}
+
+                            <span className="leading-5 text-muted-foreground">
+                              since {primaryRangeLabel || "start of range"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex w-full justify-center pt-1">
+                          <svg
+                            viewBox="0 0 140 40"
+                            className="h-24 w-full max-w-[220px]"
+                            role="img"
+                            aria-label={`Rank trend for ${primarySeries.label}`}
+                          >
+                            <defs>
+                              <linearGradient id="current-focus-spark" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={hexToRgba("#a78bfa", 0.28)} />
+                                <stop offset="100%" stopColor={hexToRgba("#a78bfa", 0)} />
+                              </linearGradient>
+                            </defs>
+
+                            <path d={currentFocusSparkline.areaPath} fill="url(#current-focus-spark)" />
+                            <path
+                              d={currentFocusSparkline.linePath}
+                              fill="none"
+                              stroke="#a78bfa"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <p className="mt-2 text-sm text-muted-foreground">No primary area selected.</p>
+                    <div className="mt-3 rounded-2xl border border-border/40 bg-background/20 p-4">
+                      <p className="text-sm text-muted-foreground">No primary area selected.</p>
+                    </div>
                   )}
                 </div>
-
+                
                 <div>
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-foreground">Selected {geographyMode}s</h4>
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">Selected {geographyMode}s</h4>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Click a selected {geographyMode === "LSOA" ? "LSOA" : "ward"} to remove it
+                      </p>
+                    </div>
                     <p className="text-xs text-muted-foreground">{activeSelectedCodes.length} of {MAX_SELECTION}</p>
                   </div>
 
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-3 space-y-2">
                     {selectedListData.selected.map((item) => {
                       const checked = activeSelectedCodes.includes(item.code);
                       const meta = getOptionMeta(item);
@@ -1377,7 +1486,7 @@ export default function TimeSeries() {
                           onMouseEnter={() => setHoveredCode(item.code)}
                           onMouseLeave={() => setHoveredCode(null)}
                           className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
-                            active ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20 hover:bg-background/30"
+                            active ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20 hover:border-red-400/30 hover:bg-red-500/5"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1389,9 +1498,18 @@ export default function TimeSeries() {
                                 <p className="truncate text-xs text-muted-foreground">{meta.rankDecile}</p>
                               </div>
                             </div>
-                            <span className="text-xs text-primary">
-                              {primaryCode === item.code ? "Primary" : checked ? "Selected" : ""}
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                              {primaryCode === item.code ? (
+                                <span className="text-[11px] font-medium text-primary">Primary</span>
+                              ) : null}
+
+                              {checked ? (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-red-400/25 bg-red-500/10 px-2 py-1 text-[11px] font-medium text-red-300">
+                                  <X className="h-3 w-3" />
+                                  Remove
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
                         </button>
                       );
