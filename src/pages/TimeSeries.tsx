@@ -1,28 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Minus,
-  RotateCcw,
-  Search,
-  X,
-} from "lucide-react";
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { ArrowDown, ArrowUp, Check, Minus, RotateCcw, Search, X } from "lucide-react";
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { GlassCard } from "@/components/ui/glass-card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { useLad } from "@/context/lad-context";
 
 type RangePreset = "5Y" | "Max";
 type GeographyMode = "LSOA" | "Ward";
@@ -95,7 +79,7 @@ const decileChartConfig = {
 } satisfies ChartConfig;
 
 const MAX_SELECTION = 5;
-const TIME_SERIES_STORAGE_KEY = "iod-dashboard-time-series-state";
+const TIME_SERIES_STORAGE_KEY_BASE = "iod-dashboard-time-series-state";
 
 const DECILE_COLORS: Record<number, string> = {
   1: "#F4EFFA",
@@ -220,9 +204,7 @@ function buildSparklineAreaPath(values: number[], width: number, height: number)
   const points = buildSparklinePoints(values, width, height);
   if (!points.length) return "";
 
-  const linePart = points
-    .map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
-    .join(" ");
+  const linePart = points.map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
 
   return `M ${points[0].x.toFixed(2)} ${height} ${linePart} L ${points[points.length - 1].x.toFixed(
     2,
@@ -246,6 +228,13 @@ function TrendIcon({ direction }: { direction: ChangeDirection }) {
 }
 
 export default function TimeSeries() {
+  const { activeLad } = useLad();
+
+  const lsoaSeriesPath = `/data/${activeLad.slug}_lsoa_timeseries_synthetic.json`;
+  const wardSeriesPath = `/data/${activeLad.slug}_ward_timeseries_synthetic.json`;
+  const lookupPath = `/data/${activeLad.slug}_lsoa21_ward20_lookup.json`;
+  const storageKey = `${TIME_SERIES_STORAGE_KEY_BASE}:${activeLad.slug}`;
+
   const [geographyMode, setGeographyMode] = useState<GeographyMode>("LSOA");
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
   const [sortMode, setSortMode] = useState<SortMode>("az");
@@ -269,6 +258,7 @@ export default function TimeSeries() {
   const [lsoaLoading, setLsoaLoading] = useState(true);
   const [wardLoading, setWardLoading] = useState(true);
   const [lookupLoading, setLookupLoading] = useState(true);
+  const [hasRestoredState, setHasRestoredState] = useState(false);
 
   const searchAnchorRef = useRef<HTMLDivElement | null>(null);
   const searchDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -281,84 +271,102 @@ export default function TimeSeries() {
 
   const rankChartHeight = 380;
   const decileChartHeight = 180;
+
   useEffect(() => {
-  try {
-    const raw = window.localStorage.getItem(TIME_SERIES_STORAGE_KEY);
-    if (!raw) return;
+    setHasRestoredState(false);
 
-    const saved = JSON.parse(raw) as Partial<PersistedTimeSeriesState>;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) {
+        setHasRestoredState(true);
+        return;
+      }
 
-    if (saved.geographyMode === "LSOA" || saved.geographyMode === "Ward") {
-      setGeographyMode(saved.geographyMode);
+      const saved = JSON.parse(raw) as Partial<PersistedTimeSeriesState>;
+
+      if (saved.geographyMode === "LSOA" || saved.geographyMode === "Ward") {
+        setGeographyMode(saved.geographyMode);
+      }
+
+      if (saved.rangePreset === "5Y" || saved.rangePreset === "Max") {
+        setRangePreset(saved.rangePreset);
+      }
+
+      if (
+        saved.sortMode === "az" ||
+        saved.sortMode === "most_deprived" ||
+        saved.sortMode === "least_deprived"
+      ) {
+        setSortMode(saved.sortMode);
+      }
+
+      if (Array.isArray(saved.selectedLsoas)) {
+        setSelectedLsoas(saved.selectedLsoas.slice(0, MAX_SELECTION));
+      } else {
+        setSelectedLsoas([]);
+      }
+
+      if (Array.isArray(saved.selectedWards)) {
+        setSelectedWards(saved.selectedWards.slice(0, MAX_SELECTION));
+      } else {
+        setSelectedWards([]);
+      }
+
+      if (typeof saved.primaryLsoaCode === "string") {
+        setPrimaryLsoaCode(saved.primaryLsoaCode);
+      } else {
+        setPrimaryLsoaCode("");
+      }
+
+      if (typeof saved.primaryWardCode === "string") {
+        setPrimaryWardCode(saved.primaryWardCode);
+      } else {
+        setPrimaryWardCode("");
+      }
+    } catch (error) {
+      console.error("Could not restore Time Series state", error);
+    } finally {
+      setHasRestoredState(true);
     }
+  }, [storageKey]);
 
-    if (saved.rangePreset === "5Y" || saved.rangePreset === "Max") {
-      setRangePreset(saved.rangePreset);
+  useEffect(() => {
+    if (!hasRestoredState) return;
+
+    try {
+      const stateToPersist: PersistedTimeSeriesState = {
+        geographyMode,
+        rangePreset,
+        sortMode,
+        selectedLsoas,
+        selectedWards,
+        primaryLsoaCode,
+        primaryWardCode,
+      };
+
+      window.localStorage.setItem(storageKey, JSON.stringify(stateToPersist));
+    } catch (error) {
+      console.error("Could not persist Time Series state", error);
     }
-
-    if (
-      saved.sortMode === "az" ||
-      saved.sortMode === "most_deprived" ||
-      saved.sortMode === "least_deprived"
-    ) {
-      setSortMode(saved.sortMode);
-    }
-
-    if (Array.isArray(saved.selectedLsoas)) {
-      setSelectedLsoas(saved.selectedLsoas.slice(0, MAX_SELECTION));
-    }
-
-    if (Array.isArray(saved.selectedWards)) {
-      setSelectedWards(saved.selectedWards.slice(0, MAX_SELECTION));
-    }
-
-    if (typeof saved.primaryLsoaCode === "string") {
-      setPrimaryLsoaCode(saved.primaryLsoaCode);
-    }
-
-    if (typeof saved.primaryWardCode === "string") {
-      setPrimaryWardCode(saved.primaryWardCode);
-    }
-  } catch (error) {
-    console.error("Could not restore Time Series state", error);
-  }
-}, []);
-
-useEffect(() => {
-  try {
-    const stateToPersist: PersistedTimeSeriesState = {
-      geographyMode,
-      rangePreset,
-      sortMode,
-      selectedLsoas,
-      selectedWards,
-      primaryLsoaCode,
-      primaryWardCode,
-    };
-
-    window.localStorage.setItem(
-      TIME_SERIES_STORAGE_KEY,
-      JSON.stringify(stateToPersist),
-    );
-  } catch (error) {
-    console.error("Could not persist Time Series state", error);
-  }
-}, [
-  geographyMode,
-  rangePreset,
-  sortMode,
-  selectedLsoas,
-  selectedWards,
-  primaryLsoaCode,
-  primaryWardCode,
-]);
+  }, [
+    storageKey,
+    hasRestoredState,
+    geographyMode,
+    rangePreset,
+    sortMode,
+    selectedLsoas,
+    selectedWards,
+    primaryLsoaCode,
+    primaryWardCode,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
+    setLsoaLoading(true);
 
     async function loadLsoaSeriesData() {
       try {
-        const response = await fetch("/data/bristol_lsoa_timeseries_synthetic.json");
+        const response = await fetch(lsoaSeriesPath);
         if (!response.ok) {
           throw new Error(`Failed to load LSOA time-series data: ${response.status}`);
         }
@@ -378,14 +386,15 @@ useEffect(() => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [lsoaSeriesPath]);
 
   useEffect(() => {
     let isMounted = true;
+    setWardLoading(true);
 
     async function loadWardSeriesData() {
       try {
-        const response = await fetch("/data/bristol_ward_timeseries_synthetic.json");
+        const response = await fetch(wardSeriesPath);
         if (!response.ok) {
           throw new Error(`Failed to load Ward time-series data: ${response.status}`);
         }
@@ -405,14 +414,15 @@ useEffect(() => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [wardSeriesPath]);
 
   useEffect(() => {
     let isMounted = true;
+    setLookupLoading(true);
 
     async function loadLookupData() {
       try {
-        const response = await fetch("/data/bristol_lsoa21_ward20_lookup.json");
+        const response = await fetch(lookupPath);
         if (!response.ok) {
           throw new Error(`Failed to load LSOA/Ward lookup: ${response.status}`);
         }
@@ -432,7 +442,7 @@ useEffect(() => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [lookupPath]);
 
   const pageLoading = lsoaLoading || wardLoading || lookupLoading;
 
@@ -473,6 +483,20 @@ useEffect(() => {
       .map(([code, label]) => ({ code, label }))
       .sort((a, b) => a.label.localeCompare(b.label, "en-GB"));
   }, [lsoaWardLookup, lsoaSeriesData]);
+
+  useEffect(() => {
+    if (!lsoaOptions.length) return;
+
+    const allowed = new Set(lsoaOptions.map((item) => item.code));
+    setSelectedLsoas((current) => current.filter((code) => allowed.has(code)).slice(0, MAX_SELECTION));
+  }, [lsoaOptions]);
+
+  useEffect(() => {
+    if (!wardOptions.length) return;
+
+    const allowed = new Set(wardOptions.map((item) => item.code));
+    setSelectedWards((current) => current.filter((code) => allowed.has(code)).slice(0, MAX_SELECTION));
+  }, [wardOptions]);
 
   useEffect(() => {
     if (!selectedLsoas.length && lsoaOptions.length) {
@@ -645,20 +669,20 @@ useEffect(() => {
   );
 
   const currentFocusSparkline = useMemo(() => {
-  if (!primaryVisiblePoints.length) {
+    if (!primaryVisiblePoints.length) {
+      return {
+        linePath: "",
+        areaPath: "",
+      };
+    }
+
+    const rankValues = primaryVisiblePoints.map((point) => Math.round(point.rank));
+
     return {
-      linePath: "",
-      areaPath: "",
+      linePath: buildSparklinePath(rankValues, 140, 40),
+      areaPath: buildSparklineAreaPath(rankValues, 140, 40),
     };
-  }
-
-  const rankValues = primaryVisiblePoints.map((point) => Math.round(point.rank));
-
-  return {
-    linePath: buildSparklinePath(rankValues, 140, 40),
-    areaPath: buildSparklineAreaPath(rankValues, 140, 40),
-  };
-}, [primaryVisiblePoints]);
+  }, [primaryVisiblePoints]);
 
   const activeSearchBase = useMemo(() => {
     if (geographyMode === "LSOA") {
@@ -968,23 +992,24 @@ useEffect(() => {
           className="space-y-3"
         >
           <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
-            Time Series 2019-2025 rankings for <span className="text-primary glow-text-cyan">Bristol</span>
+            Time Series 2019-2025 rankings for{" "}
+            <span className="text-primary glow-text-cyan">{activeLad.name}</span>
           </h1>
 
           <p className="text-muted-foreground text-base md:text-lg">
             Compare selected LSOAs and Wards over time with rank as the primary focus.
-          </p>          
+          </p>
 
           {primaryLatest && primarySeries ? (
             <p className="text-sm text-muted-foreground">
               {primarySeries.label} · Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)} ·{" "}
               <span className="text-foreground/90">
-                {primaryDelta < 0
-                  ? `↓ ${Math.abs(primaryDelta)} place`
-                  : primaryDelta > 0
-                    ? `↑ ${primaryDelta} place`
+                {primaryRangeDelta < 0
+                  ? `↑ ${Math.abs(primaryRangeDelta)} place`
+                  : primaryRangeDelta > 0
+                    ? `↓ ${primaryRangeDelta} place`
                     : "No change"}{" "}
-                since last release
+                since {primaryRangeLabel || "start of range"}
               </span>
             </p>
           ) : null}
@@ -1438,7 +1463,7 @@ useEffect(() => {
 
           <div className="space-y-6">
             <GlassCard className="p-5">
-              <div className="space-y-4">                
+              <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Main Selection</h3>
 
@@ -1537,7 +1562,7 @@ useEffect(() => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -1564,7 +1589,9 @@ useEffect(() => {
                           onMouseEnter={() => setHoveredCode(item.code)}
                           onMouseLeave={() => setHoveredCode(null)}
                           className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
-                            active ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20 hover:border-red-400/30 hover:bg-red-500/5"
+                            active
+                              ? "border-primary/60 bg-primary/10"
+                              : "border-border/40 bg-background/20 hover:border-red-400/30 hover:bg-red-500/5"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
