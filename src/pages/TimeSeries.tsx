@@ -5,7 +5,6 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
-  ChevronsUpDown,
   Minus,
   RotateCcw,
   Search,
@@ -27,7 +26,7 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 
 type RangePreset = "5Y" | "Max";
 type GeographyMode = "LSOA" | "Ward";
-type SortMode = "selection" | "change";
+type SortMode = "az" | "most_deprived" | "least_deprived";
 
 type TimePoint = {
   date: string;
@@ -66,6 +65,7 @@ type SelectedChartSeriesMeta = {
   label: string;
   color: string;
   wardName: string | null;
+  currentDecile: number | null;
 };
 
 type ChangeDirection = "up" | "down" | "flat";
@@ -84,15 +84,20 @@ const decileChartConfig = {
   },
 } satisfies ChartConfig;
 
-const SERIES_PALETTE = [
-  "#22d3ee",
-  "#a78bfa",
-  "#f472b6",
-  "#34d399",
-  "#f59e0b",
-] as const;
-
 const MAX_SELECTION = 5;
+
+const DECILE_COLORS: Record<number, string> = {
+  1: "#F4EFFA",
+  2: "#E6DAF6",
+  3: "#D2BDF0",
+  4: "#BE9BE8",
+  5: "#A378DE",
+  6: "#845EC9",
+  7: "#5E5AB8",
+  8: "#395F97",
+  9: "#286379",
+  10: "#429B7E",
+};
 
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -205,7 +210,7 @@ function buildSparklineAreaPath(values: number[], width: number, height: number)
   if (!points.length) return "";
 
   const linePart = points
-    .map((point, index) => `${index === 0 ? "L" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+    .map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
     .join(" ");
 
   return `M ${points[0].x.toFixed(2)} ${height} ${linePart} L ${points[points.length - 1].x.toFixed(
@@ -232,10 +237,13 @@ function TrendIcon({ direction }: { direction: ChangeDirection }) {
 export default function TimeSeries() {
   const [geographyMode, setGeographyMode] = useState<GeographyMode>("LSOA");
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
-  const [sortMode, setSortMode] = useState<SortMode>("selection");
+  const [sortMode, setSortMode] = useState<SortMode>("az");
 
   const [selectedLsoas, setSelectedLsoas] = useState<string[]>([]);
   const [selectedWards, setSelectedWards] = useState<string[]>([]);
+
+  const [primaryLsoaCode, setPrimaryLsoaCode] = useState<string>("");
+  const [primaryWardCode, setPrimaryWardCode] = useState<string>("");
 
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
 
@@ -261,7 +269,7 @@ export default function TimeSeries() {
   } | null>(null);
 
   const rankChartHeight = 380;
-  const decileChartHeight = 220;
+  const decileChartHeight = 180;
 
   useEffect(() => {
     let isMounted = true;
@@ -386,18 +394,42 @@ export default function TimeSeries() {
 
   useEffect(() => {
     if (!selectedLsoas.length && lsoaOptions.length) {
-      setSelectedLsoas([lsoaOptions[0].code]);
+      const first = lsoaOptions[0].code;
+      setSelectedLsoas([first]);
+      setPrimaryLsoaCode(first);
     }
   }, [selectedLsoas.length, lsoaOptions]);
 
   useEffect(() => {
     if (!selectedWards.length && wardOptions.length) {
-      setSelectedWards([wardOptions[0].code]);
+      const first = wardOptions[0].code;
+      setSelectedWards([first]);
+      setPrimaryWardCode(first);
     }
   }, [selectedWards.length, wardOptions]);
 
+  useEffect(() => {
+    if (!selectedLsoas.length) {
+      setPrimaryLsoaCode("");
+      return;
+    }
+    if (!primaryLsoaCode || !selectedLsoas.includes(primaryLsoaCode)) {
+      setPrimaryLsoaCode(selectedLsoas[0]);
+    }
+  }, [selectedLsoas, primaryLsoaCode]);
+
+  useEffect(() => {
+    if (!selectedWards.length) {
+      setPrimaryWardCode("");
+      return;
+    }
+    if (!primaryWardCode || !selectedWards.includes(primaryWardCode)) {
+      setPrimaryWardCode(selectedWards[0]);
+    }
+  }, [selectedWards, primaryWardCode]);
+
   const activeSelectedCodes = geographyMode === "LSOA" ? selectedLsoas : selectedWards;
-  const primaryCode = activeSelectedCodes[0] ?? "";
+  const primaryCode = geographyMode === "LSOA" ? primaryLsoaCode : primaryWardCode;
 
   const activeSeriesByCode = geographyMode === "LSOA" ? lsoaSeriesByCode : wardSeriesByCode;
   const totalAreas = geographyMode === "LSOA" ? lsoaSeriesData.length : wardSeriesData.length;
@@ -411,27 +443,41 @@ export default function TimeSeries() {
     [activeSelectedCodes, activeSeriesByCode],
   );
 
-  const seriesColorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    activeSelectedCodes.slice(0, MAX_SELECTION).forEach((code, index) => {
-      map.set(code, SERIES_PALETTE[index % SERIES_PALETTE.length]);
-    });
-    return map;
-  }, [activeSelectedCodes]);
-
   const selectedSeriesMeta = useMemo<SelectedChartSeriesMeta[]>(
     () =>
-      selectedSeries.map((series) => ({
-        code: series.code,
-        label: series.label,
-        color: seriesColorMap.get(series.code) ?? SERIES_PALETTE[0],
-        wardName:
-          geographyMode === "LSOA"
-            ? lsoaWardByLsoaCode.get(series.code)?.ward_name?.trim() || null
-            : null,
-      })),
-    [selectedSeries, seriesColorMap, geographyMode, lsoaWardByLsoaCode],
+      selectedSeries.map((series) => {
+        const latest = getLatestVisiblePoint(series, rangePreset);
+        const currentDecile = latest ? Math.round(latest.decile) : null;
+
+        return {
+          code: series.code,
+          label: series.label,
+          currentDecile,
+          color: currentDecile ? DECILE_COLORS[currentDecile] ?? DECILE_COLORS[10] : DECILE_COLORS[10],
+          wardName:
+            geographyMode === "LSOA"
+              ? lsoaWardByLsoaCode.get(series.code)?.ward_name?.trim() || null
+              : null,
+        };
+      }),
+    [selectedSeries, rangePreset, geographyMode, lsoaWardByLsoaCode],
   );
+
+  const legendSeriesMeta = useMemo(
+    () =>
+      [...selectedSeriesMeta].sort((a, b) =>
+        a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }),
+      ),
+    [selectedSeriesMeta],
+  );
+
+  const seriesColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    selectedSeriesMeta.forEach((series) => {
+      map.set(series.code, series.color);
+    });
+    return map;
+  }, [selectedSeriesMeta]);
 
   const primarySeries = primaryCode ? activeSeriesByCode.get(primaryCode) ?? null : null;
   const primaryVisiblePoints = useMemo(
@@ -506,63 +552,49 @@ export default function TimeSeries() {
     [primaryVisiblePoints],
   );
 
-  const lsoaSearchBase = useMemo(() => {
-    return lsoaOptions.map((option) => {
-      const wardName = lsoaWardByLsoaCode.get(option.code)?.ward_name?.trim();
-      return {
-        kind: "LSOA" as const,
-        code: option.code,
-        label: option.label,
-        subLabel: wardName ? `${option.code} · ${wardName}` : option.code,
-      };
-    });
-  }, [lsoaOptions, lsoaWardByLsoaCode]);
+  const activeSearchBase = useMemo(() => {
+    if (geographyMode === "LSOA") {
+      return lsoaOptions.map((option) => {
+        const wardName = lsoaWardByLsoaCode.get(option.code)?.ward_name?.trim();
+        return {
+          kind: "LSOA" as const,
+          code: option.code,
+          label: option.label,
+          subLabel: wardName ? `${option.code} · ${wardName}` : option.code,
+          selected: selectedLsoas.includes(option.code),
+        };
+      });
+    }
 
-  const wardSearchBase = useMemo(
-    () =>
-      wardOptions.map((option) => ({
-        kind: "Ward" as const,
-        code: option.code,
-        label: option.label,
-        subLabel: option.code,
-      })),
-    [wardOptions],
-  );
+    return wardOptions.map((option) => ({
+      kind: "Ward" as const,
+      code: option.code,
+      label: option.label,
+      subLabel: option.code,
+      selected: selectedWards.includes(option.code),
+    }));
+  }, [geographyMode, lsoaOptions, wardOptions, lsoaWardByLsoaCode, selectedLsoas, selectedWards]);
 
   const searchResults = useMemo(() => {
     const term = searchInput.trim().toLowerCase();
 
-    const matches = (item: { label: string; code: string; subLabel: string }) =>
-      !term ||
-      item.label.toLowerCase().includes(term) ||
-      item.code.toLowerCase().includes(term) ||
-      item.subLabel.toLowerCase().includes(term);
-
-    const lsoaResults: SearchResult[] = lsoaSearchBase
-      .filter(matches)
-      .slice(0, 12)
-      .map((item) => ({ ...item, selected: selectedLsoas.includes(item.code) }));
-
-    const wardResults: SearchResult[] = wardSearchBase
-      .filter(matches)
-      .slice(0, 12)
-      .map((item) => ({ ...item, selected: selectedWards.includes(item.code) }));
-
-    return { lsoaResults, wardResults };
-  }, [searchInput, lsoaSearchBase, wardSearchBase, selectedLsoas, selectedWards]);
-
-  const flattenedSearchResults = useMemo(
-    () => [...searchResults.lsoaResults, ...searchResults.wardResults],
-    [searchResults],
-  );
+    return activeSearchBase.filter((item) => {
+      return (
+        !term ||
+        item.label.toLowerCase().includes(term) ||
+        item.code.toLowerCase().includes(term) ||
+        item.subLabel.toLowerCase().includes(term)
+      );
+    });
+  }, [searchInput, activeSearchBase]);
 
   useEffect(() => {
-    if (!flattenedSearchResults.length) {
+    if (!searchResults.length) {
       setActiveSearchIndex(0);
       return;
     }
-    setActiveSearchIndex((current) => Math.min(current, flattenedSearchResults.length - 1));
-  }, [flattenedSearchResults]);
+    setActiveSearchIndex((current) => Math.min(current, searchResults.length - 1));
+  }, [searchResults]);
 
   useEffect(() => {
     if (!searchOpen || !searchAnchorRef.current) return;
@@ -604,7 +636,7 @@ export default function TimeSeries() {
 
   const selectedAreasSummary = useMemo(() => {
     const rows = selectedSeriesMeta
-      .map((meta, index) => {
+      .map((meta) => {
         const series = activeSeriesByCode.get(meta.code);
         if (!series) return null;
         const points = filterPointsByRange(series.points, rangePreset);
@@ -616,7 +648,6 @@ export default function TimeSeries() {
         const sparkValues = points.map((point) => point.rank);
 
         return {
-          index,
           code: meta.code,
           label: meta.label,
           wardName: meta.wardName,
@@ -625,13 +656,13 @@ export default function TimeSeries() {
           endYear: new Date(end.date).getFullYear(),
           startRank: Math.round(start.rank),
           endRank: Math.round(end.rank),
+          currentRank: Math.round(end.rank),
           delta,
           sparklinePath: buildSparklinePath(sparkValues, 96, 24),
           sparklineAreaPath: buildSparklineAreaPath(sparkValues, 96, 24),
         };
       })
       .filter(Boolean) as {
-      index: number;
       code: string;
       label: string;
       wardName: string | null;
@@ -640,29 +671,43 @@ export default function TimeSeries() {
       endYear: number;
       startRank: number;
       endRank: number;
+      currentRank: number;
       delta: number;
       sparklinePath: string;
       sparklineAreaPath: string;
     }[];
 
-    if (sortMode === "change") {
-      return [...rows].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    if (sortMode === "most_deprived") {
+      return [...rows].sort((a, b) => a.currentRank - b.currentRank);
     }
 
-    return rows.sort((a, b) => a.index - b.index);
+    if (sortMode === "least_deprived") {
+      return [...rows].sort((a, b) => b.currentRank - a.currentRank);
+    }
+
+    return [...rows].sort((a, b) =>
+      a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }),
+    );
   }, [selectedSeriesMeta, activeSeriesByCode, rangePreset, sortMode]);
 
   const selectedListData = useMemo(() => {
-    const selectedSet = new Set(activeSelectedCodes);
     const baseOptions = geographyMode === "LSOA" ? lsoaOptions : wardOptions;
 
     const selected = activeSelectedCodes
       .map((code) => baseOptions.find((option) => option.code === code))
       .filter(Boolean) as SelectOption[];
 
-    const available = baseOptions.filter((option) => !selectedSet.has(option.code));
-    return { selected, available };
+    return { selected };
   }, [activeSelectedCodes, geographyMode, lsoaOptions, wardOptions]);
+
+  function setPrimarySelection(code: string) {
+    if (geographyMode === "LSOA") {
+      if (selectedLsoas.includes(code)) setPrimaryLsoaCode(code);
+      return;
+    }
+
+    if (selectedWards.includes(code)) setPrimaryWardCode(code);
+  }
 
   function toggleSelectedLsoa(code: string) {
     setSelectedLsoas((current) => {
@@ -691,8 +736,19 @@ export default function TimeSeries() {
   function handleSearchSelect(item: SearchResult) {
     setGeographyMode(item.kind);
 
-    if (item.kind === "LSOA") toggleSelectedLsoa(item.code);
-    if (item.kind === "Ward") toggleSelectedWard(item.code);
+    if (item.kind === "LSOA") {
+      if (!selectedLsoas.includes(item.code) && selectedLsoas.length < MAX_SELECTION) {
+        setSelectedLsoas((current) => [...current, item.code]);
+      }
+      setPrimaryLsoaCode(item.code);
+    }
+
+    if (item.kind === "Ward") {
+      if (!selectedWards.includes(item.code) && selectedWards.length < MAX_SELECTION) {
+        setSelectedWards((current) => [...current, item.code]);
+      }
+      setPrimaryWardCode(item.code);
+    }
 
     setSearchOpen(false);
     setSearchInput("");
@@ -729,11 +785,17 @@ export default function TimeSeries() {
   function resetFilters() {
     setGeographyMode("LSOA");
     setRangePreset("Max");
-    setSortMode("selection");
+    setSortMode("az");
     setSearchInput("");
     setSearchOpen(false);
-    setSelectedLsoas(lsoaOptions.length ? [lsoaOptions[0].code] : []);
-    setSelectedWards(wardOptions.length ? [wardOptions[0].code] : []);
+
+    const nextLsoa = lsoaOptions.length ? [lsoaOptions[0].code] : [];
+    const nextWard = wardOptions.length ? [wardOptions[0].code] : [];
+
+    setSelectedLsoas(nextLsoa);
+    setSelectedWards(nextWard);
+    setPrimaryLsoaCode(nextLsoa[0] ?? "");
+    setPrimaryWardCode(nextWard[0] ?? "");
   }
 
   const searchDropdown =
@@ -748,70 +810,40 @@ export default function TimeSeries() {
               width: dropdownRect.width,
             }}
           >
-            {flattenedSearchResults.length ? (
-              <div className="max-h-72 overflow-y-auto space-y-2">
-                <div>
-                  <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">LSOAs</p>
-                  <div className="space-y-1">
-                    {searchResults.lsoaResults.map((result) => {
-                      const flatIndex = flattenedSearchResults.findIndex(
-                        (item) => item.kind === result.kind && item.code === result.code,
-                      );
-                      const active = flatIndex === activeSearchIndex;
+            <div className="px-2 pb-2">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {geographyMode === "LSOA" ? `LSOAs (${lsoaOptions.length} total)` : `Wards (${wardOptions.length} total)`}
+              </p>
+            </div>
 
-                      return (
-                        <button
-                          key={`${result.kind}-${result.code}`}
-                          type="button"
-                          onMouseEnter={() => setActiveSearchIndex(flatIndex)}
-                          onClick={() => handleSearchSelect(result)}
-                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                            active ? "bg-primary/15" : "hover:bg-background/50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-medium text-foreground">{result.label}</span>
-                            {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{result.subLabel}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+            {searchResults.length ? (
+              <div className="max-h-80 overflow-y-auto space-y-1">
+                {searchResults.map((result, index) => {
+                  const active = index === activeSearchIndex;
 
-                <div>
-                  <p className="px-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Wards</p>
-                  <div className="space-y-1">
-                    {searchResults.wardResults.map((result) => {
-                      const flatIndex = flattenedSearchResults.findIndex(
-                        (item) => item.kind === result.kind && item.code === result.code,
-                      );
-                      const active = flatIndex === activeSearchIndex;
-
-                      return (
-                        <button
-                          key={`${result.kind}-${result.code}`}
-                          type="button"
-                          onMouseEnter={() => setActiveSearchIndex(flatIndex)}
-                          onClick={() => handleSearchSelect(result)}
-                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                            active ? "bg-primary/15" : "hover:bg-background/50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-medium text-foreground">{result.label}</span>
-                            {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{result.subLabel}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                  return (
+                    <button
+                      key={`${result.kind}-${result.code}`}
+                      type="button"
+                      onMouseEnter={() => setActiveSearchIndex(index)}
+                      onClick={() => handleSearchSelect(result)}
+                      className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                        active ? "bg-primary/15" : "hover:bg-background/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-foreground">{result.label}</span>
+                        {result.selected ? <Check className="h-4 w-4 text-primary" /> : null}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{result.subLabel}</p>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
-              <p className="px-2 py-8 text-center text-sm text-muted-foreground">No matching LSOAs or wards</p>
+              <p className="px-2 py-8 text-center text-sm text-muted-foreground">
+                No matching {geographyMode === "LSOA" ? "LSOAs" : "wards"}
+              </p>
             )}
           </div>,
           document.body,
@@ -835,6 +867,10 @@ export default function TimeSeries() {
             Compare selected LSOAs and wards over time with rank as the primary focus.
           </p>
 
+          <p className="text-sm text-muted-foreground">
+            {lsoaOptions.length} LSOAs total · {wardOptions.length} wards total
+          </p>
+
           {primaryLatest && primarySeries ? (
             <p className="text-sm text-muted-foreground">
               {primarySeries.label} · Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)} ·{" "}
@@ -853,15 +889,15 @@ export default function TimeSeries() {
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.9fr)_360px] gap-6 items-start">
           <div className="space-y-6">
             <GlassCard className="p-6">
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-foreground">Rank over time</h2>
-                  <p className="text-xs text-muted-foreground">Lower rank = more deprived</p>
+                  <h2 className="text-xl font-semibold text-foreground">Rank and decile over time</h2>
+                  <p className="text-xs text-muted-foreground">Lower rank = more deprived · Decile 1 = most deprived</p>
                 </div>
 
-                {!!selectedSeriesMeta.length && (
+                {!!legendSeriesMeta.length && (
                   <div className="flex flex-wrap gap-2">
-                    {selectedSeriesMeta.map((item) => (
+                    {legendSeriesMeta.map((item) => (
                       <button
                         key={item.code}
                         type="button"
@@ -869,6 +905,7 @@ export default function TimeSeries() {
                         onMouseLeave={() => setHoveredCode(null)}
                         onFocus={() => setHoveredCode(item.code)}
                         onBlur={() => setHoveredCode(null)}
+                        onClick={() => setPrimarySelection(item.code)}
                         className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
                           hoveredCode === item.code
                             ? "border-primary/60 bg-primary/10"
@@ -877,6 +914,9 @@ export default function TimeSeries() {
                       >
                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="text-xs text-foreground">{item.label}</span>
+                        {primaryCode === item.code ? (
+                          <span className="text-[10px] uppercase tracking-wide text-primary">Primary</span>
+                        ) : null}
                       </button>
                     ))}
                   </div>
@@ -902,7 +942,7 @@ export default function TimeSeries() {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={mainRankChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
                           <defs>
-                            {selectedSeriesMeta.map((series) => (
+                            {legendSeriesMeta.map((series) => (
                               <linearGradient
                                 key={`gradient-${series.code}`}
                                 id={`gradient-${series.code}`}
@@ -936,7 +976,7 @@ export default function TimeSeries() {
                               const row = payload[0]?.payload as Record<string, unknown>;
                               const dateLabel = typeof row.shortDate === "string" ? row.shortDate : "";
 
-                              const items = selectedSeriesMeta
+                              const items = legendSeriesMeta
                                 .map((series) => {
                                   const value = row[series.code];
                                   if (typeof value !== "number") return null;
@@ -966,6 +1006,9 @@ export default function TimeSeries() {
                                               style={{ backgroundColor: item!.color }}
                                             />
                                             <span className="truncate text-sm text-foreground">{item!.label}</span>
+                                            {primaryCode === item!.code ? (
+                                              <span className="text-[10px] uppercase tracking-wide text-primary">Primary</span>
+                                            ) : null}
                                           </div>
                                           {item!.ward ? (
                                             <p className="mt-0.5 text-[11px] text-muted-foreground">
@@ -984,7 +1027,7 @@ export default function TimeSeries() {
                             }}
                           />
 
-                          {selectedSeriesMeta.map((series) => (
+                          {legendSeriesMeta.map((series) => (
                             <Area
                               key={`${series.code}-area`}
                               type="linear"
@@ -997,7 +1040,7 @@ export default function TimeSeries() {
                             />
                           ))}
 
-                          {selectedSeriesMeta.map((series) => {
+                          {legendSeriesMeta.map((series) => {
                             const muted = hoveredCode && hoveredCode !== series.code;
                             return (
                               <Line
@@ -1014,6 +1057,7 @@ export default function TimeSeries() {
                                   stroke: "rgba(255,255,255,0.9)",
                                   strokeWidth: 2,
                                 }}
+                                onClick={() => setPrimarySelection(series.code)}
                                 connectNulls={false}
                               />
                             );
@@ -1030,65 +1074,73 @@ export default function TimeSeries() {
                     </div>
                   )}
                 </div>
-              </div>
-            </GlassCard>
 
-            <GlassCard className="p-5">
-              <div className="space-y-3 border-t border-border/0">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-foreground">Decile (secondary)</h2>
-                  <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
+                <div className="border-t border-border/40 pt-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-foreground">Primary area decile</h3>
+                    <p className="text-xs text-muted-foreground">1 = most deprived, 10 = least deprived</p>
+                  </div>
+
+                  {pageLoading ? (
+                    <div
+                      className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                      style={{ height: `${decileChartHeight}px` }}
+                    >
+                      Loading time-series data...
+                    </div>
+                  ) : decileChartData.length ? (
+                    <ChartContainer config={decileChartConfig} className="w-full" style={{ height: `${decileChartHeight}px` }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={decileChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
+                          <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            allowDecimals={false}
+                            domain={[10, 1]}
+                            reversed
+                            ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                          />
+                          <Tooltip
+                            cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const row = payload[0]?.payload as Record<string, unknown>;
+                              return (
+                                <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
+                                  <p className="text-sm font-medium text-foreground">{String(row.shortDate ?? "")}</p>
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas}
+                                  </p>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Line
+                            type="stepAfter"
+                            dataKey="decile"
+                            stroke={
+                              primaryLatest
+                                ? DECILE_COLORS[Math.round(primaryLatest.decile)] ?? "var(--color-decile)"
+                                : "var(--color-decile)"
+                            }
+                            strokeWidth={2.5}
+                            dot={false}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  ) : (
+                    <div
+                      className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
+                      style={{ height: `${decileChartHeight}px` }}
+                    >
+                      No decile data for the primary selected area
+                    </div>
+                  )}
                 </div>
-
-                {pageLoading ? (
-                  <div
-                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                    style={{ height: `${decileChartHeight}px` }}
-                  >
-                    Loading time-series data...
-                  </div>
-                ) : decileChartData.length ? (
-                  <ChartContainer config={decileChartConfig} className="w-full" style={{ height: `${decileChartHeight}px` }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={decileChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
-                        <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          allowDecimals={false}
-                          domain={[10, 1]}
-                          reversed
-                          ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                        />
-                        <Tooltip
-                          cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
-                          content={({ active, payload }) => {
-                            if (!active || !payload?.length) return null;
-                            const row = payload[0]?.payload as Record<string, unknown>;
-                            return (
-                              <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
-                                <p className="text-sm font-medium text-foreground">{String(row.shortDate ?? "")}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas}
-                                </p>
-                              </div>
-                            );
-                          }}
-                        />
-                        <Line type="stepAfter" dataKey="decile" stroke="var(--color-decile)" strokeWidth={2.5} dot={false} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                ) : (
-                  <div
-                    className="flex items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/10 text-sm text-muted-foreground"
-                    style={{ height: `${decileChartHeight}px` }}
-                  >
-                    No decile data for the primary selected area
-                  </div>
-                )}
               </div>
             </GlassCard>
           </div>
@@ -1101,7 +1153,11 @@ export default function TimeSeries() {
                     <button
                       key={mode}
                       type="button"
-                      onClick={() => setGeographyMode(mode)}
+                      onClick={() => {
+                        setGeographyMode(mode);
+                        setSearchInput("");
+                        setSearchOpen(false);
+                      }}
                       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                         geographyMode === mode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
                       }`}
@@ -1136,6 +1192,10 @@ export default function TimeSeries() {
                 </button>
               </div>
 
+              <div className="mt-3 text-xs text-muted-foreground">
+                {lsoaOptions.length} LSOAs total · {wardOptions.length} wards total
+              </div>
+
               <div className="mt-4" ref={searchAnchorRef}>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1147,25 +1207,25 @@ export default function TimeSeries() {
                       setSearchOpen(true);
                     }}
                     onKeyDown={(event) => {
-                      if (!flattenedSearchResults.length && event.key !== "Escape") return;
+                      if (!searchResults.length && event.key !== "Escape") return;
 
                       if (event.key === "ArrowDown") {
                         event.preventDefault();
                         setSearchOpen(true);
-                        setActiveSearchIndex((current) => (current + 1) % flattenedSearchResults.length);
+                        setActiveSearchIndex((current) => (current + 1) % searchResults.length);
                       }
 
                       if (event.key === "ArrowUp") {
                         event.preventDefault();
                         setSearchOpen(true);
                         setActiveSearchIndex((current) =>
-                          current === 0 ? flattenedSearchResults.length - 1 : current - 1,
+                          current === 0 ? searchResults.length - 1 : current - 1,
                         );
                       }
 
-                      if (event.key === "Enter" && flattenedSearchResults.length) {
+                      if (event.key === "Enter" && searchResults.length) {
                         event.preventDefault();
-                        handleSearchSelect(flattenedSearchResults[activeSearchIndex]);
+                        handleSearchSelect(searchResults[activeSearchIndex]);
                       }
 
                       if (event.key === "Escape") {
@@ -1173,8 +1233,8 @@ export default function TimeSeries() {
                       }
                     }}
                     className="w-full rounded-xl border border-border/50 bg-background/30 px-10 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
-                    placeholder="Search LSOAs or Wards…"
-                    aria-label="Search LSOAs or Wards"
+                    placeholder={`Search ${geographyMode === "LSOA" ? "LSOAs" : "Wards"}…`}
+                    aria-label={`Search ${geographyMode === "LSOA" ? "LSOAs" : "Wards"}`}
                   />
                   {searchInput ? (
                     <button
@@ -1195,25 +1255,32 @@ export default function TimeSeries() {
 
             <GlassCard className="p-5">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <h3 className="text-lg font-semibold text-foreground">Selected areas summary</h3>
-                  <button
-                    type="button"
-                    onClick={() => setSortMode((current) => (current === "selection" ? "change" : "selection"))}
-                    className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ChevronsUpDown className="h-3.5 w-3.5" />
-                    {sortMode === "selection" ? "Selection order" : "Largest change"}
-                  </button>
+
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Sort By</span>
+                    <select
+                      value={sortMode}
+                      onChange={(event) => setSortMode(event.target.value as SortMode)}
+                      className="rounded-md border border-border/50 bg-background/30 px-2.5 py-1.5 text-xs text-foreground outline-none"
+                    >
+                      <option value="az">A-Z</option>
+                      <option value="most_deprived">Most deprived</option>
+                      <option value="least_deprived">Least deprived</option>
+                    </select>
+                  </label>
                 </div>
 
                 <div className="space-y-2">
                   {selectedAreasSummary.map((item) => (
-                    <div
+                    <button
                       key={item.code}
+                      type="button"
                       onMouseEnter={() => setHoveredCode(item.code)}
                       onMouseLeave={() => setHoveredCode(null)}
-                      className={`rounded-xl border px-3 py-3 transition-colors ${
+                      onClick={() => setPrimarySelection(item.code)}
+                      className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
                         hoveredCode === item.code ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20"
                       }`}
                     >
@@ -1222,6 +1289,9 @@ export default function TimeSeries() {
                           <div className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                             <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                            {primaryCode === item.code ? (
+                              <span className="text-[10px] uppercase tracking-wide text-primary">Primary</span>
+                            ) : null}
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
                             {item.code}
@@ -1255,7 +1325,7 @@ export default function TimeSeries() {
                         <TrendIcon direction={getChangeDirection(item.delta)} />
                         <ChangeText delta={item.delta} />
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1296,13 +1366,14 @@ export default function TimeSeries() {
                     {selectedListData.selected.map((item) => {
                       const checked = activeSelectedCodes.includes(item.code);
                       const meta = getOptionMeta(item);
-                      const color = seriesColorMap.get(item.code) ?? SERIES_PALETTE[0];
+                      const color = seriesColorMap.get(item.code) ?? DECILE_COLORS[10];
                       const active = hoveredCode === item.code;
                       return (
                         <button
                           key={item.code}
                           type="button"
                           onClick={() => handleSelectionToggle(item.code)}
+                          onDoubleClick={() => setPrimarySelection(item.code)}
                           onMouseEnter={() => setHoveredCode(item.code)}
                           onMouseLeave={() => setHoveredCode(null)}
                           className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
@@ -1318,32 +1389,10 @@ export default function TimeSeries() {
                                 <p className="truncate text-xs text-muted-foreground">{meta.rankDecile}</p>
                               </div>
                             </div>
-                            <span className="text-xs text-primary">{checked ? "Selected" : ""}</span>
+                            <span className="text-xs text-primary">
+                              {primaryCode === item.code ? "Primary" : checked ? "Selected" : ""}
+                            </span>
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="border-t border-border/40 pt-3">
-                  <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Available</p>
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {selectedListData.available.map((item) => {
-                      const meta = getOptionMeta(item);
-                      const disableUnchecked = activeSelectedCodes.length >= MAX_SELECTION;
-                      return (
-                        <button
-                          key={item.code}
-                          type="button"
-                          disabled={disableUnchecked}
-                          onClick={() => handleSelectionToggle(item.code)}
-                          className={`w-full rounded-lg border border-border/30 px-3 py-2 text-left transition-colors ${
-                            disableUnchecked ? "opacity-50 cursor-not-allowed" : "bg-background/20 hover:bg-background/30"
-                          }`}
-                        >
-                          <p className="truncate text-sm text-foreground">{item.label}</p>
-                          <p className="truncate text-xs text-muted-foreground">{meta.secondary}</p>
                         </button>
                       );
                     })}
