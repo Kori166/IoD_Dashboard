@@ -70,6 +70,16 @@ type SelectedChartSeriesMeta = {
 
 type ChangeDirection = "up" | "down" | "flat";
 
+type PersistedTimeSeriesState = {
+  geographyMode: GeographyMode;
+  rangePreset: RangePreset;
+  sortMode: SortMode;
+  selectedLsoas: string[];
+  selectedWards: string[];
+  primaryLsoaCode: string;
+  primaryWardCode: string;
+};
+
 const rankChartConfig = {
   rank: {
     label: "Rank",
@@ -85,6 +95,7 @@ const decileChartConfig = {
 } satisfies ChartConfig;
 
 const MAX_SELECTION = 5;
+const TIME_SERIES_STORAGE_KEY = "iod-dashboard-time-series-state";
 
 const DECILE_COLORS: Record<number, string> = {
   1: "#F4EFFA",
@@ -270,6 +281,77 @@ export default function TimeSeries() {
 
   const rankChartHeight = 380;
   const decileChartHeight = 180;
+  useEffect(() => {
+  try {
+    const raw = window.localStorage.getItem(TIME_SERIES_STORAGE_KEY);
+    if (!raw) return;
+
+    const saved = JSON.parse(raw) as Partial<PersistedTimeSeriesState>;
+
+    if (saved.geographyMode === "LSOA" || saved.geographyMode === "Ward") {
+      setGeographyMode(saved.geographyMode);
+    }
+
+    if (saved.rangePreset === "5Y" || saved.rangePreset === "Max") {
+      setRangePreset(saved.rangePreset);
+    }
+
+    if (
+      saved.sortMode === "az" ||
+      saved.sortMode === "most_deprived" ||
+      saved.sortMode === "least_deprived"
+    ) {
+      setSortMode(saved.sortMode);
+    }
+
+    if (Array.isArray(saved.selectedLsoas)) {
+      setSelectedLsoas(saved.selectedLsoas.slice(0, MAX_SELECTION));
+    }
+
+    if (Array.isArray(saved.selectedWards)) {
+      setSelectedWards(saved.selectedWards.slice(0, MAX_SELECTION));
+    }
+
+    if (typeof saved.primaryLsoaCode === "string") {
+      setPrimaryLsoaCode(saved.primaryLsoaCode);
+    }
+
+    if (typeof saved.primaryWardCode === "string") {
+      setPrimaryWardCode(saved.primaryWardCode);
+    }
+  } catch (error) {
+    console.error("Could not restore Time Series state", error);
+  }
+}, []);
+
+useEffect(() => {
+  try {
+    const stateToPersist: PersistedTimeSeriesState = {
+      geographyMode,
+      rangePreset,
+      sortMode,
+      selectedLsoas,
+      selectedWards,
+      primaryLsoaCode,
+      primaryWardCode,
+    };
+
+    window.localStorage.setItem(
+      TIME_SERIES_STORAGE_KEY,
+      JSON.stringify(stateToPersist),
+    );
+  } catch (error) {
+    console.error("Could not persist Time Series state", error);
+  }
+}, [
+  geographyMode,
+  rangePreset,
+  sortMode,
+  selectedLsoas,
+  selectedWards,
+  primaryLsoaCode,
+  primaryWardCode,
+]);
 
   useEffect(() => {
     let isMounted = true;
