@@ -25,7 +25,7 @@ export function TopBar() {
         {/* Region badge */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
           <MapPin className="h-3 w-3" />
-          England
+          Bristol
         </div>
 
         {/* Last updated */}
