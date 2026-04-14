@@ -1,0 +1,80 @@
+{
+  "manifest_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "dashboard_id": "iod_dashboard",
+  "run_id": "2026-04-14",
+  "generated_at": "2026-04-14T00:00:00Z",
+  "publication_mode": "static_snapshot",
+  "release_channel": "latest",
+  "default_geography": "LAD",
+  "default_area_code": "E06000023",
+  "coverage": {
+    "scope": "UK",
+    "geographies": ["UK", "COUNTRY", "REGION", "LAD", "WARD", "LSOA"],
+    "area_counts": {
+      "UK": 1,
+      "COUNTRY": 4,
+      "REGION": null,
+      "LAD": null,
+      "WARD": null,
+      "LSOA": null
+    }
+  },
+  "storage": {
+    "use_external_data_store": true,
+    "published_data_root": "https://data.example.org/iod-dashboard/latest/",
+    "archive_root": "https://data.example.org/iod-dashboard/runs/",
+    "local_repo_fallback_root": "/data/latest/"
+  },
+  "bootstrap_files": {
+    "lads": "lads.json",
+    "geographies": "geographies.json",
+    "search_index": "search_index.json",
+    "sources": "sources.json",
+    "build_info": "build_info.json",
+    "schema": "schema.json",
+    "uk_overview": "uk/overview.json",
+    "uk_indicators": "uk/indicators.json",
+    "uk_timeseries": "uk/timeseries.json"
+  },
+  "lookup_files": {
+    "lsoa21_to_ward20": "lookups/lsoa21_to_ward20.json",
+    "lsoa21_to_lad": "lookups/lsoa21_to_lad.json",
+    "ward20_to_lad": "lookups/ward20_to_lad.json",
+    "lad_lookup": "lookups/lad_lookup.json"
+  },
+  "dataset_patterns": {
+    "nation_profile": "nations/{nation_code}.json",
+    "region_profile": "regions/{region_code}.json",
+    "lad_overview": "lads/{lad_code}/overview.json",
+    "lad_indicators": "lads/{lad_code}/indicators.json",
+    "lad_timeseries": "lads/{lad_code}/timeseries.json",
+    "lad_ward_timeseries": "lads/{lad_code}/ward_timeseries.json",
+    "lad_lsoa_timeseries": "lads/{lad_code}/lsoa_timeseries.json",
+    "lad_sources": "lads/{lad_code}/sources.json",
+    "lad_metadata": "lads/{lad_code}/metadata.json"
+  },
+  "map_files": {
+    "uk_lad_boundaries": "maps/uk_lad_boundaries_simplified.topojson",
+    "lad_ward_boundaries": "maps/{lad_code}_ward_boundaries_simplified.topojson",
+    "lad_lsoa_boundaries": "maps/{lad_code}_lsoa_boundaries_simplified.topojson"
+  },
+  "history": {
+    "runs_index": "runs_index.json",
+    "run_path_pattern": "{run_id}/"
+  },
+  "integrity": {
+    "hash_algorithm": "sha256",
+    "files": {}
+  },
+  "ui": {
+    "lazy_load_geographies": ["REGION", "LAD", "WARD", "LSOA"],
+    "preload_files": ["lads", "geographies", "search_index", "uk_overview"],
+    "prefer_external_data_store": true
+  },
+  "notes": [
+    "The dashboard should load manifest.json first, then resolve all other paths relative to storage.published_data_root unless local fallback is enabled.",
+    "For local-only development, set storage.use_external_data_store to false and use /data/latest/ as the effective root.",
+    "Pipeline should update run_id, generated_at, area_counts, and integrity.files on each publication."
+  ]
+}

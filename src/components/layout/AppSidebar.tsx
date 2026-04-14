@@ -1,6 +1,5 @@
 import {
-  LayoutDashboard, Map, BarChart3, GitCompare,
-  Workflow, Database, Search, MapPin, Clock
+  LayoutDashboard, Map, BarChart3, Workflow, Database, Search, MapPin, Clock
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -15,8 +14,7 @@ const navItems = [
   { title: "Overview", url: "/", icon: LayoutDashboard },
   { title: "Time Series", url: "/time-series", icon: Clock },
   { title: "Map Explorer", url: "/map", icon: Map },
-  { title: "Indicator Analysis", url: "/indicators", icon: BarChart3 },
-  { title: "Area Comparison", url: "/compare", icon: GitCompare },
+  { title: "Feature Analysis", url: "/indicators", icon: BarChart3 },
   { title: "Pipeline & Method", url: "/pipeline", icon: Workflow },
   { title: "Data Sources", url: "/sources", icon: Database },
 ];
