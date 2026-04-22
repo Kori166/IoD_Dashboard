@@ -4,18 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "build:data": "python scripts/build_lsoa21_ward20_lookup.py && python scripts/build_bristol_synthetic_timeseries.py",
-    "build": "npm run build:data && vite build",
-    "build:timeseries-lsoa": "python scripts/build_bristol_synthetic_timeseries.py",
-    "build:timeseries-ward": "python scripts/build_bristol_ward_timeseries_synthetic.py",
-    "build:data": "npm run build:timeseries-lsoa && npm run build:timeseries-ward",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+  "dev": "vite",
+  "build": "vite build",
+  "build:data": "python scripts/build_bristol_synthetic_timeseries.py && python scripts/build_bristol_ward_timeseries_synthetic.py",
+  "lint": "eslint .",
+  "preview": "vite preview",
+  "test": "vitest run",
+  "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
