@@ -6,7 +6,6 @@
   "scripts": {
   "dev": "vite",
   "build": "vite build",
-  "build:data": "python scripts/build_bristol_synthetic_timeseries.py && python scripts/build_bristol_ward_timeseries_synthetic.py",
   "lint": "eslint .",
   "preview": "vite preview",
   "test": "vitest run",
