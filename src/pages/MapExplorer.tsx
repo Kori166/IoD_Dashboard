@@ -1,8 +1,12 @@
+// Code Sources and Provenance:
+ // - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Layers } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
-import { SectionHeader } from "@/components/ui/section-header";
 import BristolComparisonMap from "@/components/maps/BristolComparisonMap";
 
 type RightMapMode =
@@ -42,7 +46,7 @@ export default function MapExplorer() {
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
-      {/* Page header */}
+      // page header
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -58,12 +62,12 @@ export default function MapExplorer() {
         
       </motion.div>
 
-      {/* Two map cards side by side */}
+      // Two map cards side by side
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
         {/* Left map card */}
         <GlassCard className="p-5 h-full">
           <div className="h-full flex flex-col">
-            {/* Header row with fixed spacing so both cards line up */}
+            // Header row - fixed spacing so both cards line up
             <div className="min-h-[72px] space-y-1 mb-4">
               <h2 className="text-xl font-semibold text-foreground">
                 Our LSOA Rankings for Bristol
@@ -73,7 +77,7 @@ export default function MapExplorer() {
               </p>
             </div>
 
-            {/* Map area */}
+            // Map area
             <div className="flex-1">
               <BristolComparisonMap
                 metric="bristol_rank"
@@ -81,17 +85,16 @@ export default function MapExplorer() {
               />
             </div>
 
-            {/* Footer note */}
             <p className="text-sm text-muted-foreground mt-4">
               Left map is fixed to our LSOA rank view so users always have a stable baseline.
             </p>
           </div>
         </GlassCard>
 
-        {/* Right map card */}
+        // Map card RHS
         <GlassCard className="p-5 h-full">
           <div className="h-full flex flex-col">
-            {/* Header row with title on the left and buttons on the right */}
+            // Header row with title on LHS and buttons on RHS
             <div className="min-h-[72px] mb-4 flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-foreground">
@@ -102,7 +105,6 @@ export default function MapExplorer() {
                 </p>
               </div>
 
-              {/* Buttons moved to the top-right area of the right card */}
               <div className="space-y-2 2xl:min-w-[360px]">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-primary" />
@@ -137,7 +139,7 @@ export default function MapExplorer() {
               </div>
             </div>
 
-            {/* Map area */}
+            //Map
             <div className="flex-1">
               <BristolComparisonMap
                 metric={rightMapMode}
@@ -145,7 +147,6 @@ export default function MapExplorer() {
               />
             </div>
 
-            {/* Footer note */}
             <p className="text-sm text-muted-foreground mt-4">
               Use the buttons above to switch the right map between alternative ranking and decile views.
             </p>

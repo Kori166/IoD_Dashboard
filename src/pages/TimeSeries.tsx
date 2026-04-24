@@ -1,3 +1,10 @@
+// Code Sources and Provenance:
+ // - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - npm (2026) react-dom. Available from: https://www.npmjs.com/package/react-dom
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+ // - Recharts (2026) Recharts. Available from: https://recharts.github.io/
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
@@ -8,10 +15,12 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { useLad } from "@/context/lad-context";
 
+// Set range & mode types
 type RangePreset = "5Y" | "Max";
 type GeographyMode = "LSOA" | "Ward";
 type SortMode = "az" | "most_deprived" | "least_deprived";
 
+// Specify data structure types
 type TimePoint = {
   date: string;
   rank: number;
@@ -30,7 +39,7 @@ type LsoaWardLookupRow = {
   ward_code?: string;
   ward_name?: string;
 };
-
+// Search options
 type SelectOption = {
   code: string;
   label: string;
@@ -43,7 +52,7 @@ type SearchResult = {
   subLabel: string;
   selected: boolean;
 };
-
+// Styling and metadata for charts
 type SelectedChartSeriesMeta = {
   code: string;
   label: string;
@@ -53,7 +62,7 @@ type SelectedChartSeriesMeta = {
 };
 
 type ChangeDirection = "up" | "down" | "flat";
-
+// save selection after refresh
 type PersistedTimeSeriesState = {
   geographyMode: GeographyMode;
   rangePreset: RangePreset;
@@ -63,7 +72,7 @@ type PersistedTimeSeriesState = {
   primaryLsoaCode: string;
   primaryWardCode: string;
 };
-
+// Chart configs
 const rankChartConfig = {
   rank: {
     label: "Rank",
@@ -77,7 +86,7 @@ const decileChartConfig = {
     color: "#8b5cf6",
   },
 } satisfies ChartConfig;
-
+//Set constants
 const MAX_SELECTION = 5;
 const TIME_SERIES_STORAGE_KEY_BASE = "iod-dashboard-time-series-state";
 
@@ -93,7 +102,7 @@ const DECILE_COLORS: Record<number, string> = {
   9: "#286379",
   10: "#429B7E",
 };
-
+// Date formatting
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -107,7 +116,7 @@ function formatXAxisLabel(date: string) {
     year: "numeric",
   }).format(new Date(date));
 }
-
+// Filter by time
 function filterPointsByRange(points: TimePoint[], preset: RangePreset) {
   if (!points.length) return [];
   if (preset === "Max") return points;
@@ -139,7 +148,7 @@ function getXAxisTicks(data: { xLabel: string }[]) {
 
   return ticks;
 }
-
+// Calculate trends
 function getLatestVisiblePoint(series: AreaSeries, rangePreset: RangePreset) {
   const points = filterPointsByRange(series.points, rangePreset);
   return points.length ? points[points.length - 1] : null;
@@ -150,7 +159,7 @@ function getChangeDirection(delta: number): ChangeDirection {
   if (delta > 0) return "down";
   return "flat";
 }
-
+//Colour conversion
 function hexToRgba(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
   const safe =
@@ -168,7 +177,7 @@ function hexToRgba(hex: string, alpha: number) {
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-
+// Generate sparkline - converts values to coordinates, creates SVG line path, & filled area under sparkline
 function buildSparklinePoints(values: number[], width: number, height: number) {
   if (!values.length) return [];
 
@@ -210,7 +219,7 @@ function buildSparklineAreaPath(values: number[], width: number, height: number)
     2,
   )} ${height} Z`;
 }
-
+// Format UI components
 function ChangeText({ delta }: { delta: number }) {
   if (delta < 0) {
     return <span className="font-medium text-red-300">{Math.abs(delta)} places (more deprived)</span>;
@@ -226,9 +235,9 @@ function TrendIcon({ direction }: { direction: ChangeDirection }) {
   if (direction === "down") return <ArrowDown className="h-4 w-4 text-emerald-500" />;
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 }
-
+// Main dashboard components
 export default function TimeSeries() {
-  const { activeLad } = useLad();
+  const { activeLad } = useLad(); //Gets currently selected LAD
 
   const lsoaSeriesPath = `/data/${activeLad.slug}_lsoa_timeseries_synthetic.json`;
   const wardSeriesPath = `/data/${activeLad.slug}_ward_timeseries_synthetic.json`;
@@ -913,7 +922,7 @@ export default function TimeSeries() {
       rankDecile: `Rank ${Math.round(latest.rank)} · Decile ${Math.round(latest.decile)}`,
     };
   }
-
+// reset dashboard  selections
   function resetFilters() {
     setGeographyMode("LSOA");
     setRangePreset("Max");
@@ -952,7 +961,7 @@ export default function TimeSeries() {
               <div className="max-h-80 overflow-y-auto space-y-1">
                 {searchResults.map((result, index) => {
                   const active = index === activeSearchIndex;
-
+// visual rendering 
                   return (
                     <button
                       key={`${result.kind}-${result.code}`}

@@ -1,6 +1,11 @@
+// Code Sources and Provenance:
+ //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+ //- geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
-import { SectionHeader } from "@/components/ui/section-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { sourceMetadata } from "@/data/mockData";
 import {
@@ -32,7 +37,7 @@ export default function DataSources() {
         </p>
       </motion.div>
 
-      {/* Summary Cards */}
+      // Summary cards
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -78,7 +83,7 @@ export default function DataSources() {
         />
       </motion.div>
 
-      {/* Source Cards */}
+      // Data source cards
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {sourceMetadata.map((source, i) => (
           <motion.div
@@ -106,9 +111,9 @@ export default function DataSources() {
                 {source.description}
               </p>
 
-              {/* Metadata grid */}
+              // Metadata row
               <div className="grid grid-cols-3 gap-2 text-xs">
-                {/* Frequency */}
+                // update frequency
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Frequency
@@ -119,7 +124,7 @@ export default function DataSources() {
                   </span>
                 </div>
 
-                {/* Coverage */}
+                // Geographical coverage
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Coverage
@@ -130,7 +135,7 @@ export default function DataSources() {
                   </span>
                 </div>
 
-                {/* Access */}
+                // data accessibility
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Access
@@ -154,7 +159,7 @@ export default function DataSources() {
                 </div>
               </div>
 
-              {/* Link */}
+              // data link
               <div className="mt-3 pt-2 border-t border-border/30">
                 <a
                   href={source.link}
