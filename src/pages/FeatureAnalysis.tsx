@@ -291,7 +291,7 @@ export default function IndicatorAnalysis() {
           ))}
         </Scatter>
 
-        {/* ✅ LOWESS line */}
+        {/*LOWESS line */}
         <Line
           type="monotone"
           data={processed.lowessLine}

@@ -37,7 +37,7 @@ export default function DataSources() {
         </p>
       </motion.div>
 
-      // Summary cards
+      {/* Summary cards*/}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,7 +83,7 @@ export default function DataSources() {
         />
       </motion.div>
 
-      // Data source cards
+      {/* Data source cards*/}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {sourceMetadata.map((source, i) => (
           <motion.div
@@ -111,9 +111,8 @@ export default function DataSources() {
                 {source.description}
               </p>
 
-              // Metadata row
               <div className="grid grid-cols-3 gap-2 text-xs">
-                // update frequency
+                {/* update frequency*/}
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Frequency
@@ -124,7 +123,7 @@ export default function DataSources() {
                   </span>
                 </div>
 
-                // Geographical coverage
+{/* coverage*/}
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Coverage
@@ -135,7 +134,7 @@ export default function DataSources() {
                   </span>
                 </div>
 
-                // data accessibility
+         {/*data accessibility*/}
                 <div>
                   <span className="text-muted-foreground/60 block mb-0.5">
                     Access
@@ -159,7 +158,7 @@ export default function DataSources() {
                 </div>
               </div>
 
-              // data link
+              {/* link to data*/}
               <div className="mt-3 pt-2 border-t border-border/30">
                 <a
                   href={source.link}
@@ -179,13 +178,6 @@ export default function DataSources() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <GlassCard className="p-6 w-full">
-          <p className="text-lg font-medium mb-2">Data Caveats</p>
-          <textarea
-            placeholder="Notes - wards changing in 2028 etc."
-            className="w-full min-h-[75px] bg-transparent outline-none resize-none text-sm"
-          />
-        </GlassCard>
       </motion.div>
     </div>
   );
