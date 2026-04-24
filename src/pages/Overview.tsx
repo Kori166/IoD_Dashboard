@@ -1,3 +1,13 @@
+// Code Sources and Provenance:
+ // - Meta OpenSource (no date) useEffect. Available from: https://react.dev/reference/react/useEffect
+ // - Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState 
+ // - Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
+ // - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+ // - geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+
+
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -7,7 +17,6 @@ import {
   Layers,
   TrendingUp,
   TrendingDown,
-  ArrowRight,
 } from "lucide-react";
 import {
   Bar,
@@ -112,7 +121,7 @@ export default function Overview() {
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
-      {/* Intro header with a small entrance animation. */}
+      // animated intro header
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -130,7 +139,7 @@ export default function Overview() {
         </p>
       </motion.div>
 
-      {/* High-level summary metrics shown as dashboard cards. */}
+      //High level summary as dashboard cards
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Indicators"
@@ -162,9 +171,8 @@ export default function Overview() {
         />
       </div>
 
-      {/* Main content area: map left, local authority profile middle, rankings right. */}
+      //Map, local authority information, and rankings
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
-        {/* Map card kept slightly narrower but taller. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -175,7 +183,7 @@ export default function Overview() {
             </p>
           </div>
 
-          {/* Embedded map component with a taller display area. */}
+          // Embedded map
           <div className="mt-4 min-h-[555px]">
             <BristolChoropleth
               highlightedDecile={hoveredDecile}
@@ -184,7 +192,7 @@ export default function Overview() {
           </div>
         </GlassCard>
 
-        {/* Local Authority Profile card showing the share of LSOAs by Bristol decile. */}
+        // Local authority card showing share of LSOAs by Bristol decile
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -269,7 +277,7 @@ export default function Overview() {
           </div>
         </GlassCard>
 
-        {/* Rankings card remains the right-hand column. */}
+        //Rankings column on RHS
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -280,7 +288,7 @@ export default function Overview() {
             </p>
           </div>
 
-          {/* Toggle buttons for switching between Bristol and UK ranking views. */}
+          // Toggle buttons for switching between Bristol and UK ranking views
           <div className="mt-4 flex gap-2">
             <button
               type="button"
@@ -306,7 +314,7 @@ export default function Overview() {
             </button>
           </div>
 
-          {/* Lists of the highest and lowest deprived areas under the selected mode. */}
+          // Lists of the highest and lowest deprived areas under the selected mode
 <div className="mt-5 space-y-6">
   <div>
     <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">

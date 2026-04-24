@@ -1,15 +1,22 @@
+// Code Sources and Provenance:
+ //- Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState 
+ //- Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
+ //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ //- Recharts (2026) Recharts. Available from: https://recharts.github.io/
+ //- geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+
+// Import libraries 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
-import { KeyInsight } from "@/components/ui/key-insight";
 import {
-  allIndicators, indicatorCategories, indicatorValues,
-  correlationMatrix, deprivationDistribution, areaSummaries
+  allIndicators, indicatorCategories,
+  correlationMatrix, areaSummaries
 } from "@/data/mockData";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  ScatterChart, Scatter, Cell, Line, AreaChart, Area, ComposedChart,
+  Scatter, Cell, Line, ComposedChart,
   Label,
 } from "recharts";
 
@@ -160,7 +167,7 @@ export default function IndicatorAnalysis() {
         {/* Feature Importance */}
         <GlassCard className="p-6">
           <SectionHeader title="Feature Importance" subtitle="Top 10 most important features" />
-          <div className="h-80 mt-4 flex justify-centre items-center h-[450px]">
+          <div className="mt-4 flex justify-center items-center h-[450px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredImportance} layout="vertical" margin={{right: 20, left : 10}}>
                 <XAxis type="number" stroke="hsl(215, 15%, 35%)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -253,7 +260,7 @@ export default function IndicatorAnalysis() {
            value="Number of Universal Credit Claimants"
            position="insideBottom"
            offset={-5}
-           style={{textAnchor: "middle", fill: "hsl(215, 15%, 65%", fontSize: 12}}
+           style={{textAnchor: "middle", fill: "hsl(215, 15%, 65%)", fontSize: 12}}
           />
         </XAxis>
         <YAxis
@@ -268,7 +275,7 @@ export default function IndicatorAnalysis() {
            value="Deprivation Score"
            angle={-90}
            position="insideLeft"
-           style={{textAnchor: "middle", fill:"hsl(215, 15%, 65%", fontSize: 12}}
+           style={{textAnchor: "middle", fill:"hsl(215, 15%, 65%)", fontSize: 12}}
          />
         </YAxis>
         <Tooltip contentStyle={chartTooltipStyle} />

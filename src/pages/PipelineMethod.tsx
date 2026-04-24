@@ -1,10 +1,15 @@
+// Code Sources and Provenance:
+ //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { pipelineSteps } from "@/data/mockData";
 import {
   Download, Filter, MapPin, Layers, Calculator, Database,
-  ChevronDown, AlertTriangle, Clock, Code2, GitBranch
+  AlertTriangle, Clock, Code2, GitBranch
 } from "lucide-react";
 import {
   Accordion,
@@ -40,7 +45,7 @@ export default function PipelineMethod() {
         </p>
       </motion.div>
 
-      {/* Pipeline Flow */}
+      // pipeline flow
       <GlassCard className="p-6">
         <SectionHeader title="Data Pipeline" subtitle="End-to-end processing flow" />
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -71,7 +76,7 @@ export default function PipelineMethod() {
         </div>
       </GlassCard>
 
-      {/* Architecture Cards */}
+      // Architecture cards
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard glow="cyan" className="p-5">
           <Code2 className="h-5 w-5 text-primary mb-3" />
@@ -96,7 +101,7 @@ export default function PipelineMethod() {
         </GlassCard>
       </div>
 
-      {/* Why Public Data */}
+      // Why public data cards
       <GlassCard className="p-6">
         <SectionHeader title="Why Public Data?" />
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -118,7 +123,7 @@ export default function PipelineMethod() {
         </div>
       </GlassCard>
 
-      {/* Accordions */}
+      // Accordian cards - scoring, transformation, indicators, caveats
       <GlassCard className="p-6">
         <SectionHeader title="Detailed Methodology" subtitle="Expand sections for technical detail" />
         <Accordion type="single" collapsible className="mt-4">

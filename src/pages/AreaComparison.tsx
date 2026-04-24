@@ -1,3 +1,9 @@
+// Code Sources and Provenance:
+ // - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. Available from: https://react.dev/
+ // - Lucide (2026) Lucide. Available from: https://lucide.dev/
+ // - Recharts (2026) Recharts. Available from: https://recharts.github.io/
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -79,7 +85,7 @@ export default function AreaComparison() {
         />
       </motion.div>
 
-      {/* Area selector */}
+      //area selector
       <GlassCard className="p-5">
         <div className="flex items-center gap-3 mb-3">
           <Plus className="h-4 w-4 text-primary" />
@@ -103,7 +109,7 @@ export default function AreaComparison() {
         </div>
       </GlassCard>
      
-      {/* Scorecards */}
+      //Scorecards
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {selectedAreas.map((area, i) => (
           <GlassCard key={area.area_id} glow={i === 0 ? "cyan" : i === 1 ? "violet" : "magenta"} className="p-5">
@@ -133,9 +139,9 @@ export default function AreaComparison() {
         ))}
       </div>
 
-      {/* Charts */}
+      //Charts
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Radar */}
+        //Radar
         <GlassCard className="p-6">
           <SectionHeader title="Indicator Profile" subtitle="Domain scores by area" />
           <div className="h-80 mt-4">
@@ -161,7 +167,7 @@ export default function AreaComparison() {
           </div>
         </GlassCard>
 
-        {/* Trend */}
+        //Trends
         <GlassCard className="p-6">
           <SectionHeader title="Score Trend" subtitle="Deprivation score over time" />
           <div className="h-80 mt-4">
@@ -189,7 +195,7 @@ export default function AreaComparison() {
 
       <KeyInsight insights={[insight]} />
 
-      {/* Bar comparison */}
+      // Bar chart comparison
       <GlassCard className="p-6">
         <SectionHeader title="Score Comparison" subtitle="Side-by-side deprivation scores" />
         <div className="h-48 mt-4">
