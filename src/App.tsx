@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { LadProvider } from "@/context/lad-context";
 import Overview from "./pages/Overview";
 import TimeSeries from "./pages/TimeSeries";
 import MapExplorer from "./pages/MapExplorer";
