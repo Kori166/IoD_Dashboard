@@ -1,9 +1,9 @@
 // Code Sources and Provenance:
- //- Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState 
- //- Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
- //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
- //- Recharts (2026) Recharts. Available from: https://recharts.github.io/
- //- geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+// - Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState 
+// - Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
+// - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
+// - Recharts (2026) Recharts. Available from: https://recharts.github.io/
+// - geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
 
 // Import libraries 
 import { useState, useMemo } from "react";

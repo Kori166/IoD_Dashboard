@@ -121,7 +121,7 @@ export default function Overview() {
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
-      // animated intro header
+     {/*animated intro header*/}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -139,7 +139,7 @@ export default function Overview() {
         </p>
       </motion.div>
 
-      //High level summary as dashboard cards
+      {/*High level summary as dashboard cards*/}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Indicators"
@@ -171,8 +171,9 @@ export default function Overview() {
         />
       </div>
 
-      //Map, local authority information, and rankings
+      {/*Map, local authority information, and rankings*/}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
+
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -183,7 +184,7 @@ export default function Overview() {
             </p>
           </div>
 
-          // Embedded map
+          {/* Embedded map component with a taller display area. */}
           <div className="mt-4 min-h-[555px]">
             <BristolChoropleth
               highlightedDecile={hoveredDecile}
@@ -192,7 +193,7 @@ export default function Overview() {
           </div>
         </GlassCard>
 
-        // Local authority card showing share of LSOAs by Bristol decile
+        {/* Local Authority Profile card showing the share of LSOAs by Bristol decile. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -277,7 +278,7 @@ export default function Overview() {
           </div>
         </GlassCard>
 
-        //Rankings column on RHS
+        {/* Rankings card remains the right-hand column. */}
         <GlassCard className="p-6">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -288,7 +289,7 @@ export default function Overview() {
             </p>
           </div>
 
-          // Toggle buttons for switching between Bristol and UK ranking views
+          {/* Toggle buttons for switching between Bristol and UK ranking views. */}
           <div className="mt-4 flex gap-2">
             <button
               type="button"
@@ -314,7 +315,7 @@ export default function Overview() {
             </button>
           </div>
 
-          // Lists of the highest and lowest deprived areas under the selected mode
+          {/* Lists of the highest and lowest deprived areas under the selected mode. */}
 <div className="mt-5 space-y-6">
   <div>
     <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">
