@@ -35,18 +35,6 @@ type AreaSeries = {
   points: TimePoint[];
 };
 
-type RawInterpolatedPoint = {
-  snapshot_date: string;
-  rank: number;
-  decile: number;
-  predicted_score: number;
-};
-
-type RawInterpolatedSeries = {
-  lsoa_code: string;
-  points: RawInterpolatedPoint[];
-};
-
 type LsoaWardLookupRow = {
   lsoa_code: string;
   lsoa_name?: string;
@@ -367,6 +355,7 @@ export default function TimeSeries() {
         selectedWards,
         primaryLsoaCode,
         primaryWardCode,
+        displayMetric,
       };
 
       window.localStorage.setItem(storageKey, JSON.stringify(stateToPersist));
@@ -379,6 +368,7 @@ export default function TimeSeries() {
     geographyMode,
     rangePreset,
     sortMode,
+    displayMetric,
     selectedLsoas,
     selectedWards,
     primaryLsoaCode,
@@ -396,18 +386,11 @@ export default function TimeSeries() {
           throw new Error(`Failed to load LSOA time-series data: ${response.status}`);
         }
 
-        const rawData = (await response.json()) as RawInterpolatedSeries[];
-        const data: AreaSeries[] = rawData.map((item) => ({
-          code: item.lsoa_code,
-          label: item.lsoa_code,
-          points: item.points.map((point) => ({
-            date: point.snapshot_date,
-            rank: point.rank,
-            decile: point.decile,
-            score: point.predicted_score,
-          })),
-        }));
-
+        const data = (await response.json()) as AreaSeries[];
+        if (isMounted) setLsoaSeriesData(data);
+        if (saved.displayMetric === "rank" || saved.displayMetric === "score") {
+          setDisplayMetric(saved.displayMetric);
+        }
         if (isMounted) setLsoaSeriesData(data);
       } catch (error) {
         console.error("Could not load LSOA time-series data", error);
@@ -1223,7 +1206,7 @@ export default function TimeSeries() {
                               key={`${series.code}-area`}
                               type="linear"
                               dataKey={series.code}
-                              baseValue={rankChartFloor}
+                              baseValue={displayMetric === "rank" ? mainChartDomain[1] : mainChartDomain[0]}
                               stroke="none"
                               fill={`url(#gradient-${series.code})`}
                               isAnimationActive={false}
