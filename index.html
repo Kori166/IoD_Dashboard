@@ -1,19 +1,48 @@
+<!--
+  Main HTML page for the React app.
+
+  This file sets the page metadata, favicon, social sharing preview, and the root element where React loads the app.
+
+  Provenance:
+  - MDN (no date) ‘HTML: HyperText Markup Language’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/HTML 
+    Used for the main HTML document structure.
+
+  - MDN (no date) ‘Viewport meta tag’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag 
+    Used for the responsive viewport metadata.
+
+  - MDN (no date) ‘<link>: The External Resource Link element’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link 
+    Used for the favicon link.
+
+  - Open Graph Protocol (no date) ‘The Open Graph protocol’ [online]. Available from:
+    https://ogp.me/ 
+    Used for the social sharing metadata.
+
+  - Vite (no date) ‘index.html and Project Root’ [online]. Available from:
+    https://vite.dev/guide/#index-html-and-project-root 
+    Used for the module script that loads the React entry file.
+-->
+
 <!doctype html>
 <html lang="en">
-  <head>
+  <head> <!-- Sets character encoding and mobile scaling -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
     
-    <title>UK Deprivation Index — Public Data Replication</title>
+    <title>UK Deprivation Index — Public Data Replication</title> <!-- Sets the browser tab title -->
 
-    <meta
+    <!-- Gives search engines and previews basic page details -->
+    <meta 
       name="description"
       content="Interactive dashboard replicating the UK Index of Deprivation from publicly available datasets"
     />
     <meta name="author" content="Kori Flowers" />
 
-    <link rel="icon" type="image/x-icon" href="/favicon-dep.ico?v=5" />
+    <link rel="icon" type="image/x-icon" href="/favicon-dep.ico?v=5" /> <!-- Sets the browser tab icon -->
 
+    <!-- Sets how the page appears when shared on social platforms. -->
     <meta property="og:title" content="UK Deprivation Index Dashboard" />
     <meta
       property="og:description"
@@ -23,7 +52,7 @@
     <meta property="og:image" content="/favicon-dep.ico?v=5" />   
   </head>
 
-  <body>
+  <body> <!-- React mounts the app inside this element and loads the React app entry file through Vite -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

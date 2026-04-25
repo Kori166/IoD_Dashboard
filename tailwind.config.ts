@@ -1,8 +1,44 @@
+/*
+  Tailwind CSS setup for the app.
+
+  This file controls dark mode, scanned source files, theme values,
+  custom colours, animations, and Tailwind plugins.
+
+  Provenance:
+  - Tailwind Labs (no date) ‘Configuration’ [online]. Available from:
+    https://tailwindcss.com/docs/configuration 
+    Used for the main Tailwind config structure.
+
+  - Tailwind Labs (no date) ‘Detecting classes in source files’ [online]. Available from:
+    https://tailwindcss.com/docs/detecting-classes-in-source-files 
+    Used for the content file paths.
+
+  - Tailwind Labs (no date) ‘Dark mode’ [online]. Available from:
+    https://tailwindcss.com/docs/dark-mode 
+    Used for the class-based dark mode setting.
+
+  - Tailwind Labs (no date) ‘Theme variables’ [online]. Available from:
+    https://tailwindcss.com/docs/theme 
+    Used for the extended theme values, colours, fonts, and radius setings.
+
+  - Tailwind Labs (no date) ‘Animation’ [online]. Available from:
+    https://tailwindcss.com/docs/animation 
+    Used for the custom keyfames and animation settings.
+
+  - npm (no date) ‘tailwindcss-animate’ [online]. Available from:
+    https://www.npmjs.com/package/tailwindcss-animate 
+    Used for the Tailwind animation plugin.
+
+  - shadcn (no date) ‘Installation’ [online]. Available from:
+    https://ui.shadcn.com/docs/installation 
+    Used for the CSS variable colour pattern and acordion animation setup.
+*/
+
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  darkMode: ["class"], // Uses a class on the page to switch dark mode on or off
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"], // Tells Tailwind where to look for class names
   prefix: "",
   theme: {
     container: {
@@ -12,12 +48,12 @@ export default {
         "2xl": "1400px",
       },
     },
-    extend: {
+    extend: { // Sets the main fonts used by the app
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
-      colors: {
+      colors: { // Maps Tailwind colour names to CSS variables from the app theme
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -79,12 +115,12 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
-      borderRadius: {
+      borderRadius: { // Uses one shared radius value for rounded corners
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      keyframes: {
+      keyframes: { // Defines custom motion effects used by the interface
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -102,7 +138,7 @@ export default {
           "50%": { transform: "translateY(-4px)" },
         },
       },
-      animation: {
+      animation: { // Connect the custom keyfames to Tailwind animatio classes
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
@@ -110,5 +146,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate")], // Adds extra animation utility classes
 } satisfies Config;

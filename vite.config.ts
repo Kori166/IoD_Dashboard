@@ -2,14 +2,21 @@
   Vite setup for the React app.
 
   Provenance:
-  - Main config structure is based on the Vite configuration docs:
-    https://vite.dev/config/
-  - Server options are based on Vite's server options docs:
-    https://vite.dev/config/server-options.html
-  - React plugin setup is based on the official @vitejs/plugin-react docs:
-    https://www.npmjs.com/package/@vitejs/plugin-react
-  - The "@" import shortcut follows Vite's resolve.alias docs:
-    https://vite.dev/config/shared-options.html#resolve-alias
+  - Vite (2025) ‘Configuring Vite’ [online]. Available from:
+    https://vite.dev/config/ 
+    Used for the main Vite config structure.
+
+  - Vite (2025) ‘Server Options’ [online]. Available from:
+    https://vite.dev/config/server-options.html 
+    Used for the dev server settings.
+
+  - npm (2025) ‘@vitejs/plugin-react’ [online]. Available from:
+    https://www.npmjs.com/package/@vitejs/plugin-react 
+    Used for the React plugin setup.
+
+  - Vite (2025) ‘Shared Options’ [online]. Available from:
+    https://vite.dev/config/shared-options.html#resolve-alias 
+    Used for the "@" import shortcut.
 */
 
 import { defineConfig } from "vite";
