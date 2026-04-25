@@ -19,18 +19,32 @@ import { useLad } from "@/context/lad-context";
 type RangePreset = "5Y" | "Max";
 type GeographyMode = "LSOA" | "Ward";
 type SortMode = "az" | "most_deprived" | "least_deprived";
+type DisplayMetric = "rank" | "score";
 
 // Specify data structure types
 type TimePoint = {
   date: string;
   rank: number;
   decile: number;
+  score: number;
 };
 
 type AreaSeries = {
   code: string;
   label: string;
   points: TimePoint[];
+};
+
+type RawInterpolatedPoint = {
+  snapshot_date: string;
+  rank: number;
+  decile: number;
+  predicted_score: number;
+};
+
+type RawInterpolatedSeries = {
+  lsoa_code: string;
+  points: RawInterpolatedPoint[];
 };
 
 type LsoaWardLookupRow = {
@@ -71,6 +85,7 @@ type PersistedTimeSeriesState = {
   selectedWards: string[];
   primaryLsoaCode: string;
   primaryWardCode: string;
+  displayMetric: DisplayMetric;
 };
 // Chart configs
 const rankChartConfig = {
@@ -247,6 +262,7 @@ export default function TimeSeries() {
   const [geographyMode, setGeographyMode] = useState<GeographyMode>("LSOA");
   const [rangePreset, setRangePreset] = useState<RangePreset>("Max");
   const [sortMode, setSortMode] = useState<SortMode>("az");
+  const [displayMetric, setDisplayMetric] = useState<DisplayMetric>("rank");
 
   const [selectedLsoas, setSelectedLsoas] = useState<string[]>([]);
   const [selectedWards, setSelectedWards] = useState<string[]>([]);
@@ -380,7 +396,18 @@ export default function TimeSeries() {
           throw new Error(`Failed to load LSOA time-series data: ${response.status}`);
         }
 
-        const data = (await response.json()) as AreaSeries[];
+        const rawData = (await response.json()) as RawInterpolatedSeries[];
+        const data: AreaSeries[] = rawData.map((item) => ({
+          code: item.lsoa_code,
+          label: item.lsoa_code,
+          points: item.points.map((point) => ({
+            date: point.snapshot_date,
+            rank: point.rank,
+            decile: point.decile,
+            score: point.predicted_score,
+          })),
+        }));
+
         if (isMounted) setLsoaSeriesData(data);
       } catch (error) {
         console.error("Could not load LSOA time-series data", error);
@@ -637,7 +664,9 @@ export default function TimeSeries() {
           xLabel: formatXAxisLabel(point.date),
         };
 
-        existing[series.code] = point.rank;
+        existing[series.code] = displayMetric === "rank" ? point.rank : point.score;
+        existing[`${series.code}__rank`] = point.rank;
+        existing[`${series.code}__score`] = point.score;
         existing[`${series.code}__decile`] = point.decile;
         existing[`${series.code}__label`] = series.label;
         existing[`${series.code}__ward`] = wardName;
@@ -648,7 +677,7 @@ export default function TimeSeries() {
     return Array.from(pointsByDate.values()).sort(
       (a, b) => new Date(String(a.date)).getTime() - new Date(String(b.date)).getTime(),
     );
-  }, [selectedSeries, rangePreset, geographyMode, lsoaWardByLsoaCode]);
+  }, [selectedSeries, rangePreset, geographyMode, lsoaWardByLsoaCode, displayMetric]);
 
   const xAxisTicks = useMemo(() => getXAxisTicks(mainRankChartData as { xLabel: string }[]), [mainRankChartData]);
 
@@ -663,7 +692,18 @@ export default function TimeSeries() {
     return values;
   }, [mainRankChartData, selectedSeriesMeta]);
 
-  const rankChartFloor = useMemo(() => Math.max(getIntegerDomain(mainRankValues, 10)[1], 10), [mainRankValues]);
+  const mainChartDomain = useMemo(() => {
+    if (!mainRankValues.length) return displayMetric === "rank" ? [1, 10] : [0, 10];
+
+    if (displayMetric === "rank") {
+      return [1, Math.max(getIntegerDomain(mainRankValues, 10)[1], 10)];
+    }
+
+    const min = Math.floor(Math.min(...mainRankValues));
+    const max = Math.ceil(Math.max(...mainRankValues));
+
+    return [min, max];
+  }, [mainRankValues, displayMetric]);
 
   const decileChartData = useMemo(
     () =>
@@ -1029,8 +1069,11 @@ export default function TimeSeries() {
             <GlassCard className="p-6">
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-foreground">Rank and decile over time</h2>
-                  <p className="text-xs text-muted-foreground">Lower rank = more deprived · Decile 1 = most deprived</p>
+                  <h2 className="text-xl font-semibold text-foreground">{displayMetric === "rank" ? "Rank and decile over time" : "Score and decile over time"}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {displayMetric === "rank"
+                      ? "Lower rank = more deprived · Decile 1 = most deprived"
+                      : "Predicted score · Decile 1 = most deprived"}</p>
                 </div>
 
                 {!!legendSeriesMeta.length && (
@@ -1102,7 +1145,7 @@ export default function TimeSeries() {
                             axisLine={false}
                             tickMargin={10}
                             allowDecimals={false}
-                            domain={[rankChartFloor, 1]}
+                            domain={mainChartDomain}
                             reversed
                           />
 
@@ -1124,12 +1167,19 @@ export default function TimeSeries() {
                                     label: String(row[`${series.code}__label`] ?? series.label),
                                     ward: row[`${series.code}__ward`],
                                     decile: row[`${series.code}__decile`],
-                                    rank: Math.round(value),
+                                    rank: row[`${series.code}__rank`],
+                                    score: row[`${series.code}__score`],
+                                    value,
                                     color: series.color,
                                   };
                                 })
                                 .filter(Boolean)
-                                .sort((a, b) => a!.rank - b!.rank);
+                                .sort((a, b) => {
+                                  const aValue = typeof a!.value === "number" ? a!.value : 0;
+                                  const bValue = typeof b!.value === "number" ? b!.value : 0;
+
+                                  return displayMetric === "rank" ? aValue - bValue : bValue - aValue;
+                                });
 
                               return (
                                 <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
@@ -1155,7 +1205,10 @@ export default function TimeSeries() {
                                           ) : null}
                                         </div>
                                         <p className="shrink-0 text-xs text-muted-foreground">
-                                          Rank {item!.rank} · Decile {String(item!.decile ?? "n/a")}
+                                          {displayMetric === "rank"
+                                            ? `Rank ${Number.isFinite(Number(item!.rank)) ? Math.round(Number(item!.rank)) : "n/a"}`
+                                            : `Score ${Number.isFinite(Number(item!.score)) ? Number(item!.score).toFixed(2) : "n/a"}`}{" "}
+                                          · Decile {String(item!.decile ?? "n/a")}
                                         </p>
                                       </div>
                                     ))}
@@ -1304,6 +1357,31 @@ export default function TimeSeries() {
                     </button>
                   ))}
                 </div>
+
+                <div className="flex rounded-xl border border-white/10 bg-background/40 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMetric("rank")}
+                    className={
+                      displayMetric === "rank"
+                        ? "rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-300"
+                        : "px-4 py-2 text-sm text-muted-foreground"
+                    }
+                  >
+                    Rank
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDisplayMetric("score")}
+                    className={
+                      displayMetric === "score"
+                        ? "rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-300"
+                        : "px-4 py-2 text-sm text-muted-foreground"
+                    }
+                  >
+                    Score
+                  </button>
+                </div>  
 
                 <div className="inline-flex rounded-lg border border-border/50 bg-background/30 p-1">
                   {(["5Y", "Max"] as RangePreset[]).map((preset) => (
