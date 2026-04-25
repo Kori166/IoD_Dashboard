@@ -27,11 +27,18 @@ type TimePoint = {
   rank: number;
   decile: number;
   score: number;
+  mean_lsoa_rank?: number;
+  mean_lsoa_decile?: number;
+  lsoa_count?: number;
+  score_min?: number;
+  score_median?: number;
+  score_max?: number;
 };
 
 type AreaSeries = {
   code: string;
   label: string;
+  lsoas?: SelectOption[];
   points: TimePoint[];
 };
 
@@ -390,8 +397,7 @@ export default function TimeSeries() {
         if (isMounted) setLsoaSeriesData(data);
         if (saved.displayMetric === "rank" || saved.displayMetric === "score") {
           setDisplayMetric(saved.displayMetric);
-        }
-        if (isMounted) setLsoaSeriesData(data);
+        }        
       } catch (error) {
         console.error("Could not load LSOA time-series data", error);
         if (isMounted) setLsoaSeriesData([]);
