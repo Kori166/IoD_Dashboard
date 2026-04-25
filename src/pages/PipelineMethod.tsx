@@ -45,7 +45,7 @@ export default function PipelineMethod() {
         </p>
       </motion.div>
 
-      // pipeline flow
+      {/*pipeline flow*/}
       <GlassCard className="p-6">
         <SectionHeader title="Data Pipeline" subtitle="End-to-end processing flow" />
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -76,7 +76,7 @@ export default function PipelineMethod() {
         </div>
       </GlassCard>
 
-      // Architecture cards
+      {/*Architecture cards*/}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard glow="cyan" className="p-5">
           <Code2 className="h-5 w-5 text-primary mb-3" />
@@ -101,7 +101,7 @@ export default function PipelineMethod() {
         </GlassCard>
       </div>
 
-      // Why public data cards
+      {/*Why public data cards*/}
       <GlassCard className="p-6">
         <SectionHeader title="Why Public Data?" />
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,7 +123,7 @@ export default function PipelineMethod() {
         </div>
       </GlassCard>
 
-      // Accordian cards - scoring, transformation, indicators, caveats
+      {/*Accordian cards - scoring, transformation, indicators, caveats*/}
       <GlassCard className="p-6">
         <SectionHeader title="Detailed Methodology" subtitle="Expand sections for technical detail" />
         <Accordion type="single" collapsible className="mt-4">
