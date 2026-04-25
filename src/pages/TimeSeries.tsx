@@ -320,6 +320,10 @@ export default function TimeSeries() {
         setSortMode(saved.sortMode);
       }
 
+      if (saved.displayMetric === "rank" || saved.displayMetric === "score") {
+        setDisplayMetric(saved.displayMetric);
+      }
+
       if (Array.isArray(saved.selectedLsoas)) {
         setSelectedLsoas(saved.selectedLsoas.slice(0, MAX_SELECTION));
       } else {
@@ -394,10 +398,7 @@ export default function TimeSeries() {
         }
 
         const data = (await response.json()) as AreaSeries[];
-        if (isMounted) setLsoaSeriesData(data);
-        if (saved.displayMetric === "rank" || saved.displayMetric === "score") {
-          setDisplayMetric(saved.displayMetric);
-        }        
+if (isMounted) setLsoaSeriesData(data);     
       } catch (error) {
         console.error("Could not load LSOA time-series data", error);
         if (isMounted) setLsoaSeriesData([]);
@@ -1133,9 +1134,9 @@ export default function TimeSeries() {
                             tickLine={false}
                             axisLine={false}
                             tickMargin={10}
-                            allowDecimals={false}
+                            allowDecimals={displayMetric === "rank" ? false : true}
                             domain={mainChartDomain}
-                            reversed
+                            reversed={displayMetric === "rank"}
                           />
 
                           <Tooltip
@@ -1273,7 +1274,13 @@ export default function TimeSeries() {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={decileChartData} margin={{ top: 10, right: 18, left: 4, bottom: 6 }}>
                           <CartesianGrid vertical={false} strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="xLabel" tickLine={false} axisLine={false} tickMargin={10} />
+                          <XAxis
+                            dataKey="xLabel"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            ticks={xAxisTicks}
+                          />
                           <YAxis
                             tickLine={false}
                             axisLine={false}
