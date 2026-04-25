@@ -254,8 +254,8 @@ function TrendIcon({ direction }: { direction: ChangeDirection }) {
 export default function TimeSeries() {
   const { activeLad } = useLad(); //Gets currently selected LAD
 
-  const lsoaSeriesPath = `/data/${activeLad.slug}_lsoa_timeseries_synthetic.json`;
-  const wardSeriesPath = `/data/${activeLad.slug}_ward_timeseries_synthetic.json`;
+  const lsoaSeriesPath = `/data/${activeLad.slug}_lsoa_timeseries.json`;
+  const wardSeriesPath = `/data/${activeLad.slug}_ward_timeseries.json`;
   const lookupPath = `/data/${activeLad.slug}_lsoa21_ward20_lookup.json`;
   const storageKey = `${TIME_SERIES_STORAGE_KEY_BASE}:${activeLad.slug}`;
 
