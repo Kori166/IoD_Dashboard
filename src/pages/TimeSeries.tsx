@@ -218,16 +218,16 @@ function buildSparklinePath(values: number[], width: number, height: number) {
     .join(" ");
 }
 
-function buildSparklineAreaPath(values: number[], width: number, height: number) {
-  const points = buildSparklinePoints(values, width, height);
-  if (!points.length) return "";
+function getSparklineValues(points: TimePoint[], displayMetric: DisplayMetric) {
+  const values = points.map((point) =>
+    displayMetric === "score" ? point.score : point.rank,
+  );
 
-  const linePart = points.map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
-
-  return `M ${points[0].x.toFixed(2)} ${height} ${linePart} L ${points[points.length - 1].x.toFixed(
-    2,
-  )} ${height} Z`;
+  return displayMetric === "rank"
+    ? values.map((value) => -value)
+    : values;
 }
+
 // Format UI components
 function ChangeText({ delta }: { delta: number }) {
   if (delta < 0) {
@@ -472,7 +472,7 @@ export default function TimeSeries() {
 
     return () => {
       isMounted = false;
-    };
+    }; 
   }, [lookupPath]);
 
   const pageLoading =
@@ -744,14 +744,7 @@ export default function TimeSeries() {
       };
     }
 
-    const values = primaryVisiblePoints.map((point) =>
-      displayMetric === "score" ? point.score : point.rank,
-    );
-
-    const visualValues =
-      displayMetric === "rank"
-        ? values.map((value) => -value)
-        : values;
+    const visualValues = getSparklineValues(primaryVisiblePoints, displayMetric);
 
     return {
       linePath: buildSparklinePath(visualValues, 140, 40),
@@ -851,8 +844,12 @@ export default function TimeSeries() {
 
         const start = points[0];
         const end = points[points.length - 1];
-        const delta = Math.round(end.rank - start.rank);
-        const sparkValues = points.map((point) => point.rank);
+        const delta =
+          displayMetric === "score"
+            ? Number((end.score - start.score).toFixed(2))
+            : Math.round(end.rank - start.rank);
+
+        const sparkValues = getSparklineValues(points, displayMetric);
 
         return {
           code: meta.code,
@@ -863,7 +860,10 @@ export default function TimeSeries() {
           endYear: new Date(end.date).getFullYear(),
           startRank: Math.round(start.rank),
           endRank: Math.round(end.rank),
+          startScore: start.score,
+          endScore: end.score,
           currentRank: Math.round(end.rank),
+          currentScore: end.score,
           delta,
           latestPoint: end,
           sparklinePath: buildSparklinePath(sparkValues, 96, 24),
@@ -879,7 +879,10 @@ export default function TimeSeries() {
       endYear: number;
       startRank: number;
       endRank: number;
+      startScore: number;
+      endScore: number;
       currentRank: number;
+      currentScore: number;
       delta: number;
       latestPoint: TimePoint;
       sparklinePath: string;
@@ -887,17 +890,25 @@ export default function TimeSeries() {
     }[];
 
     if (sortMode === "most_deprived") {
-      return [...rows].sort((a, b) => a.currentRank - b.currentRank);
-    }
+    return [...rows].sort((a, b) =>
+      displayMetric === "score"
+        ? b.currentScore - a.currentScore
+        : a.currentRank - b.currentRank,
+    );
+  }
 
-    if (sortMode === "least_deprived") {
-      return [...rows].sort((a, b) => b.currentRank - a.currentRank);
-    }
+  if (sortMode === "least_deprived") {
+    return [...rows].sort((a, b) =>
+      displayMetric === "score"
+        ? a.currentScore - b.currentScore
+        : b.currentRank - a.currentRank,
+    );
+  }
 
     return [...rows].sort((a, b) =>
       a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }),
     );
-  }, [selectedSeriesMeta, activeSeriesByCode, rangePreset, sortMode]);
+  }, [selectedSeriesMeta, activeSeriesByCode, rangePreset, sortMode, displayMetric]);
 
   const selectedListData = useMemo(() => {
     const baseOptions = geographyMode === "LSOA" ? lsoaOptions : wardOptions;
@@ -1550,7 +1561,7 @@ export default function TimeSeries() {
                           </p>
                         </div>
                         <div className="h-6 w-[98px]">
-                          <svg viewBox="0 0 96 24" className="h-6 w-[98px]" role="img" aria-label={`Rank trend for ${item.label}`}>
+                          <svg viewBox="0 0 96 24" className="h-6 w-[98px]" role="img" aria-label={`${displayMetric === "rank" ? "Rank" : "Score"} trend for ${item.label}`}>
                             <defs>
                               <linearGradient id={`spark-gradient-${item.code}`} x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor={hexToRgba(item.color, 0.24)} />
@@ -1571,10 +1582,34 @@ export default function TimeSeries() {
 
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                         <span className="text-muted-foreground">
-                          {item.startYear} → {item.endYear}: {item.startRank} → {item.endRank}
+                          {item.startYear} → {item.endYear}:{" "}
+                          {displayMetric === "score"
+                            ? `${item.startScore.toFixed(2)} → ${item.endScore.toFixed(2)}`
+                            : `${item.startRank} → ${item.endRank}`}
                         </span>
-                        <TrendIcon direction={getChangeDirection(item.delta)} />
-                        <ChangeText delta={item.delta} />
+
+                        {displayMetric === "rank" ? (
+                          <>
+                            <TrendIcon direction={getChangeDirection(item.delta)} />
+                            <ChangeText delta={item.delta} />
+                          </>
+                        ) : (
+                          <span
+                            className={
+                              item.delta > 0
+                                ? "font-medium text-red-300"
+                                : item.delta < 0
+                                  ? "font-medium text-emerald-300"
+                                  : "text-muted-foreground"
+                            }
+                          >
+                            {item.delta > 0
+                              ? `↑ ${item.delta.toFixed(2)} score increase`
+                              : item.delta < 0
+                                ? `↓ ${Math.abs(item.delta).toFixed(2)} score decrease`
+                                : "No net change"}
+                          </span>
+                        )}
                       </div>
                       {geographyMode === "Ward" && hoveredCode === item.code ? (
                         <div className="absolute right-3 top-3 z-20 w-64 rounded-xl border border-border/60 bg-background/95 p-3 text-xs text-muted-foreground shadow-2xl backdrop-blur-sm">
