@@ -10,7 +10,6 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUp, Check, Minus, RotateCcw, Search, X } from "lucide-react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { AreaTimeSeriesRow, TimeSeriesPoint } from "@/types/dashboard-data";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { useLad } from "@/context/lad-context";
@@ -238,6 +237,12 @@ function ChangeText({ delta }: { delta: number }) {
     return <span className="font-medium text-emerald-300">{delta} places (less deprived)</span>;
   }
   return <span className="text-muted-foreground">No net change</span>;
+}
+
+function TrendIcon({ direction }: { direction: ChangeDirection }) {
+  if (direction === "up") return <ArrowUp className="h-4 w-4 text-red-500" />;
+  if (direction === "down") return <ArrowDown className="h-4 w-4 text-emerald-500" />;
+  return <Minus className="h-4 w-4 text-muted-foreground" />;
 }
 
 function formatOptionalNumber(value: number | undefined, digits = 1) {
@@ -480,18 +485,25 @@ export default function TimeSeries() {
   const lsoaWardByLsoaCode = useMemo(() => new Map(lsoaWardLookup.map((row) => [row.lsoa_code, row])), [lsoaWardLookup]);
 
   const wardOptions = useMemo<SelectOption[]>(() => {
-    const wardMap = new Map<string, string>();
+    const optionMap = new Map<string, string>();
+
+    for (const series of wardSeriesData) {
+      optionMap.set(series.code, series.label);
+    }
 
     for (const row of lsoaWardLookup) {
       const code = row.ward_code?.trim();
       const name = row.ward_name?.trim();
-      if (code && name) wardMap.set(code, name);
+
+      if (code && name && !optionMap.has(code)) {
+        optionMap.set(code, name);
+      }
     }
 
-    return Array.from(wardMap.entries())
+    return Array.from(optionMap.entries())
       .map(([code, label]) => ({ code, label }))
       .sort((a, b) => a.label.localeCompare(b.label, "en-GB"));
-  }, [lsoaWardLookup]);
+  }, [wardSeriesData, lsoaWardLookup]);
 
   const lsoaOptions = useMemo<SelectOption[]>(() => {
     const optionMap = new Map<string, string>();
@@ -667,6 +679,8 @@ export default function TimeSeries() {
         existing[`${series.code}__decile`] = point.decile;
         existing[`${series.code}__label`] = series.label;
         existing[`${series.code}__ward`] = wardName;
+        
+        pointsByDate.set(key, existing);
       }
     }
 
@@ -689,17 +703,25 @@ export default function TimeSeries() {
   }, [mainRankChartData, selectedSeriesMeta]);
 
   const mainChartDomain = useMemo(() => {
-    if (!mainRankValues.length) return displayMetric === "rank" ? [1, 10] : [0, 10];
+  if (!mainRankValues.length) return displayMetric === "rank" ? [1, 10] : [0, 10];
 
-    if (displayMetric === "rank") {
-      return [1, Math.max(getIntegerDomain(mainRankValues, 10)[1], 10)];
-    }
+  const minValue = Math.min(...mainRankValues);
+  const maxValue = Math.max(...mainRankValues);
 
-    const min = Math.floor(Math.min(...mainRankValues));
-    const max = Math.ceil(Math.max(...mainRankValues));
+  if (displayMetric === "rank") {
+    const padding = Math.max(3, Math.ceil((maxValue - minValue) * 0.15));
+    const min = Math.max(1, Math.floor(minValue - padding));
+    const max = Math.ceil(maxValue + padding);
 
     return [min, max];
-  }, [mainRankValues, displayMetric]);
+  }
+
+  const padding = Math.max(1, (maxValue - minValue) * 0.15);
+  const min = Math.floor(minValue - padding);
+  const max = Math.ceil(maxValue + padding);
+
+  return [min, max];
+}, [mainRankValues, displayMetric]);
 
   const decileChartData = useMemo(
     () =>
@@ -722,13 +744,20 @@ export default function TimeSeries() {
       };
     }
 
-    const rankValues = primaryVisiblePoints.map((point) => Math.round(point.rank));
+    const values = primaryVisiblePoints.map((point) =>
+      displayMetric === "score" ? point.score : point.rank,
+    );
+
+    const visualValues =
+      displayMetric === "rank"
+        ? values.map((value) => -value)
+        : values;
 
     return {
-      linePath: buildSparklinePath(rankValues, 140, 40),
-      areaPath: buildSparklineAreaPath(rankValues, 140, 40),
+      linePath: buildSparklinePath(visualValues, 140, 40),
+      areaPath: buildSparklineAreaPath(visualValues, 140, 40),
     };
-  }, [primaryVisiblePoints]);
+  }, [primaryVisiblePoints, displayMetric]);
 
   const activeSearchBase = useMemo(() => {
     if (geographyMode === "LSOA") {
@@ -1679,7 +1708,7 @@ export default function TimeSeries() {
                             viewBox="0 0 140 40"
                             className="h-24 w-full max-w-[220px]"
                             role="img"
-                            aria-label={`Rank trend for ${primarySeries.label}`}
+                            aria-label={`${displayMetric === "rank" ? "Rank" : "Score"} trend for ${primarySeries.label}`}
                           >
                             <defs>
                               <linearGradient id="current-focus-spark" x1="0" y1="0" x2="0" y2="1">

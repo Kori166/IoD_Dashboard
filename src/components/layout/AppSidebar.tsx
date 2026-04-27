@@ -4,11 +4,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarHeader, SidebarFooter, useSidebar,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar} from "@/components/ui/sidebar";
 
 const navItems = [
   { title: "Overview", url: "/", icon: LayoutDashboard },  
