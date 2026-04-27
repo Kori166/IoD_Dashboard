@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUp, Check, Minus, RotateCcw, Search, X } from "lucide-react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-
+import type { AreaTimeSeriesRow, TimeSeriesPoint } from "@/types/dashboard-data";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { useLad } from "@/context/lad-context";
@@ -240,10 +240,10 @@ function ChangeText({ delta }: { delta: number }) {
   return <span className="text-muted-foreground">No net change</span>;
 }
 
-function TrendIcon({ direction }: { direction: ChangeDirection }) {
-  if (direction === "up") return <ArrowUp className="h-4 w-4 text-red-500" />;
-  if (direction === "down") return <ArrowDown className="h-4 w-4 text-emerald-500" />;
-  return <Minus className="h-4 w-4 text-muted-foreground" />;
+function formatOptionalNumber(value: number | undefined, digits = 1) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : "n/a";
 }
 // Main dashboard components
 export default function TimeSeries() {
@@ -398,7 +398,7 @@ export default function TimeSeries() {
         }
 
         const data = (await response.json()) as AreaSeries[];
-if (isMounted) setLsoaSeriesData(data);     
+        if (isMounted) setLsoaSeriesData(data);   
       } catch (error) {
         console.error("Could not load LSOA time-series data", error);
         if (isMounted) setLsoaSeriesData([]);
@@ -470,7 +470,10 @@ if (isMounted) setLsoaSeriesData(data);
     };
   }, [lookupPath]);
 
-  const pageLoading = lsoaLoading || wardLoading || lookupLoading;
+  const pageLoading =
+  geographyMode === "LSOA"
+    ? lsoaLoading || lookupLoading
+    : wardLoading || lookupLoading;
 
   const lsoaSeriesByCode = useMemo(() => new Map(lsoaSeriesData.map((item) => [item.code, item])), [lsoaSeriesData]);
   const wardSeriesByCode = useMemo(() => new Map(wardSeriesData.map((item) => [item.code, item])), [wardSeriesData]);
@@ -654,13 +657,16 @@ if (isMounted) setLsoaSeriesData(data);
           xLabel: formatXAxisLabel(point.date),
         };
 
-        existing[series.code] = displayMetric === "rank" ? point.rank : point.score;
+        existing[series.code] =
+          displayMetric === "score" && typeof point.score === "number"
+            ? point.score
+            : point.rank;
+
         existing[`${series.code}__rank`] = point.rank;
-        existing[`${series.code}__score`] = point.score;
+        existing[`${series.code}__score`] = point.score ?? null;
         existing[`${series.code}__decile`] = point.decile;
         existing[`${series.code}__label`] = series.label;
         existing[`${series.code}__ward`] = wardName;
-        pointsByDate.set(key, existing);
       }
     }
 
@@ -703,6 +709,7 @@ if (isMounted) setLsoaSeriesData(data);
         xLabel: formatXAxisLabel(point.date),
         rank: Math.round(point.rank),
         decile: Math.round(point.decile),
+        score: point.score,
       })),
     [primaryVisiblePoints],
   );
@@ -829,6 +836,7 @@ if (isMounted) setLsoaSeriesData(data);
           endRank: Math.round(end.rank),
           currentRank: Math.round(end.rank),
           delta,
+          latestPoint: end,
           sparklinePath: buildSparklinePath(sparkValues, 96, 24),
           sparklineAreaPath: buildSparklineAreaPath(sparkValues, 96, 24),
         };
@@ -844,6 +852,7 @@ if (isMounted) setLsoaSeriesData(data);
       endRank: number;
       currentRank: number;
       delta: number;
+      latestPoint: TimePoint;
       sparklinePath: string;
       sparklineAreaPath: string;
     }[];
@@ -1036,7 +1045,7 @@ if (isMounted) setLsoaSeriesData(data);
           </h1>
 
           <p className="text-muted-foreground text-base md:text-lg">
-            Compare selected LSOAs and Wards over time with rank as the primary focus.
+            Compare selected LSOAs and Wards over time by rank, score and decile.
           </p>
 
           {primaryLatest && primarySeries ? (
@@ -1299,7 +1308,8 @@ if (isMounted) setLsoaSeriesData(data);
                                 <div className="rounded-xl border border-border/50 bg-background/95 px-4 py-3 shadow-xl backdrop-blur-sm">
                                   <p className="text-sm font-medium text-foreground">{String(row.shortDate ?? "")}</p>
                                   <p className="mt-1 text-xs text-muted-foreground">
-                                    Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas}
+                                    Decile {Math.round(Number(row.decile))} · Rank {Math.round(Number(row.rank))} of {totalAreas} · Score{" "}
+                                    {Number.isFinite(Number(row.score)) ? Number(row.score).toFixed(2) : "n/a"}
                                   </p>
                                 </div>
                               );
@@ -1492,7 +1502,7 @@ if (isMounted) setLsoaSeriesData(data);
                       onMouseEnter={() => setHoveredCode(item.code)}
                       onMouseLeave={() => setHoveredCode(null)}
                       onClick={() => setPrimarySelection(item.code)}
-                      className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
+                      className={`relative w-full rounded-xl border px-3 py-3 text-left transition-colors ${
                         hoveredCode === item.code ? "border-primary/60 bg-primary/10" : "border-border/40 bg-background/20"
                       }`}
                     >
@@ -1537,6 +1547,55 @@ if (isMounted) setLsoaSeriesData(data);
                         <TrendIcon direction={getChangeDirection(item.delta)} />
                         <ChangeText delta={item.delta} />
                       </div>
+                      {geographyMode === "Ward" && hoveredCode === item.code ? (
+                        <div className="absolute right-3 top-3 z-20 w-64 rounded-xl border border-border/60 bg-background/95 p-3 text-xs text-muted-foreground shadow-2xl backdrop-blur-sm">
+                          <p className="mb-2 text-sm font-semibold text-foreground">{item.label}</p>
+
+                          <div className="space-y-1">
+                            <div className="flex justify-between gap-3">
+                              <span>Mean LSOA rank</span>
+                              <span className="text-foreground">
+                                {formatOptionalNumber(item.latestPoint.mean_lsoa_rank, 1)}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                              <span>Mean LSOA decile</span>
+                              <span className="text-foreground">
+                                {formatOptionalNumber(item.latestPoint.mean_lsoa_decile, 1)}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                              <span>LSOA count</span>
+                              <span className="text-foreground">
+                                {item.latestPoint.lsoa_count ?? "n/a"}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                              <span>Score min</span>
+                              <span className="text-foreground">
+                                {formatOptionalNumber(item.latestPoint.score_min, 2)}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                              <span>Score median</span>
+                              <span className="text-foreground">
+                                {formatOptionalNumber(item.latestPoint.score_median, 2)}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                              <span>Score max</span>
+                              <span className="text-foreground">
+                                {formatOptionalNumber(item.latestPoint.score_max, 2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -1585,6 +1644,9 @@ if (isMounted) setLsoaSeriesData(data);
                               }}
                             >
                               Decile {Math.round(primaryLatest.decile)}
+                            </span>
+                            <span className="rounded-lg border border-border/40 bg-background/30 px-3 py-2 text-2xl font-medium text-foreground">
+                              Score {Number.isFinite(Number(primaryLatest.score)) ? Number(primaryLatest.score).toFixed(2) : "n/a"}
                             </span>
                           </div>
 
