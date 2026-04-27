@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Overview", url: "/", icon: LayoutDashboard },
-  { title: "Time Series", url: "/time-series", icon: Clock },
+  { title: "Overview", url: "/", icon: LayoutDashboard },  
   { title: "Map Explorer", url: "/map", icon: Map },
+  { title: "Time Series", url: "/time-series", icon: Clock },
   { title: "Feature Analysis", url: "/indicators", icon: BarChart3 },
   { title: "Pipeline & Method", url: "/pipeline", icon: Workflow },
   { title: "Data Sources", url: "/sources", icon: Database },
