@@ -218,6 +218,19 @@ function buildSparklinePath(values: number[], width: number, height: number) {
     .join(" ");
 }
 
+function buildSparklineAreaPath(values: number[], width: number, height: number) {
+  const points = buildSparklinePoints(values, width, height);
+  if (!points.length) return "";
+
+  const linePart = points
+    .map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+    .join(" ");
+
+  return `M ${points[0].x.toFixed(2)} ${height} ${linePart} L ${points[
+    points.length - 1
+  ].x.toFixed(2)} ${height} Z`;
+}
+
 function getSparklineValues(points: TimePoint[], displayMetric: DisplayMetric) {
   const values = points.map((point) =>
     displayMetric === "score" ? point.score : point.rank,

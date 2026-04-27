@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 
 import type { LsoaCurrentRow } from "@/types/dashboard-data";
 
-type MapMetric =
+export type MapMetric =
   | "bristol_rank"
   | "bristol_decile"
   | "bristol_score"
@@ -30,9 +30,10 @@ type LsoaGeoJson = GeoJSON.FeatureCollection<
 type BristolComparisonMapProps = {
   metric: MapMetric;
   heightClassName?: string;
+  highlightedBucket?: number | null;
 };
 
-function getDecileColor(decile?: number | null) {
+export function getDecileColor(decile?: number | null) {
   if (!decile) return "#1f2937";
 
   const palette: Record<number, string> = {
@@ -51,12 +52,19 @@ function getDecileColor(decile?: number | null) {
   return palette[decile] ?? "#1f2937";
 }
 
-function getRankBucketColor(rank?: number | null, maxRank = 268) {
-  if (!rank) return "#1f2937";
+function getRankBucket(rank?: number | null, maxRank = 268) {
+  if (!rank) return null;
+  return Math.min(10, Math.max(1, Math.ceil((rank / maxRank) * 10)));
+}
 
-  const bucket = Math.min(10, Math.max(1, Math.ceil((rank / maxRank) * 10)));
+function getScoreBucket(score?: number | null, minScore = 0, maxScore = 75) {
+  if (score == null || !Number.isFinite(score)) return null;
 
-  return getDecileColor(bucket);
+  const range = maxScore - minScore || 1;
+  const normalised = Math.min(1, Math.max(0, (score - minScore) / range));
+
+  // Higher score = more deprived, so high scores should use low/most-deprived colour buckets.
+  return Math.min(10, Math.max(1, 11 - Math.ceil(normalised * 10)));
 }
 
 function getScoreColor(score?: number | null, minScore = 0, maxScore = 75) {
@@ -79,6 +87,18 @@ function isRankMetric(metric: MapMetric) {
 
 function isScoreMetric(metric: MapMetric) {
   return metric === "bristol_score" || metric === "ons_score";
+}
+
+function getRankMax(metric: MapMetric) {
+  return metric === "ons_national_rank" ? 32844 : 268;
+}
+
+function getScoreRange(metric: MapMetric) {
+  if (metric === "bristol_score") {
+    return { min: -5, max: 45 };
+  }
+
+  return { min: 0, max: 75 };
 }
 
 function getMetricValue(row: LsoaCurrentRow | undefined, metric: MapMetric) {
@@ -129,23 +149,28 @@ function getMetricLabel(metric: MapMetric) {
   }
 }
 
-function getMetricColor(metric: MapMetric, value?: number | null) {
-  if (value == null) return "#1f2937";
+export function getMetricBucket(metric: MapMetric, value?: number | null) {
+  if (value == null) return null;
 
   if (isDecileMetric(metric)) {
-    return getDecileColor(value);
+    return Math.round(value);
   }
 
   if (isRankMetric(metric)) {
-    const maxRank = metric === "ons_national_rank" ? 32844 : 268;
-    return getRankBucketColor(value, maxRank);
+    return getRankBucket(value, getRankMax(metric));
   }
 
   if (isScoreMetric(metric)) {
-    return getScoreColor(value);
+    const { min, max } = getScoreRange(metric);
+    return getScoreBucket(value, min, max);
   }
 
-  return "#1f2937";
+  return null;
+}
+
+function getMetricColor(metric: MapMetric, value?: number | null) {
+  const bucket = getMetricBucket(metric, value);
+  return bucket == null ? "#1f2937" : getDecileColor(bucket);
 }
 
 function formatMetricValue(metric: MapMetric, value?: number | null) {
@@ -158,9 +183,57 @@ function formatMetricValue(metric: MapMetric, value?: number | null) {
   return Math.round(Number(value)).toString();
 }
 
+export function getLegendTitle(metric: MapMetric) {
+  if (isDecileMetric(metric)) return "Decile";
+  if (isRankMetric(metric)) return "Rank bucket";
+  if (isScoreMetric(metric)) return "Score bucket";
+  return "Bucket";
+}
+
+export function getLegendStartLabel(metric: MapMetric) {
+  if (isDecileMetric(metric)) return "Most deprived";
+  if (isRankMetric(metric)) return "Highest deprivation rank";
+  if (isScoreMetric(metric)) return "Highest score";
+  return "High";
+}
+
+export function getLegendEndLabel(metric: MapMetric) {
+  if (isDecileMetric(metric)) return "Least deprived";
+  if (isRankMetric(metric)) return "Lowest deprivation rank";
+  if (isScoreMetric(metric)) return "Lowest score";
+  return "Low";
+}
+
+export function getLegendBucketTitle(metric: MapMetric, bucket: number) {
+  if (isDecileMetric(metric)) {
+    return `Decile ${bucket}`;
+  }
+
+  if (isRankMetric(metric)) {
+    const maxRank = getRankMax(metric);
+    const start = Math.floor(((bucket - 1) / 10) * maxRank) + 1;
+    const end = Math.ceil((bucket / 10) * maxRank);
+    return `Rank ${start} to ${end}`;
+  }
+
+  if (isScoreMetric(metric)) {
+    const { min, max } = getScoreRange(metric);
+    const step = (max - min) / 10;
+
+    // Bucket 1 is highest score / most deprived.
+    const high = max - (bucket - 1) * step;
+    const low = max - bucket * step;
+
+    return `Score ${low.toFixed(1)} to ${high.toFixed(1)}`;
+  }
+
+  return `Bucket ${bucket}`;
+}
+
 export default function BristolComparisonMap({
   metric,
   heightClassName = "h-[420px]",
+  highlightedBucket = null,
 }: BristolComparisonMapProps) {
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
@@ -228,6 +301,7 @@ export default function BristolComparisonMap({
         const code = props.lsoa_code ?? props.lsoa_code_11;
         const row = lsoaByCode[code];
         const activeValue = getMetricValue(row, metric);
+        const activeBucket = getMetricBucket(metric, activeValue);
 
         return {
           ...feature,
@@ -235,6 +309,7 @@ export default function BristolComparisonMap({
             ...props,
             ...row,
             active_value: activeValue ?? null,
+            active_bucket: activeBucket ?? null,
             lsoa_code: row?.code ?? code ?? null,
             lsoa_name: row?.label ?? props.lsoa_name ?? props.lsoa_name_11 ?? "Unknown LSOA",
             ward_name: row?.ward_name ?? null,
@@ -279,15 +354,23 @@ export default function BristolComparisonMap({
             data={mergedGeojson as any}
             style={(feature: any) => {
               const value = feature?.properties?.active_value;
+              const bucket = feature?.properties?.active_bucket;
+
+              const isHighlighted =
+                highlightedBucket !== null && bucket === highlightedBucket;
+
+              const isDimmed =
+                highlightedBucket !== null && bucket !== highlightedBucket;
 
               return {
                 fillColor: getMetricColor(metric, value),
-                weight: 0.7,
+                weight: isHighlighted ? 1.8 : 0.7,
                 opacity: 1,
-                color: "hsl(220, 30%, 16%)",
-                fillOpacity: value == null ? 0.25 : 0.9,
+                color: isHighlighted ? "hsl(190, 95%, 55%)" : "hsl(220, 30%, 16%)",
+                fillOpacity: value == null ? 0.25 : isDimmed ? 0.22 : isHighlighted ? 1 : 0.9,
               };
             }}
+
             onEachFeature={(feature: any, layer: any) => {
               const props = feature.properties || {};
               const metricLabel = getMetricLabel(metric);
@@ -329,11 +412,18 @@ export default function BristolComparisonMap({
                 },
                 mouseout: (e: any) => {
                   const value = props.active_value;
+                  const bucket = props.active_bucket;
+
+                  const isHighlighted =
+                    highlightedBucket !== null && bucket === highlightedBucket;
+
+                  const isDimmed =
+                    highlightedBucket !== null && bucket !== highlightedBucket;
 
                   e.target.setStyle({
-                    weight: 0.7,
-                    color: "hsl(220, 30%, 16%)",
-                    fillOpacity: value == null ? 0.25 : 0.9,
+                    weight: isHighlighted ? 1.8 : 0.7,
+                    color: isHighlighted ? "hsl(190, 95%, 55%)" : "hsl(220, 30%, 16%)",
+                    fillOpacity: value == null ? 0.25 : isDimmed ? 0.22 : isHighlighted ? 1 : 0.9,
                   });
                 },
               });
@@ -342,24 +432,7 @@ export default function BristolComparisonMap({
         </MapContainer>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-        <span>Most deprived</span>
-
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((bucket) => (
-            <div key={bucket} className="flex flex-col items-center gap-1">
-              <div
-                className="h-5 w-5 rounded"
-                style={{ background: getDecileColor(bucket) }}
-                title={`Bucket ${bucket}`}
-              />
-              <span className="text-[10px]">{bucket}</span>
-            </div>
-          ))}
-        </div>
-
-        <span>Least deprived</span>
-      </div>
+      
     </div>
   );
 }

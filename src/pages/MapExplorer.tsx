@@ -6,9 +6,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layers } from "lucide-react";
-
 import { GlassCard } from "@/components/ui/glass-card";
-import BristolComparisonMap from "@/components/maps/BristolComparisonMap";
+import BristolComparisonMap, { getDecileColor, getLegendBucketTitle, getLegendEndLabel, getLegendStartLabel, getLegendTitle, type MapMetric} from "@/components/maps/BristolComparisonMap";
 
 type MapMeasure = "decile" | "rank" | "score";
 
@@ -53,9 +52,245 @@ function MeasureToggle({
   );
 }
 
+function SharedMapLegend({
+  metric,
+  highlightedBucket,
+  onHighlightBucket,
+  legendHover,
+  onLegendHover,
+}: {
+  metric: MapMetric;
+  highlightedBucket: number | null;
+  onHighlightBucket: (bucket: number | null) => void;
+  legendHover: { y: number; value: number; bucket: number } | null;
+  onLegendHover: (value: { y: number; value: number; bucket: number } | null) => void;
+}) {
+  const isDecile = metric.includes("decile");
+  const isRank = metric.includes("rank");
+  const isScore = metric.includes("score");
+
+  const rankMax = 268;
+
+  const scoreRange =
+    metric === "bristol_score"
+      ? { min: -5, max: 45 }
+      : { min: 0, max: 75 };
+
+  const gradient = `linear-gradient(to bottom,
+    ${getDecileColor(1)} 0%,
+    ${getDecileColor(2)} 10%,
+    ${getDecileColor(3)} 20%,
+    ${getDecileColor(4)} 30%,
+    ${getDecileColor(5)} 40%,
+    ${getDecileColor(6)} 50%,
+    ${getDecileColor(7)} 60%,
+    ${getDecileColor(8)} 70%,
+    ${getDecileColor(9)} 80%,
+    ${getDecileColor(10)} 100%)`;
+
+  function handleGradientMove(event: React.MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const rawRatio = (event.clientY - rect.top) / rect.height;
+    const ratio = Math.min(1, Math.max(0, rawRatio));
+
+    if (isRank) {
+      const value = Math.round(1 + ratio * (rankMax - 1));
+      const bucket = Math.min(10, Math.max(1, Math.ceil((value / rankMax) * 10)));
+
+      onLegendHover({
+        y: ratio * 100,
+        value,
+        bucket,
+      });
+      onHighlightBucket(bucket);
+      return;
+    }
+
+    if (isScore) {
+      const value = scoreRange.max - ratio * (scoreRange.max - scoreRange.min);
+      const bucket = Math.min(
+        10,
+        Math.max(1, 11 - Math.ceil(((value - scoreRange.min) / (scoreRange.max - scoreRange.min)) * 10)),
+      );
+
+      onLegendHover({
+        y: ratio * 100,
+        value,
+        bucket,
+      });
+      onHighlightBucket(bucket);
+    }
+  }
+
+  function clearGradientHover() {
+    onLegendHover(null);
+    onHighlightBucket(null);
+  }
+
+  return (
+    <GlassCard className="h-full p-4">
+      <div className="flex h-full flex-col">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Shared legend</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Applies to both maps.
+          </p>
+        </div>
+
+        {isDecile ? (
+          <div className="mt-6 flex flex-1 flex-col">
+            <p className="mb-4 text-xs font-medium text-muted-foreground">
+              Most deprived
+            </p>
+
+            <div className="flex flex-1 flex-col justify-between">
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((decile) => (
+                <button
+                  key={decile}
+                  type="button"
+                  onMouseEnter={() => onHighlightBucket(decile)}
+                  onMouseLeave={() => onHighlightBucket(null)}
+                  onFocus={() => onHighlightBucket(decile)}
+                  onBlur={() => onHighlightBucket(null)}
+                  className="group flex w-full items-center justify-between gap-4 rounded-md px-1 py-1 text-left transition-colors hover:bg-background/40"
+                  title={`Decile ${decile}`}
+                  aria-label={`Highlight decile ${decile}`}
+                >
+                  <span
+                    className={`h-10 flex-1 rounded-md border transition-all ${
+                      highlightedBucket === decile
+                        ? "scale-[1.03] border-white shadow-[0_0_14px_rgba(34,211,238,0.65)]"
+                        : "border-border/40"
+                    }`}
+                    style={{ background: getDecileColor(decile) }}
+                  />
+
+                  <span className="w-7 text-right text-2xl font-bold leading-none text-foreground">
+                    {decile}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-4 text-xs font-medium text-muted-foreground">
+              Least deprived
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-1 flex-col">
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-foreground">
+                {isRank ? "Rank 1" : `${scoreRange.max.toFixed(2)}`}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isRank ? "Most deprived" : "Highest score · Most deprived"}
+              </p>
+            </div>
+
+            <div className="flex min-h-0 flex-1 gap-4">
+              <div
+                className="relative h-full w-12 cursor-crosshair rounded-lg border border-border/50"
+                style={{ background: gradient }}
+                onMouseMove={handleGradientMove}
+                onMouseLeave={clearGradientHover}
+              >
+                {legendHover ? (
+                  <>
+                    <div
+                      className="pointer-events-none absolute left-0 right-0 h-0.5 bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.85)]"
+                      style={{ top: `${legendHover.y}%` }}
+                    />
+
+                    <div
+                      className="pointer-events-none absolute left-14 -translate-y-1/2 whitespace-nowrap rounded-md border border-cyan-300/40 bg-background/95 px-2 py-1 text-xs font-bold text-foreground shadow-xl"
+                      style={{ top: `${legendHover.y}%` }}
+                    >
+                      {isRank
+                        ? `Rank ${legendHover.value}`
+                        : `Score ${legendHover.value.toFixed(2)}`}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+
+              <div className="relative flex-1">
+                {isRank ? (
+                  [
+                    { label: "1", top: "0%" },
+                    { label: "67", top: "25%" },
+                    { label: "134", top: "50%" },
+                    { label: "201", top: "75%" },
+                    { label: "268", top: "100%" },
+                  ].map((tick) => (
+                    <div
+                      key={tick.label}
+                      className="absolute left-0 flex w-full -translate-y-1/2 items-center gap-2"
+                      style={{ top: tick.top }}
+                    >
+                      <span className="h-px w-5 bg-border" />
+                      <span className="text-xs font-bold text-foreground">
+                        {tick.label}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  [
+                    { label: scoreRange.max.toFixed(2), top: "0%" },
+                    {
+                      label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.75).toFixed(2),
+                      top: "25%",
+                    },
+                    {
+                      label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.5).toFixed(2),
+                      top: "50%",
+                    },
+                    {
+                      label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.25).toFixed(2),
+                      top: "75%",
+                    },
+                    { label: scoreRange.min.toFixed(2), top: "100%" },
+                  ].map((tick) => (
+                    <div
+                      key={tick.label}
+                      className="absolute left-0 flex w-full -translate-y-1/2 items-center gap-2"
+                      style={{ top: tick.top }}
+                    >
+                      <span className="h-px w-5 bg-border" />
+                      <span className="text-xs font-bold text-foreground">
+                        {tick.label}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-foreground">
+                {isRank ? "Rank 268" : `${scoreRange.min.toFixed(2)}`}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isRank ? "Least deprived" : "Lowest score · Least deprived"}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </GlassCard>
+  );
+}
+
 export default function MapExplorer() {
-  const [leftMeasure, setLeftMeasure] = useState<MapMeasure>("decile");
-  const [rightMeasure, setRightMeasure] = useState<MapMeasure>("decile");
+  const [selectedMeasure, setSelectedMeasure] = useState<MapMeasure>("decile");
+  const [highlightedBucket, setHighlightedBucket] = useState<number | null>(null);
+  const [legendHover, setLegendHover] = useState<{
+    y: number;
+    value: number;
+    bucket: number;
+  } | null>(null);
+
+  const leftMetric = toBristolMetric(selectedMeasure) as MapMetric;
+  const rightMetric = toOnsBristolMetric(selectedMeasure) as MapMetric;
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
@@ -74,10 +309,10 @@ export default function MapExplorer() {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px] gap-6 items-start">
         <GlassCard className="p-5 h-full">
           <div className="h-full flex flex-col">
-            <div className="min-h-[112px] space-y-3 mb-4">
+            <div className="min-h-[112px] mb-4 flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-foreground">
                   Our Bristol IoD
@@ -88,7 +323,7 @@ export default function MapExplorer() {
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 2xl:min-w-[260px]">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-semibold text-foreground">
@@ -96,19 +331,20 @@ export default function MapExplorer() {
                   </h3>
                 </div>
 
-                <MeasureToggle value={leftMeasure} onChange={setLeftMeasure} />
+                <MeasureToggle value={selectedMeasure} onChange={setSelectedMeasure} />
               </div>
             </div>
 
-            <div className="flex-1">
+            <div className="flex-1"> 
               <BristolComparisonMap
-                metric={toBristolMetric(leftMeasure)}
+                metric={leftMetric}
+                highlightedBucket={highlightedBucket}
                 heightClassName="h-[750px]"
               />
             </div>
 
             <p className="text-sm text-muted-foreground mt-4">
-              Left map uses our Bristol-relative model outputs.
+              Left map uses our Bristol-relative model outputs, coloured by the selected measure.
             </p>
           </div>
         </GlassCard>
@@ -134,22 +370,30 @@ export default function MapExplorer() {
                   </h3>
                 </div>
 
-                <MeasureToggle value={rightMeasure} onChange={setRightMeasure} />
+                <MeasureToggle value={selectedMeasure} onChange={setSelectedMeasure} />
               </div>
             </div>
 
             <div className="flex-1">
               <BristolComparisonMap
-                metric={toOnsBristolMetric(rightMeasure)}
+                metric={rightMetric}
+                highlightedBucket={highlightedBucket}
                 heightClassName="h-[750px]"
               />
             </div>
 
             <p className="text-sm text-muted-foreground mt-4">
-              Use the buttons above to switch the ONS map between decile, rank and score.
+              Right map uses ONS data ranked within Bristol, coloured by the selected measure.
             </p>
           </div>
         </GlassCard>
+        <SharedMapLegend
+          metric={leftMetric}
+          highlightedBucket={highlightedBucket}
+          onHighlightBucket={setHighlightedBucket}
+          legendHover={legendHover}
+          onLegendHover={setLegendHover}
+        />
       </div>
     </div>
   );
