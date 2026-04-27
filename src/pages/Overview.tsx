@@ -31,23 +31,10 @@ import {
 
 import { MetricCard } from "@/components/ui/metric-card";
 import { GlassCard } from "@/components/ui/glass-card";
-import { KeyInsight } from "@/components/ui/key-insight";
 import { SectionHeader } from "@/components/ui/section-header";
 import BristolChoropleth from "@/components/maps/BristolChoropleth";
-import { Link } from "react-router-dom";
+import type { LsoaCurrentRow, WardCurrentRow } from "@/types/dashboard-data";
 
-// Shape of each deprivation row loaded from the Bristol IMD JSON file.
-type BristolIMDRow = {
-  lsoa_code: string;
-  lsoa_name: string;
-  imd_score: number;
-  uk_rank: number;
-  uk_decile: number;
-  bristol_rank: number;
-  bristol_decile: number;
-  ward_name: string;
-  ward_lsoa: string;
-};
 
 // Decile palette aligned with the dashboard legend.
 const DECILE_COLORS: Record<number, string> = {
@@ -65,7 +52,8 @@ const DECILE_COLORS: Record<number, string> = {
 
 export default function Overview() {
   // Stores the full set of IMD rows used across the page.
-  const [imdRows, setImdRows] = useState<BristolIMDRow[]>([]);
+  const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
+  const [wardRows, setWardRows] = useState<WardCurrentRow[]>([]);
 
   // Controls whether rankings are shown relative to Bristol or the whole UK.
   const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol");
@@ -76,9 +64,16 @@ export default function Overview() {
   // Load the IMD data once when the page first renders.
   useEffect(() => {
     async function load() {
-      const res = await fetch("/data/bristol_imd.json");
-      const data = await res.json();
-      setImdRows(data);
+      const [lsoaRes, wardRes] = await Promise.all([
+        fetch("/data/bristol_lsoa_current.json"),
+        fetch("/data/bristol_ward_current.json"),
+      ]);
+
+      const lsoaData = (await lsoaRes.json()) as LsoaCurrentRow[];
+      const wardData = (await wardRes.json()) as WardCurrentRow[];
+
+      setLsoaRows(lsoaData);
+      setWardRows(wardData);
     }
 
     load();
@@ -86,27 +81,46 @@ export default function Overview() {
 
   // Sort rows by the currently selected ranking mode so the top/bottom lists
   // can be derived from one shared ordered dataset.
+  const activeLsoaRows = lsoaRows;
   const sortedRows = useMemo(() => {
-    return [...imdRows].sort((a, b) =>
+    return [...activeLsoaRows].sort((a, b) =>
       rankMode === "bristol"
         ? a.bristol_rank - b.bristol_rank
-        : a.uk_rank - b.uk_rank,
+        : (a.ons_national_rank ?? Number.MAX_SAFE_INTEGER) -
+          (b.ons_national_rank ?? Number.MAX_SAFE_INTEGER),
     );
-  }, [imdRows, rankMode]);
+  }, [activeLsoaRows, rankMode]);
 
   // Top 5 most deprived areas based on the active sort mode.
   const mostDeprived = sortedRows.slice(0, 5);
+
+  const sortedWardRows = useMemo(() => {
+  return [...wardRows].sort((a, b) =>
+    rankMode === "bristol"
+      ? a.bristol_rank - b.bristol_rank
+      : a.ons_bristol_rank - b.ons_bristol_rank,
+  );
+}, [wardRows, rankMode]);
+
+const mostDeprivedWards = sortedWardRows.slice(0, 5);
+const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
 
   // Bottom 5 least deprived areas, reversed so the least deprived shows first.
   const leastDeprived = [...sortedRows].slice(-5).reverse();
 
   // Build the local authority profile showing the share of Bristol LSOAs in each decile.
   const localAuthorityProfileData = useMemo(() => {
-    const total = imdRows.length;
+    const total = lsoaRows.length;
 
     return Array.from({ length: 10 }, (_, index) => {
       const decile = index + 1;
-      const count = imdRows.filter((row) => row.bristol_decile === decile).length;
+
+      const count = lsoaRows.filter((row) =>
+        rankMode === "bristol"
+          ? row.bristol_decile === decile
+          : row.ons_national_decile === decile,
+      ).length;
+
       const percentage = total ? (count / total) * 100 : 0;
 
       return {
@@ -117,7 +131,7 @@ export default function Overview() {
         color: DECILE_COLORS[decile],
       };
     });
-  }, [imdRows]);
+  }, [lsoaRows, rankMode]);
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
@@ -150,7 +164,7 @@ export default function Overview() {
         />
         <MetricCard
           label="LSOAs Covered"
-          value={imdRows.length ? String(imdRows.length) : "267"}
+          value={lsoaRows.length ? String(lsoaRows.length) : "268"}
           subtitle="LSOAs"
           icon={MapPin}
           glow="violet"
@@ -187,6 +201,7 @@ export default function Overview() {
           {/* Embedded map component with a taller display area. */}
           <div className="mt-4 min-h-[555px]">
             <BristolChoropleth
+              mode={rankMode}
               highlightedDecile={hoveredDecile}
               onLegendHoverChange={setHoveredDecile}
             />
@@ -324,7 +339,7 @@ export default function Overview() {
     <div className="space-y-1.5">
       {mostDeprived.map((row, i) => (
         <div
-          key={row.ward_lsoa}
+          key={row.ward_name ? `${row.ward_name} - ${row.label.replace("Bristol ", "")}` : row.label}
           className="flex w-full items-start gap-2 text-base md:text-xs"
         >
           <div className="flex-1 min-w-0">
@@ -332,7 +347,7 @@ export default function Overview() {
               <span className="text-foreground font-medium">
                 {i + 1}.
               </span>{" "}
-              {row.ward_lsoa}
+              {row.ward_name ? `${row.ward_name} - ${row.label.replace("Bristol ", "")}` : row.label}
             </span>
           </div>
 
@@ -340,7 +355,7 @@ export default function Overview() {
             <span className="text-destructive font-bold text-xs md:text-base whitespace-nowrap">
               {rankMode === "bristol"
                 ? `#${row.bristol_rank}`
-                : `#${row.uk_rank}`}
+                : `#${row.ons_national_rank ?? "n/a"}`}
             </span>
           </div>
         </div>
@@ -355,7 +370,7 @@ export default function Overview() {
     <div className="space-y-1.5">
       {leastDeprived.map((row, i) => (
         <div
-          key={row.ward_lsoa}
+          key={row.code}
           className="flex w-full items-start gap-2 overflow-hidden text-base md:text-xs"
         >
           <div className="flex-1 min-w-0">
@@ -363,7 +378,7 @@ export default function Overview() {
               <span className="text-foreground font-medium">
                 {i + 1}.
               </span>{" "}
-              {row.ward_lsoa}
+              {row.ward_name ? `${row.ward_name} - ${row.label.replace("Bristol ", "")}` : row.label}
             </span>
           </div>
 
@@ -371,7 +386,7 @@ export default function Overview() {
             <span className="text-success font-bold text-xs md:text-base whitespace-nowrap">
               {rankMode === "bristol"
                 ? `#${row.bristol_rank}`
-                : `#${row.uk_rank}`}
+                : `#${row.ons_national_rank ?? "n/a"}`}
             </span>
           </div>
         </div>
@@ -380,6 +395,7 @@ export default function Overview() {
   </div>
 </div>
 </GlassCard>
+
 </div>
       <GlassCard className="p-6">
         <SectionHeader title="Why This Matters" />

@@ -16,27 +16,29 @@
     "ward": "2020"
   },
   "files": {
-    "imd_current": {
-      "path": "/data/bristol_imd.json",
+    "lsoa_current": {
+      "path": "/data/bristol_lsoa_current.json",
       "format": "json",
       "description": "Current LSOA-level deprivation snapshot for Bristol used by Overview and map pages.",
       "grain": "LSOA",
       "required": true,
-      "primary_key": ["lsoa_code"],
+      "primary_key": ["code"],
       "fields": {
-        "lsoa_code": "string",
-        "lsoa_name": "string",
-        "imd_score": "number",
-        "uk_rank": "integer",
-        "uk_decile": "integer",
+        "code": "string",
+        "label": "string",
+        "ward_code": "string",
+        "ward_name": "string",
         "bristol_rank": "integer",
         "bristol_decile": "integer",
-        "ward_name": "string",
-        "ward_lsoa": "string",
-        "last_updated": "string",
-        "model_version": "string"
+        "bristol_score": "number",
+        "ons_score": "number",
+        "ons_bristol_rank": "integer",
+        "ons_bristol_decile": "integer",
+        "ons_national_rank": "integer",
+        "ons_national_decile": "integer",
+        "date": "string"
       },
-      "row_count": 267
+      "row_count": 268
     },
     "lsoa_boundaries": {
       "path": "/data/bristol_lsoa.geojson",
@@ -93,6 +95,33 @@
         "ward_name": "string"
       },
       "row_count": 267
+    },
+    "ward_current": {
+      "path": "/data/bristol_ward_current.json",
+      "format": "json",
+      "description": "Current ward-level deprivation snapshot for Bristol used by Overview.",
+      "grain": "Ward",
+      "required": true,
+      "primary_key": ["code"],
+      "fields": {
+        "code": "string",
+        "label": "string",
+        "bristol_score": "number",
+        "ons_score": "number",
+        "lsoa_count": "integer",
+        "date": "string",
+        "bristol_score_min": "number",
+        "bristol_score_median": "number",
+        "bristol_score_max": "number",
+        "ons_score_min": "number",
+        "ons_score_median": "number",
+        "ons_score_max": "number",
+        "bristol_rank": "integer",
+        "bristol_decile": "integer",
+        "ons_bristol_rank": "integer",
+        "ons_bristol_decile": "integer"
+      },
+      "row_count": 34
     },
     "feature_analysis": {
       "path": "/data/bristol_feature_analysis.json",

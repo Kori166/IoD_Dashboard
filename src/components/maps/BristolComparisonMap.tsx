@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-type IMDRow = {
-  lsoa_code: string;
-  lsoa_name?: string;
-  uk_rank?: number | null;
-  uk_decile?: number | null;
-  bristol_rank?: number | null;
-  bristol_decile?: number | null;
-};
+import type { LsoaCurrentRow } from "@/types/dashboard-data";
 
-type MapMetric = "bristol_rank" | "uk_rank" | "bristol_decile" | "uk_decile";
+type MapMetric =
+  | "bristol_rank"
+  | "bristol_decile"
+  | "bristol_score"
+  | "ons_bristol_rank"
+  | "ons_bristol_decile"
+  | "ons_national_rank"
+  | "ons_national_decile"
+  | "ons_score";
 
 type LsoaGeoJson = GeoJSON.FeatureCollection<
   GeoJSON.Geometry,
@@ -22,10 +23,6 @@ type LsoaGeoJson = GeoJSON.FeatureCollection<
     lsoa_name_11?: string | null;
     longitude?: number | null;
     latitude?: number | null;
-    uk_rank?: number | null;
-    uk_decile?: number | null;
-    bristol_rank?: number | null;
-    bristol_decile?: number | null;
     active_value?: number | null;
   }
 >;
@@ -35,8 +32,6 @@ type BristolComparisonMapProps = {
   heightClassName?: string;
 };
 
-// Colour scale for deciles.
-// Lower deciles are more deprived.
 function getDecileColor(decile?: number | null) {
   if (!decile) return "#1f2937";
 
@@ -56,60 +51,129 @@ function getDecileColor(decile?: number | null) {
   return palette[decile] ?? "#1f2937";
 }
 
-// Converts a rank into a decile-like colour bucket so rank views can still be shown
-// as a choropleth without inventing a second colour system.
 function getRankBucketColor(rank?: number | null, maxRank = 268) {
   if (!rank) return "#1f2937";
 
-  const bucket = Math.min(
-    10,
-    Math.max(1, Math.ceil((rank / maxRank) * 10)),
-  );
+  const bucket = Math.min(10, Math.max(1, Math.ceil((rank / maxRank) * 10)));
+
+  return getDecileColor(bucket);
+}
+
+function getScoreColor(score?: number | null, minScore = 0, maxScore = 75) {
+  if (score == null || !Number.isFinite(score)) return "#1f2937";
+
+  const range = maxScore - minScore || 1;
+  const normalised = Math.min(1, Math.max(0, (score - minScore) / range));
+  const bucket = Math.min(10, Math.max(1, Math.ceil(normalised * 10)));
 
   return getDecileColor(bucket);
 }
 
 function isDecileMetric(metric: MapMetric) {
-  return metric === "bristol_decile" || metric === "uk_decile";
+  return metric === "bristol_decile" || metric === "ons_bristol_decile" || metric === "ons_national_decile";
+}
+
+function isRankMetric(metric: MapMetric) {
+  return metric === "bristol_rank" || metric === "ons_bristol_rank" || metric === "ons_national_rank";
+}
+
+function isScoreMetric(metric: MapMetric) {
+  return metric === "bristol_score" || metric === "ons_score";
+}
+
+function getMetricValue(row: LsoaCurrentRow | undefined, metric: MapMetric) {
+  if (!row) return null;
+
+  switch (metric) {
+    case "bristol_rank":
+      return row.bristol_rank;
+    case "bristol_decile":
+      return row.bristol_decile;
+    case "bristol_score":
+      return row.bristol_score;
+    case "ons_bristol_rank":
+      return row.ons_bristol_rank;
+    case "ons_bristol_decile":
+      return row.ons_bristol_decile;
+    case "ons_national_rank":
+      return row.ons_national_rank;
+    case "ons_national_decile":
+      return row.ons_national_decile;
+    case "ons_score":
+      return row.ons_score;
+    default:
+      return null;
+  }
 }
 
 function getMetricLabel(metric: MapMetric) {
   switch (metric) {
     case "bristol_rank":
-      return "Our LSOA rank";
-    case "uk_rank":
-      return "ONS / UK rank";
+      return "Our Bristol rank";
     case "bristol_decile":
-      return "Our LSOA decile";
-    case "uk_decile":
-      return "ONS / UK decile";
+      return "Our Bristol decile";
+    case "bristol_score":
+      return "Our Bristol score";
+    case "ons_bristol_rank":
+      return "ONS rank within Bristol";
+    case "ons_bristol_decile":
+      return "ONS decile within Bristol";
+    case "ons_national_rank":
+      return "ONS national rank";
+    case "ons_national_decile":
+      return "ONS national decile";
+    case "ons_score":
+      return "ONS score";
     default:
       return "Metric";
   }
+}
+
+function getMetricColor(metric: MapMetric, value?: number | null) {
+  if (value == null) return "#1f2937";
+
+  if (isDecileMetric(metric)) {
+    return getDecileColor(value);
+  }
+
+  if (isRankMetric(metric)) {
+    const maxRank = metric === "ons_national_rank" ? 32844 : 268;
+    return getRankBucketColor(value, maxRank);
+  }
+
+  if (isScoreMetric(metric)) {
+    return getScoreColor(value);
+  }
+
+  return "#1f2937";
+}
+
+function formatMetricValue(metric: MapMetric, value?: number | null) {
+  if (value == null || !Number.isFinite(value)) return "N/A";
+
+  if (metric === "bristol_score" || metric === "ons_score") {
+    return Number(value).toFixed(2);
+  }
+
+  return Math.round(Number(value)).toString();
 }
 
 export default function BristolComparisonMap({
   metric,
   heightClassName = "h-[420px]",
 }: BristolComparisonMapProps) {
-  // Raw map boundaries.
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
-
-  // Raw deprivation/rank rows.
-  const [imdRows, setImdRows] = useState<IMDRow[]>([]);
-
-  // Friendly error state.
+  const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Load the Bristol boundaries and IMD data once.
   useEffect(() => {
     async function load() {
       try {
         setError(null);
 
-        const [geoRes, imdRes] = await Promise.all([
+        const [geoRes, lsoaRes] = await Promise.all([
           fetch("/data/bristol_lsoa.geojson"),
-          fetch("/data/bristol_imd.json"),
+          fetch("/data/bristol_lsoa_current.json"),
         ]);
 
         if (!geoRes.ok) {
@@ -118,14 +182,14 @@ export default function BristolComparisonMap({
           );
         }
 
-        if (!imdRes.ok) {
+        if (!lsoaRes.ok) {
           throw new Error(
-            `Failed to fetch bristol_imd.json: ${imdRes.status} ${imdRes.statusText}`,
+            `Failed to fetch bristol_lsoa_current.json: ${lsoaRes.status} ${lsoaRes.statusText}`,
           );
         }
 
         const geoData = await geoRes.json();
-        const imdData = await imdRes.json();
+        const lsoaData = await lsoaRes.json();
 
         if (
           !geoData ||
@@ -135,29 +199,25 @@ export default function BristolComparisonMap({
           throw new Error("bristol_lsoa.geojson is not a valid FeatureCollection");
         }
 
-        if (!Array.isArray(imdData)) {
-          throw new Error("bristol_imd.json is not a valid array");
+        if (!Array.isArray(lsoaData)) {
+          throw new Error("bristol_lsoa_current.json is not a valid array");
         }
 
         setGeojson(geoData);
-        setImdRows(imdData);
+        setLsoaRows(lsoaData);
       } catch (err) {
         console.error("Error loading Bristol comparison map:", err);
-        setError(
-          err instanceof Error ? err.message : "Unknown error loading map data",
-        );
+        setError(err instanceof Error ? err.message : "Unknown error loading map data");
       }
     }
 
     load();
   }, []);
 
-  // Fast lookup by LSOA code so each feature can be merged with its rank data.
-  const imdByCode = useMemo(() => {
-    return Object.fromEntries(imdRows.map((row) => [row.lsoa_code, row]));
-  }, [imdRows]);
+  const lsoaByCode = useMemo(() => {
+    return Object.fromEntries(lsoaRows.map((row) => [row.code, row]));
+  }, [lsoaRows]);
 
-  // Merge rank/decile values into the GeoJSON features and expose the selected metric.
   const mergedGeojson = useMemo(() => {
     if (!geojson) return null;
 
@@ -165,33 +225,24 @@ export default function BristolComparisonMap({
       ...geojson,
       features: geojson.features.map((feature: any) => {
         const props = feature.properties || {};
-        const code = props.lsoa_code;
-        const imd = imdByCode[code];
-
-        const activeValue =
-          metric === "bristol_rank"
-            ? imd?.bristol_rank
-            : metric === "uk_rank"
-              ? imd?.uk_rank
-              : metric === "bristol_decile"
-                ? imd?.bristol_decile
-                : imd?.uk_decile;
+        const code = props.lsoa_code ?? props.lsoa_code_11;
+        const row = lsoaByCode[code];
+        const activeValue = getMetricValue(row, metric);
 
         return {
           ...feature,
           properties: {
             ...props,
-            uk_rank: imd?.uk_rank ?? null,
-            uk_decile: imd?.uk_decile ?? null,
-            bristol_rank: imd?.bristol_rank ?? null,
-            bristol_decile: imd?.bristol_decile ?? null,
+            ...row,
             active_value: activeValue ?? null,
-            lsoa_name: imd?.lsoa_name ?? props.lsoa_name ?? "Unknown LSOA",
+            lsoa_code: row?.code ?? code ?? null,
+            lsoa_name: row?.label ?? props.lsoa_name ?? props.lsoa_name_11 ?? "Unknown LSOA",
+            ward_name: row?.ward_name ?? null,
           },
         };
       }),
     };
-  }, [geojson, imdByCode, metric]);
+  }, [geojson, lsoaByCode, metric]);
 
   if (error) {
     return (
@@ -211,7 +262,6 @@ export default function BristolComparisonMap({
 
   return (
     <div className="space-y-3">
-      {/* Main choropleth map */}
       <div className={`${heightClassName} w-full overflow-hidden rounded-xl border border-border/40`}>
         <MapContainer
           center={[51.4545, -2.5879]}
@@ -231,13 +281,11 @@ export default function BristolComparisonMap({
               const value = feature?.properties?.active_value;
 
               return {
-                fillColor: isDecileMetric(metric)
-                  ? getDecileColor(value)
-                  : getRankBucketColor(value),
+                fillColor: getMetricColor(metric, value),
                 weight: 0.7,
                 opacity: 1,
                 color: "hsl(220, 30%, 16%)",
-                fillOpacity: 0.9,
+                fillOpacity: value == null ? 0.25 : 0.9,
               };
             }}
             onEachFeature={(feature: any, layer: any) => {
@@ -248,8 +296,21 @@ export default function BristolComparisonMap({
                 `
                   <div style="font-size:12px;line-height:1.5;">
                     <strong>${props.lsoa_name ?? "Unknown LSOA"}</strong><br/>
+                    Ward: ${props.ward_name ?? "N/A"}<br/>
                     Code: ${props.lsoa_code ?? "N/A"}<br/>
-                    ${metricLabel}: ${props.active_value ?? "N/A"}
+                    ${metricLabel}: ${formatMetricValue(metric, props.active_value)}<br/>
+                    Bristol rank: ${props.bristol_rank ?? "N/A"}<br/>
+                    Bristol decile: ${props.bristol_decile ?? "N/A"}<br/>
+                    Bristol score: ${
+                      props.bristol_score == null ? "N/A" : Number(props.bristol_score).toFixed(2)
+                    }<br/>
+                    ONS Bristol rank: ${props.ons_bristol_rank ?? "N/A"}<br/>
+                    ONS Bristol decile: ${props.ons_bristol_decile ?? "N/A"}<br/>
+                    ONS national rank: ${props.ons_national_rank ?? "N/A"}<br/>
+                    ONS national decile: ${props.ons_national_decile ?? "N/A"}<br/>
+                    ONS score: ${
+                      props.ons_score == null ? "N/A" : Number(props.ons_score).toFixed(2)
+                    }
                   </div>
                 `,
                 {
@@ -267,10 +328,12 @@ export default function BristolComparisonMap({
                   });
                 },
                 mouseout: (e: any) => {
+                  const value = props.active_value;
+
                   e.target.setStyle({
                     weight: 0.7,
                     color: "hsl(220, 30%, 16%)",
-                    fillOpacity: 0.9,
+                    fillOpacity: value == null ? 0.25 : 0.9,
                   });
                 },
               });
@@ -279,7 +342,6 @@ export default function BristolComparisonMap({
         </MapContainer>
       </div>
 
-      {/* Shared legend */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
         <span>Most deprived</span>
 
