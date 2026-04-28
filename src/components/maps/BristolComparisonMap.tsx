@@ -27,10 +27,24 @@ type LsoaGeoJson = GeoJSON.FeatureCollection<
   }
 >;
 
+type HighlightedMapValue = {
+  metric: MapMetric;
+  value: number;
+  mode: "exact" | "bucket";
+} | null;
+
 type BristolComparisonMapProps = {
   metric: MapMetric;
   heightClassName?: string;
   highlightedBucket?: number | null;
+  highlightedValue?: HighlightedMapValue;
+  onFeatureHover?: (payload: {
+    metric: MapMetric;
+    value: number | null;
+    bucket: number | null;
+    code: string | null;
+    label: string | null;
+  } | null) => void;
 };
 
 export function getDecileColor(decile?: number | null) {
@@ -81,24 +95,31 @@ function isDecileMetric(metric: MapMetric) {
   return metric === "bristol_decile" || metric === "ons_bristol_decile" || metric === "ons_national_decile";
 }
 
-function isRankMetric(metric: MapMetric) {
+export function isRankMetric(metric: MapMetric) {
   return metric === "bristol_rank" || metric === "ons_bristol_rank" || metric === "ons_national_rank";
 }
 
-function isScoreMetric(metric: MapMetric) {
+export function isScoreMetric(metric: MapMetric) {
   return metric === "bristol_score" || metric === "ons_score";
 }
 
-function getRankMax(metric: MapMetric) {
+function isSameHighlightFamily(a: MapMetric, b: MapMetric) {
+  if (isRankMetric(a) && isRankMetric(b)) return true;
+  if (isScoreMetric(a) && isScoreMetric(b)) return true;
+  if (a.includes("decile") && b.includes("decile")) return true;
+  return a === b;
+}
+
+export function getRankMax(metric: MapMetric) {
   return metric === "ons_national_rank" ? 32844 : 268;
 }
 
-function getScoreRange(metric: MapMetric) {
+export function getScoreRange(metric: MapMetric) {
   if (metric === "bristol_score") {
-    return { min: -5, max: 45 };
+    return { min: -1, max: 43 };
   }
 
-  return { min: 0, max: 75 };
+  return { min: 0, max: 72 };
 }
 
 function getMetricValue(row: LsoaCurrentRow | undefined, metric: MapMetric) {
@@ -234,6 +255,8 @@ export default function BristolComparisonMap({
   metric,
   heightClassName = "h-[420px]",
   highlightedBucket = null,
+  highlightedValue = null,
+  onFeatureHover,
 }: BristolComparisonMapProps) {
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
@@ -356,11 +379,22 @@ export default function BristolComparisonMap({
               const value = feature?.properties?.active_value;
               const bucket = feature?.properties?.active_bucket;
 
-              const isHighlighted =
+              const exactHighlightApplies =
+                highlightedValue !== null &&
+                isSameHighlightFamily(highlightedValue.metric, metric) &&
+                highlightedValue.mode === "exact" &&
+                value !== null &&
+                Number.isFinite(Number(value)) &&
+                Math.round(Number(value)) === Math.round(highlightedValue.value);
+
+              const bucketHighlightApplies =
                 highlightedBucket !== null && bucket === highlightedBucket;
 
-              const isDimmed =
-                highlightedBucket !== null && bucket !== highlightedBucket;
+              const hasAnyHighlight =
+                highlightedValue !== null || highlightedBucket !== null;
+
+              const isHighlighted = exactHighlightApplies || bucketHighlightApplies;
+              const isDimmed = hasAnyHighlight && !isHighlighted;
 
               return {
                 fillColor: getMetricColor(metric, value),
@@ -404,8 +438,16 @@ export default function BristolComparisonMap({
 
               layer.on({
                 mouseover: (e: any) => {
+                  onFeatureHover?.({
+                    metric,
+                    value: props.active_value ?? null,
+                    bucket: props.active_bucket ?? null,
+                    code: props.lsoa_code ?? null,
+                    label: props.lsoa_name ?? null,
+                  });
+
                   e.target.setStyle({
-                    weight: 1.5,
+                    weight: 1.8,
                     color: "hsl(190, 95%, 55%)",
                     fillOpacity: 1,
                   });
@@ -414,17 +456,29 @@ export default function BristolComparisonMap({
                   const value = props.active_value;
                   const bucket = props.active_bucket;
 
-                  const isHighlighted =
+                  const exactHighlightApplies =
+                    highlightedValue !== null &&
+                    isSameHighlightFamily(highlightedValue.metric, metric) &&
+                    highlightedValue.mode === "exact" &&
+                    value !== null &&
+                    Math.round(Number(value)) === Math.round(highlightedValue.value);
+
+                  const bucketHighlightApplies =
                     highlightedBucket !== null && bucket === highlightedBucket;
 
-                  const isDimmed =
-                    highlightedBucket !== null && bucket !== highlightedBucket;
+                  const hasAnyHighlight =
+                    highlightedValue !== null || highlightedBucket !== null;
+
+                  const isHighlighted = exactHighlightApplies || bucketHighlightApplies;
+                  const isDimmed = hasAnyHighlight && !isHighlighted;
 
                   e.target.setStyle({
                     weight: isHighlighted ? 1.8 : 0.7,
                     color: isHighlighted ? "hsl(190, 95%, 55%)" : "hsl(220, 30%, 16%)",
                     fillOpacity: value == null ? 0.25 : isDimmed ? 0.22 : isHighlighted ? 1 : 0.9,
                   });
+
+                  onFeatureHover?.(null);
                 },
               });
             }}

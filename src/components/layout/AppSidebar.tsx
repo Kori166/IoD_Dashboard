@@ -72,18 +72,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="p-4">
-        {!collapsed && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>Updated 2h ago</span>
-            </div>
-            <StatusBadge status="fresh" label="Pipeline Active" />
-          </div>
-        )}
-      </SidebarFooter>
+      
     </Sidebar>
   );
 }

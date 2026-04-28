@@ -83,8 +83,7 @@ export function TopBar() {
           >
             <Search className="h-3.5 w-3.5" />
             <span className="text-xs">Search LADs...</span>
-            <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/50">
-              ⌘K
+            <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/50">            
             </kbd>
           </button>
 
@@ -170,10 +169,10 @@ export function TopBar() {
 
         <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
-          <span>Mar 14, 2026</span>
+          <span>Apr 28, 2026</span>
         </div>
 
-        <StatusBadge status="fresh" label="Live" />
+        
       </div>
     </header>
   );

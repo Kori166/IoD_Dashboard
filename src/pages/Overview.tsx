@@ -171,15 +171,15 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
         />
         <MetricCard
           label="Last Refresh"
-          value="Mar 19 2026"
-          subtitle="Pipeline v2.3"
+          value="Apr 28 2026"
+          subtitle="Pipeline v1.0"
           icon={RefreshCw}
           glow="cyan"
         />
         <MetricCard
-          label="Model Version"
-          value="2.3.1"
-          subtitle="Weighted composite"
+          label="Version"
+          value="1.0.0"
+          subtitle="Prototype Only"
           icon={Layers}
           glow="magenta"
         />
