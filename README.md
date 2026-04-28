@@ -1,19 +1,257 @@
 # IoD Dashboard
 
-An interactive dashboard for exploring and communicating **Index of Deprivation-style analysis for Bristol**, using publicly available data and LSOA-level geography.
+An interactive React dashboard for exploring and communicating **Index of Deprivation-style analysis for Bristol** using publicly available data, Bristol LSOA geography, Bristol-relative model outputs, and ONS deprivation reference data.
 
-The app is designed to present deprivation patterns, rankings, and indicator analysis in a clear visual interface, with an emphasis on choropleth mapping and transparent, reproducible data inputs.
+The dashboard is designed as a public-facing analytical prototype. It focuses on making deprivation patterns easier to inspect through maps, rankings, time-series views, area comparisons, and methodology notes.
 
-## What this dashboard does
+## Current dashboard features
 
 The dashboard currently includes:
 
-- an **Overview** page with high-level metrics and a Bristol deprivation choropleth
-- a **Map Explorer** for interactive spatial exploration
-- an **Indicator Analysis** page for exploring feature importance and relationships
-- an **Area Comparison** page for comparing selected areas side by side
-- a **Pipeline & Methodology** page explaining the analytical process
-- a **Data Sources** page documenting the underlying datasets
+- **Overview** page
+  - Bristol LSOA choropleth with a Bristol IoD / UK IoD toggle
+  - local authority decile profile chart
+  - most and least deprived area rankings
+  - high-level dashboard summary cards
+
+- **Map Explorer** page
+  - side-by-side Bristol LSOA maps
+  - left map: Bristol-relative model outputs
+  - right map: ONS data ranked within Bristol
+  - shared vertical legend
+  - toggle between **decile** and **rank** views
+  - rank legend hover highlights the matching LSOA rank on both maps
+
+- **Time Series** page
+  - LSOA and ward time-series views
+  - rank and score chart toggle
+  - decile trend chart for the primary selected area
+  - searchable LSOA and ward selection
+  - selected area summaries with metric-aware sparklines
+
+- **Area Comparison** page
+  - side-by-side comparison of selected areas
+
+- **Feature / Indicator Analysis** page
+  - dashboard views for understanding indicators and feature relationships
+
+- **Pipeline & Methodology** page
+  - explanation of the analytical process and dashboard methodology
+
+- **Data Sources** page
+  - documentation of the datasets used by the project
+
+## Current data model
+
+The dashboard now reads frontend-ready files from:
+
+```text
+public/data/
+```
+
+The key current data files are:
+
+```text
+public/data/bristol_lsoa.geojson
+public/data/bristol_lsoa_current.json
+public/data/bristol_ward_current.json
+public/data/bristol_lsoa_timeseries.json
+public/data/bristol_ward_timeseries.json
+public/data/bristol_lsoa21_ward20_lookup.json
+```
+
+Older files such as `bristol_imd.json` or synthetic CSV exports may still exist in the repository, but the current dashboard pages should use the consolidated JSON files above where possible.
+
+## Expected data contracts
+
+### `bristol_lsoa.geojson`
+
+GeoJSON `FeatureCollection` containing Bristol LSOA boundaries. Each feature should include at least one usable LSOA code field:
+
+```json
+{
+  "properties": {
+    "lsoa_code": "E01014601",
+    "lsoa_name": "Bristol 001A"
+  }
+}
+```
+
+The dashboard can also handle older code/name property variants such as `lsoa_code_11` and `lsoa_name_11`.
+
+### `bristol_lsoa_current.json`
+
+One row per Bristol LSOA, combining Bristol-relative model outputs and ONS reference values.
+
+Expected shape:
+
+```json
+{
+  "code": "E01014601",
+  "label": "Bristol 001A",
+  "ward_name": "Henbury and Brentry",
+  "bristol_rank": 160,
+  "bristol_decile": 6,
+  "bristol_score": 22.56,
+  "ons_bristol_rank": 94,
+  "ons_bristol_decile": 4,
+  "ons_national_rank": 12345,
+  "ons_national_decile": 4,
+  "ons_score": 21.34
+}
+```
+
+Used by:
+
+- Overview choropleth
+- Overview rankings
+- Map Explorer left and right maps
+- map tooltips and legends
+
+### `bristol_ward_current.json`
+
+One row per Bristol ward, used for ward-level summaries and rankings where needed.
+
+Expected shape:
+
+```json
+{
+  "code": "E05010899",
+  "label": "Frome Vale",
+  "bristol_rank": 11,
+  "bristol_decile": 4,
+  "bristol_score": 23.06,
+  "ons_bristol_rank": 19,
+  "ons_bristol_decile": 6,
+  "ons_score": 22.41
+}
+```
+
+### `bristol_lsoa_timeseries.json`
+
+One object per LSOA with quarterly or annual points.
+
+Expected shape:
+
+```json
+{
+  "code": "E01014601",
+  "label": "Bristol 001A",
+  "points": [
+    {
+      "date": "2025-07-01",
+      "rank": 160,
+      "decile": 6,
+      "score": 22.56
+    }
+  ]
+}
+```
+
+Used by the Time Series page in LSOA mode.
+
+### `bristol_ward_timeseries.json`
+
+One object per ward with aggregated ward time-series points.
+
+Expected shape:
+
+```json
+{
+  "code": "E05010899",
+  "label": "Frome Vale",
+  "lsoas": [
+    {
+      "code": "E01014601",
+      "label": "Bristol 001A"
+    }
+  ],
+  "points": [
+    {
+      "date": "2025-07-01",
+      "rank": 11,
+      "decile": 4,
+      "score": 23.06,
+      "mean_lsoa_rank": 151.1,
+      "mean_lsoa_decile": 6.1,
+      "lsoa_count": 10,
+      "score_min": 10.1,
+      "score_median": 23.37,
+      "score_max": 42.31
+    }
+  ]
+}
+```
+
+Used by the Time Series page in Ward mode.
+
+### `bristol_lsoa21_ward20_lookup.json`
+
+Lookup table joining LSOAs to wards.
+
+Expected shape:
+
+```json
+{
+  "lsoa_code": "E01014601",
+  "lsoa_name": "Bristol 001A",
+  "ward_code": "E05010890",
+  "ward_name": "Henbury and Brentry"
+}
+```
+
+Used for:
+
+- Time Series search labels
+- LSOA-to-ward display text
+- ward aggregation checks
+
+## Current page behaviour
+
+### Overview
+
+The Overview page compares deprivation patterns across Bristol.
+
+- **Bristol IoD** uses Bristol-relative model rank and decile fields.
+- **UK IoD** uses ONS national rank and decile fields.
+- The local authority profile shows the share of Bristol LSOAs in each decile.
+- The ranking panel lists the most and least deprived LSOAs under the selected ranking mode.
+
+### Map Explorer
+
+The Map Explorer uses two maps:
+
+- left map: `bristol_rank` / `bristol_decile`
+- right map: `ons_bristol_rank` / `ons_bristol_decile`
+
+The page currently exposes only:
+
+```text
+Decile
+Rank
+```
+
+Score has intentionally been removed from the Map Explorer UI. Score remains available in the underlying data and is still used elsewhere, especially Time Series.
+
+### Time Series
+
+The Time Series page supports:
+
+- LSOA mode
+- Ward mode
+- Rank chart view
+- Score chart view
+- decile trend for the primary selected area
+- selected area summaries
+- search and persistent selected-area state
+
+Time-series data is loaded from:
+
+```text
+/data/bristol_lsoa_timeseries.json
+/data/bristol_ward_timeseries.json
+/data/bristol_lsoa21_ward20_lookup.json
+```
 
 ## Tech stack
 
@@ -25,121 +263,123 @@ This project uses:
 - **React Router**
 - **Tailwind CSS**
 - **Recharts**
+- **React Leaflet / Leaflet**
 - **Framer Motion**
-
-The project scripts currently support development, build, preview, linting, and tests.
+- **Lucide React**
+- **Vitest**
+- **Playwright**
 
 ## Repository structure
 
 ```text
 IoD_Dashboard/
 ├── public/
-│   └── data/                     # frontend-ready JSON / GeoJSON data files
+│   ├── data/                     # dashboard-ready JSON / GeoJSON data files
+│   └── favicon-dep.ico
 ├── src/
-│   ├── components/               # reusable UI and layout components
-│   ├── data/                     # mock or local in-app data
+│   ├── components/               # reusable UI, chart, layout, and map components
+│   ├── config/                   # dashboard configuration
+│   ├── context/                  # shared app context, including active LAD state
+│   ├── data/                     # local app data where still needed
 │   ├── hooks/                    # custom React hooks
 │   ├── lib/                      # utilities
 │   ├── pages/                    # route-level pages
+│   ├── test/                     # test setup files
 │   ├── App.tsx                   # app shell and routing
 │   ├── main.tsx                  # app entry point
 │   └── index.css                 # global styling
+├── scripts/                      # optional local data build scripts, if retained
 ├── README.md
-└── package.json
+├── package.json
+├── vite.config.ts
+└── vitest.config.ts
+```
 
 ## App routes
 
-The dashboard currently defines these routes:
+The main dashboard routes are:
 
-- / → Overview
-- /map → Map Explorer
-- /indicators → Indicator Analysis
-- /compare → Area Comparison
-- /pipeline → Pipeline & Methodology
-- /sources → Data Sources
+```text
+/              Overview
+/map          Map Explorer
+/time-series  Time Series
+/compare      Area Comparison
+/indicators   Feature / Indicator Analysis
+/pipeline     Pipeline & Methodology
+/sources      Data Sources
+```
+
+The exact route names should be checked against `src/App.tsx` if routing changes.
 
 ## Data flow
 
-The dashboard is designed to consume frontend-ready static data files from:
+The dashboard is intended to consume processed outputs from the companion data pipeline. The recommended workflow is:
 
-public/data/
+```text
+raw public datasets
+→ pipeline processing and modelling
+→ dashboard-ready JSON / GeoJSON
+→ public/data/
+→ React dashboard fetches static files at runtime
+```
 
-For the Bristol choropleth, the app expects files such as:
-
-public/data/bristol_lsoa.geojson
-public/data/bristol_imd.json
-
-These files are fetched in the frontend and joined by lsoa_code.
-
-## Expected map data contract
-bristol_lsoa.geojson
-
-A valid GeoJSON FeatureCollection containing Bristol LSOA geometries with at least:
-
-- properties.lsoa_code
-- optional properties.lsoa_name
-- bristol_imd.json
-
-A JSON array with one row per Bristol LSOA, for example:
-
-[
-  {
-    "lsoa_code": "E01014686",
-    "lsoa_name": "Bristol 017C",
-    "uk_rank": 32903,
-    "uk_decile": 10,
-    "bristol_rank": 281,
-    "bristol_decile": 10
-  }
-]
-
-These files are used to support:
-
-- Bristol-relative ranking and deciles
-- UK-relative ranking and deciles
-- choropleth colouring by active decile mode
-- tooltip and ranking display
+The dashboard should not rely on Python scripts during deployment. Any Python or CSV processing should happen before files are committed or copied into `public/data/`.
 
 ## Connecting pipeline outputs
 
-This dashboard is intended to consume processed outputs from the companion pipeline repository:
+The companion pipeline should generate the frontend-ready files listed in the data model section.
 
-bristol-fused-indicators/imd_dataset_pipeline
+Recommended approach:
 
-The recommended integration pattern is:
-
-run the pipeline
-export dashboard-ready files
-write them into:
-public/data/
+1. run the pipeline outside the dashboard build step
+2. export JSON / GeoJSON files using the agreed schemas
+3. place those files in `public/data/`
+4. run the dashboard locally and check each page
+5. commit the generated dashboard-ready files when appropriate
 
 This keeps the dashboard focused on presentation while the pipeline remains responsible for data production.
 
 ## Getting started
+
 ### 1. Install dependencies
 
-    Using npm via a terminal or Gitbash:
+Using npm:
 
-    npm install
-
-If you are using Bun:
-
-    bun install
+```bash
+npm install
+```
 
 ### 2. Start the development server
-    npm run dev
 
-This starts the Vite development server, usually at:
+```bash
+npm run dev
+```
 
-http://localhost:5173
-3. Build for production
+The local Vite server usually runs at:
+
+```text
+http://localhost:8080/
+```
+
+or another port shown in the terminal.
+
+### 3. Build for production
+
+```bash
 npm run build
-4. Preview the production build
+```
+
+### 4. Preview the production build
+
+```bash
 npm run preview
-Available scripts
+```
 
-Common scripts from package.json:
+## Available scripts
 
+Common scripts from `package.json`:
+
+```bash
 npm run dev
 npm run build
 npm run build:dev
@@ -147,75 +387,105 @@ npm run lint
 npm run preview
 npm run test
 npm run test:watch
-Development notes
-Static data vs source data
+```
 
-Keep raw source CSVs out of the frontend app.
+## Deployment
+
+The dashboard is currently suitable for static deployment on Vercel.
+
+Recommended Vercel settings:
+
+```text
+Framework preset: Vite
+Build command: npm run build
+Output directory: dist
+Install command: npm install
+```
+
+The app should not run Python data-generation scripts as part of the Vercel build. Data should already exist in `public/data/` before deployment.
+
+## Development notes
+
+### Static data vs source data
+
+Keep raw source files and large intermediate processing files out of the frontend app where possible.
 
 Recommended separation:
 
-raw source files → pipeline repo or data/raw/
-processed analytical outputs → pipeline repo
-dashboard-ready JSON / GeoJSON → public/data/
-Why public/data
+```text
+raw source files                  → pipeline repository or data/raw/
+processed analytical outputs       → pipeline repository
+frontend-ready JSON / GeoJSON      → public/data/
+```
 
-Files in public/data/ can be fetched directly by the browser, which is ideal for map layers and derived JSON outputs.
+### `public/data/`
 
-## Map mode switching
+Files in `public/data/` can be fetched directly by the browser. This is why the dashboard uses static JSON and GeoJSON files for maps, rankings, and time-series charts.
 
-The Bristol choropleth supports switching between:
+### Config files
 
-Bristol view: colour and rank by Bristol-specific deciles
-UK view: colour and rank by UK-wide deciles
+The project currently keeps both:
 
-## Current status
+```text
+vite.config.ts
+vitest.config.ts
+```
 
-The dashboard is actively evolving from a styled prototype into a data-connected analytical app.
-
-That means some parts may still contain:
-
-- placeholder copy
-- mock values
-- static metric cards
-- interim UI logic while the pipeline-to-dashboard contract is being finalized
+They serve different purposes and should remain separate unless the test setup is deliberately redesigned.
 
 ## Testing and quality
 
 The repository includes:
 
-- ESLint for linting
-- Vitest for unit/integration tests
-- Playwright config for end-to-end testing support
+- **ESLint** for linting
+- **Vitest** for unit/integration tests
+- **Playwright** configuration for end-to-end testing support
+
+Generated test output such as `test-results/.last-run.json` and `playwright-report/` should not be committed unless there is a specific reason.
+
+## Current status
+
+The dashboard is actively evolving from a styled prototype into a data-connected analytical app.
+
+Current known state:
+
+- Overview, Map Explorer, and Time Series are now connected to consolidated Bristol JSON files.
+- Map Explorer no longer exposes Score mode.
+- Time Series still supports both Rank and Score views.
+- Some copy, explanatory text, and lower-priority pages may still need final review.
+- Some older data files may remain in `public/data/` until the data contract is fully stabilized.
 
 ## Next priorities
 
 Suggested next development steps:
 
-- replace any remaining mock ranking content with pipeline outputs
-- standardize the dashboard data schema across all pages
-- add automated syncing from the pipeline repository into public/data/
-- improve responsive layout and use of widescreen space
-- document deployment and refresh workflows
+- complete responsive layout polish across Overview and Map Explorer
+- remove stale synthetic data files once replacements are verified
+- standardize all page fetch paths against the consolidated data contract
+- add schema validation for dashboard-ready JSON files
+- document the pipeline export process in the pipeline repository
+- add screenshots to this README
+- add a short public interpretation note explaining model limitations
 
 ## Contributing
 
 When making changes:
 
-  1. create a branch from main
-  2. make focused changes
-  3. test locally with npm run dev
-  4. run lint/tests where relevant
-  5. open a pull request
+1. create a branch from `main`
+2. make focused changes
+3. test locally with `npm run dev`
+4. run `npm run build`
+5. run lint/tests where relevant
+6. open a pull request
 
 Use clear branch names, for example:
 
-git checkout -b feature/bristol-choropleth
-git checkout -b fix/ranking-toggle
+```bash
+git checkout -b feature/map-explorer-rank-legend
+git checkout -b fix/overview-responsive-layout
 git checkout -b docs/update-readme
+```
 
 ## License
 
-A couple of tweaks you may want depending on how polished you want it:
-- rename the repo in the title to `UK Deprivation Dashboard` if that is the public-facing product name
-- add screenshots near the top, because humans do in fact like seeing the thing before reading about it
-- add a short deployment section if you’re hosting it anywhere
+License information has not yet been finalized.
