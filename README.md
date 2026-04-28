@@ -22,7 +22,7 @@ The dashboard currently includes:
 - two Bristol LSOA maps shown side by side
 - left map showing Bristol-relative model results
 - right map showing ONS data ranked within Bristol
-- shared vertical legend
+- vertical legend
 - toggle between decile and rank views
 - rank legend hover, which highlights the matching LSOA rank on both maps
 
@@ -48,7 +48,7 @@ The dashboard currently includes:
 
 ## Current data model
 
-The dashboard reads frontend-ready data files from:
+The dashboard reads data files from:
 
 ```text
 public/data/
@@ -473,18 +473,6 @@ Current known state:
 - Time Series still supports both Rank and Score views.
 - Some copy, explanatory text, and lower-priority pages may still need review.
 - Some older data files may remain in `public/data/` until the data contract is fully stable.
-
-## Next priorities
-
-Suggested next development steps:
-
-- improve responsive layout across Overview and Map Explorer
-- remove old synthetic data files once replacements are checked
-- standardise all page fetch paths against the consolidated data contract
-- add schema validation for dashboard-ready JSON files
-- document the pipeline export process in the pipeline repository
-- add screenshots to this README
-- add a short public note explaining model limitations
 
 ## Contributing
 
