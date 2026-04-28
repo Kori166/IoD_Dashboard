@@ -1106,9 +1106,9 @@ export default function TimeSeries() {
               {primarySeries.label} · Rank {Math.round(primaryLatest.rank)} · Decile {Math.round(primaryLatest.decile)} ·{" "}
               <span className="text-foreground/90">
                 {primaryRangeDelta < 0
-                  ? `↑ ${Math.abs(primaryRangeDelta)} place`
+                  ? `↑ ${Math.abs(primaryRangeDelta)} places`
                   : primaryRangeDelta > 0
-                    ? `↓ ${primaryRangeDelta} place`
+                    ? `↓ ${primaryRangeDelta} places`
                     : "No change"}{" "}
                 since {primaryRangeLabel || "start of range"}
               </span>
@@ -1124,8 +1124,8 @@ export default function TimeSeries() {
                   <h2 className="text-xl font-semibold text-foreground">{displayMetric === "rank" ? "Rank and decile over time" : "Score and decile over time"}</h2>
                   <p className="text-xs text-muted-foreground">
                     {displayMetric === "rank"
-                      ? "Lower rank = more deprived · Decile 1 = most deprived"
-                      : "Predicted score · Decile 1 = most deprived"}</p>
+                      ? "Rank 1 = most deprived & Decile 1 = most deprived"
+                      : "Predicted score & Decile 1 = most deprived"}</p>
                 </div>
 
                 {!!legendSeriesMeta.length && (

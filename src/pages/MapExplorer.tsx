@@ -118,9 +118,9 @@ function SharedMapLegend({
     <GlassCard className="h-full p-4">
       <div className="flex h-full flex-col">
         <div>
-          <p className="text-sm font-semibold text-foreground">Shared legend</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Applies to both maps.
+          <p className="text-xl font-semibold text-foreground">Legend</p>
+          <p className="mt-1 text-s text-muted-foreground">
+            
           </p>
         </div>
 
@@ -165,7 +165,7 @@ function SharedMapLegend({
               ))}
             </div>
 
-            <p className="mt-4 text-xs font-medium text-muted-foreground">
+            <p className="mt-4 text-m font-medium text-muted-foreground">
               Least deprived
             </p>
           </div>
