@@ -1,55 +1,60 @@
 # IoD Dashboard
 
-An interactive React dashboard for exploring and communicating **Index of Deprivation-style analysis for Bristol** using publicly available data, Bristol LSOA geography, Bristol-relative model outputs, and ONS deprivation reference data.
+This is an interactive React dashboard for exploring deprivation patterns in Bristol.
 
-The dashboard is designed as a public-facing analytical prototype. It focuses on making deprivation patterns easier to inspect through maps, rankings, time-series views, area comparisons, and methodology notes.
+It uses publicly available data, Bristol LSOA boundaries, Bristol-relative model results, and ONS deprivation data.
+
+The dashboard is a public-facing analytical prototype. It helps people inspect deprivation patterns through maps, rankings, time-series charts, area comparisons, and methodology notes.
 
 ## Current dashboard features
 
 The dashboard currently includes:
 
-- **Overview** page
-  - Bristol LSOA choropleth with a Bristol IoD / UK IoD toggle
-  - local authority decile profile chart
-  - most and least deprived area rankings
-  - high-level dashboard summary cards
+### Overview
 
-- **Map Explorer** page
-  - side-by-side Bristol LSOA maps
-  - left map: Bristol-relative model outputs
-  - right map: ONS data ranked within Bristol
-  - shared vertical legend
-  - toggle between **decile** and **rank** views
-  - rank legend hover highlights the matching LSOA rank on both maps
+- Bristol LSOA map with a toggle between Bristol IoD and UK IoD
+- local authority decile profile chart
+- most and least deprived area rankings
+- high-level summary cards
 
-- **Time Series** page
-  - LSOA and ward time-series views
-  - rank and score chart toggle
-  - decile trend chart for the primary selected area
-  - searchable LSOA and ward selection
-  - selected area summaries with metric-aware sparklines
+### Map Explorer
 
-- **Area Comparison** page
-  - side-by-side comparison of selected areas
+- two Bristol LSOA maps shown side by side
+- left map showing Bristol-relative model results
+- right map showing ONS data ranked within Bristol
+- shared vertical legend
+- toggle between decile and rank views
+- rank legend hover, which highlights the matching LSOA rank on both maps
 
-- **Feature / Indicator Analysis** page
-  - dashboard views for understanding indicators and feature relationships
+### Time Series
 
-- **Pipeline & Methodology** page
-  - explanation of the analytical process and dashboard methodology
+- LSOA and ward time-series views
+- toggle between rank and score charts
+- decile trend chart for the selected main area
+- searchable LSOA and ward selector
+- selected area summaries with sparklines that adapt to the chosen metric
 
-- **Data Sources** page
-  - documentation of the datasets used by the project
+### Area Comparison
+
+- side-by-side comparison of selected areas
+
+### Feature / Indicator Analysis
+
+- views for exploring indicators and relationships between features
+
+### Data Sources
+
+- documentation for the datasets used in the project
 
 ## Current data model
 
-The dashboard now reads frontend-ready files from:
+The dashboard reads frontend-ready data files from:
 
 ```text
 public/data/
 ```
 
-The key current data files are:
+The main current data files are:
 
 ```text
 public/data/bristol_lsoa.geojson
@@ -60,13 +65,15 @@ public/data/bristol_ward_timeseries.json
 public/data/bristol_lsoa21_ward20_lookup.json
 ```
 
-Older files such as `bristol_imd.json` or synthetic CSV exports may still exist in the repository, but the current dashboard pages should use the consolidated JSON files above where possible.
+Older files, such as `bristol_imd.json` or synthetic CSV exports, may still exist in the repository. Where possible, the current dashboard pages should use the consolidated JSON files listed above.
 
-## Expected data contracts
+## Expected data formats
 
 ### `bristol_lsoa.geojson`
 
-GeoJSON `FeatureCollection` containing Bristol LSOA boundaries. Each feature should include at least one usable LSOA code field:
+This file contains Bristol LSOA boundaries as a GeoJSON `FeatureCollection`.
+
+Each feature should include at least one usable LSOA code field:
 
 ```json
 {
@@ -77,13 +84,15 @@ GeoJSON `FeatureCollection` containing Bristol LSOA boundaries. Each feature sho
 }
 ```
 
-The dashboard can also handle older code/name property variants such as `lsoa_code_11` and `lsoa_name_11`.
+The dashboard can also handle older field names, such as `lsoa_code_11` and `lsoa_name_11`.
 
 ### `bristol_lsoa_current.json`
 
-One row per Bristol LSOA, combining Bristol-relative model outputs and ONS reference values.
+This file contains one row per Bristol LSOA.
 
-Expected shape:
+It combines Bristol-relative model results with ONS reference values.
+
+Expected format:
 
 ```json
 {
@@ -103,16 +112,18 @@ Expected shape:
 
 Used by:
 
-- Overview choropleth
+- Overview map
 - Overview rankings
-- Map Explorer left and right maps
+- Map Explorer maps
 - map tooltips and legends
 
 ### `bristol_ward_current.json`
 
-One row per Bristol ward, used for ward-level summaries and rankings where needed.
+This file contains one row per Bristol ward.
 
-Expected shape:
+It is used for ward-level summaries and rankings where needed.
+
+Expected format:
 
 ```json
 {
@@ -129,9 +140,9 @@ Expected shape:
 
 ### `bristol_lsoa_timeseries.json`
 
-One object per LSOA with quarterly or annual points.
+This file contains one object per LSOA, with quarterly or annual data points.
 
-Expected shape:
+Expected format:
 
 ```json
 {
@@ -152,9 +163,9 @@ Used by the Time Series page in LSOA mode.
 
 ### `bristol_ward_timeseries.json`
 
-One object per ward with aggregated ward time-series points.
+This file contains one object per ward, with aggregated ward-level time-series data.
 
-Expected shape:
+Expected format:
 
 ```json
 {
@@ -187,9 +198,9 @@ Used by the Time Series page in Ward mode.
 
 ### `bristol_lsoa21_ward20_lookup.json`
 
-Lookup table joining LSOAs to wards.
+This file links LSOAs to wards.
 
-Expected shape:
+Expected format:
 
 ```json
 {
@@ -203,8 +214,8 @@ Expected shape:
 Used for:
 
 - Time Series search labels
-- LSOA-to-ward display text
-- ward aggregation checks
+- showing which ward an LSOA belongs to
+- checking ward aggregations
 
 ## Current page behaviour
 
@@ -212,26 +223,26 @@ Used for:
 
 The Overview page compares deprivation patterns across Bristol.
 
-- **Bristol IoD** uses Bristol-relative model rank and decile fields.
-- **UK IoD** uses ONS national rank and decile fields.
+- **Bristol IoD** uses Bristol-relative model ranks and deciles.
+- **UK IoD** uses ONS national ranks and deciles.
 - The local authority profile shows the share of Bristol LSOAs in each decile.
-- The ranking panel lists the most and least deprived LSOAs under the selected ranking mode.
+- The rankings panel lists the most and least deprived LSOAs for the selected mode.
 
 ### Map Explorer
 
-The Map Explorer uses two maps:
+The Map Explorer shows two maps:
 
 - left map: `bristol_rank` / `bristol_decile`
 - right map: `ons_bristol_rank` / `ons_bristol_decile`
 
-The page currently exposes only:
+The page currently only shows these view options:
 
 ```text
 Decile
 Rank
 ```
 
-Score has intentionally been removed from the Map Explorer UI. Score remains available in the underlying data and is still used elsewhere, especially Time Series.
+Score has been removed from the Map Explorer UI on purpose. Score is still available in the data and is still used elsewhere, especially on the Time Series page.
 
 ### Time Series
 
@@ -239,11 +250,12 @@ The Time Series page supports:
 
 - LSOA mode
 - Ward mode
-- Rank chart view
-- Score chart view
-- decile trend for the primary selected area
+- rank chart view
+- score chart view
+- decile trend for the main selected area
 - selected area summaries
-- search and persistent selected-area state
+- search
+- saved selected-area state
 
 Time-series data is loaded from:
 
@@ -301,19 +313,20 @@ The main dashboard routes are:
 
 ```text
 /              Overview
-/map          Map Explorer
-/time-series  Time Series
-/compare      Area Comparison
-/indicators   Feature / Indicator Analysis
-/pipeline     Pipeline & Methodology
-/sources      Data Sources
+/map           Map Explorer
+/time-series   Time Series
+/compare       Area Comparison
+/feature       Feature Analysis
+/sources       Data Sources
 ```
 
-The exact route names should be checked against `src/App.tsx` if routing changes.
+Check `src/App.tsx` if the route names change.
 
 ## Data flow
 
-The dashboard is intended to consume processed outputs from the companion data pipeline. The recommended workflow is:
+The dashboard is designed to use processed outputs from a separate data pipeline.
+
+Recommended flow:
 
 ```text
 raw public datasets
@@ -323,21 +336,23 @@ raw public datasets
 → React dashboard fetches static files at runtime
 ```
 
-The dashboard should not rely on Python scripts during deployment. Any Python or CSV processing should happen before files are committed or copied into `public/data/`.
+The dashboard should not depend on Python scripts during deployment.
+
+Any Python or CSV processing should happen before files are committed or copied into `public/data/`.
 
 ## Connecting pipeline outputs
 
 The companion pipeline should generate the frontend-ready files listed in the data model section.
 
-Recommended approach:
+Recommended process:
 
 1. run the pipeline outside the dashboard build step
-2. export JSON / GeoJSON files using the agreed schemas
+2. export JSON / GeoJSON files using the agreed formats
 3. place those files in `public/data/`
 4. run the dashboard locally and check each page
 5. commit the generated dashboard-ready files when appropriate
 
-This keeps the dashboard focused on presentation while the pipeline remains responsible for data production.
+This keeps the dashboard focused on presentation, while the pipeline handles data processing.
 
 ## Getting started
 
@@ -402,13 +417,15 @@ Output directory: dist
 Install command: npm install
 ```
 
-The app should not run Python data-generation scripts as part of the Vercel build. Data should already exist in `public/data/` before deployment.
+The app should not run Python data-generation scripts during the Vercel build.
+
+The required data should already be available in `public/data/` before deployment.
 
 ## Development notes
 
-### Static data vs source data
+### Static data and source data
 
-Keep raw source files and large intermediate processing files out of the frontend app where possible.
+Keep raw source files and large intermediate files out of the frontend app where possible.
 
 Recommended separation:
 
@@ -420,7 +437,9 @@ frontend-ready JSON / GeoJSON      → public/data/
 
 ### `public/data/`
 
-Files in `public/data/` can be fetched directly by the browser. This is why the dashboard uses static JSON and GeoJSON files for maps, rankings, and time-series charts.
+Files in `public/data/` can be fetched directly by the browser.
+
+This is why the dashboard uses static JSON and GeoJSON files for maps, rankings, and time-series charts.
 
 ### Config files
 
@@ -431,41 +450,41 @@ vite.config.ts
 vitest.config.ts
 ```
 
-They serve different purposes and should remain separate unless the test setup is deliberately redesigned.
+They do different jobs and should stay separate unless the test setup is deliberately changed.
 
 ## Testing and quality
 
 The repository includes:
 
 - **ESLint** for linting
-- **Vitest** for unit/integration tests
-- **Playwright** configuration for end-to-end testing support
+- **Vitest** for unit and integration tests
+- **Playwright** support for end-to-end tests
 
-Generated test output such as `test-results/.last-run.json` and `playwright-report/` should not be committed unless there is a specific reason.
+Generated test output, such as `test-results/.last-run.json` and `playwright-report/`, should not be committed unless there is a clear reason.
 
 ## Current status
 
-The dashboard is actively evolving from a styled prototype into a data-connected analytical app.
+The dashboard is moving from a styled prototype into a data-connected analytical app.
 
 Current known state:
 
-- Overview, Map Explorer, and Time Series are now connected to consolidated Bristol JSON files.
-- Map Explorer no longer exposes Score mode.
+- Overview, Map Explorer, and Time Series are connected to consolidated Bristol JSON files.
+- Map Explorer no longer includes Score mode.
 - Time Series still supports both Rank and Score views.
-- Some copy, explanatory text, and lower-priority pages may still need final review.
-- Some older data files may remain in `public/data/` until the data contract is fully stabilised.
+- Some copy, explanatory text, and lower-priority pages may still need review.
+- Some older data files may remain in `public/data/` until the data contract is fully stable.
 
 ## Next priorities
 
 Suggested next development steps:
 
-- complete responsive layout polish across Overview and Map Explorer
-- remove stale synthetic data files once replacements are verified
+- improve responsive layout across Overview and Map Explorer
+- remove old synthetic data files once replacements are checked
 - standardise all page fetch paths against the consolidated data contract
 - add schema validation for dashboard-ready JSON files
 - document the pipeline export process in the pipeline repository
 - add screenshots to this README
-- add a short public interpretation note explaining model limitations
+- add a short public note explaining model limitations
 
 ## Contributing
 
@@ -475,7 +494,7 @@ When making changes:
 2. make focused changes
 3. test locally with `npm run dev`
 4. run `npm run build`
-5. run lint/tests where relevant
+5. run lint and tests where relevant
 6. open a pull request
 
 Use clear branch names, for example:
@@ -488,4 +507,4 @@ git checkout -b docs/update-readme
 
 ## License
 
-License information has not yet been finalised.
+This is an open source prototype.
