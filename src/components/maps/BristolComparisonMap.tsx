@@ -1,9 +1,57 @@
+/*
+  Bristol comparison map component.
+
+  This component loads Bristol LSOA boundary data and deprivation data, then colours each area by the selected comparison metric.
+
+  Provenance:
+  - React (no date) ‘useState’ [online]. Available from:
+    https://react.dev/reference/react/useState 
+    Used for storing loaded data and error state.
+
+  - React (no date) ‘useEffect’ [online]. Available from:
+    https://react.dev/reference/react/useEffect 
+    Used for loading map data when the component first renders.
+
+  - React (no date) ‘useMemo’ [online]. Available from:
+    https://react.dev/reference/react/useMemo 
+    Used for creating derived lookup and GeoJSON data.
+
+  - React Leaflet (no date) ‘React Leaflet’ [online]. Available from:
+    https://react-leaflet.js.org/ 
+    Used for the MapContainer, TileLayer, and GeoJSON map components.
+
+  - Leaflet (no date) ‘Leaflet Documentation’ [online]. Available from:
+    https://leafletjs.com/reference.html 
+    Used for map layers, tooltips, and hover styling.
+
+  - MDN (no date) ‘Fetch API’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API 
+    Used for loading local JSON and GeoJSON files.
+
+  - MDN (no date) ‘Promise.all()’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+    Used for loading both data files at the same time.
+
+  - GeoJSON (no date) ‘GeoJSON’ [online]. Available from:
+    https://geojson.org/ 
+    Used for the FeatureCollection map data structure.
+
+  - CARTO (no date) ‘Basemaps’ [online]. Available from:
+    https://carto.com/basemaps/ 
+    Used for the dark basemap tile layer.
+
+  - OpenStreetMap contributors (no date) ‘Copyright and License’ [online]. Available from:
+    https://www.openstreetmap.org/copyright 
+    Used for the map attribution.
+*/
+
 import { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import type { LsoaCurrentRow } from "@/types/dashboard-data";
 
+// Lists the metrics that can be shown on the comparison map
 export type MapMetric =
   | "bristol_rank"
   | "bristol_decile"
@@ -14,6 +62,7 @@ export type MapMetric =
   | "ons_national_decile"
   | "ons_score";
 
+// Defines the expected GeoJSON structure for Bristol LSOA areas
 type LsoaGeoJson = GeoJSON.FeatureCollection<
   GeoJSON.Geometry,
   {
@@ -27,12 +76,14 @@ type LsoaGeoJson = GeoJSON.FeatureCollection<
   }
 >;
 
+// Defines the selected value used to highlight matching map areas
 type HighlightedMapValue = {
   metric: MapMetric;
   value: number;
   mode: "exact" | "bucket";
 } | null;
 
+// Defines the props accepted by the comparison map
 type BristolComparisonMapProps = {
   metric: MapMetric;
   heightClassName?: string;
@@ -47,6 +98,7 @@ type BristolComparisonMapProps = {
   } | null) => void;
 };
 
+// Returns the colour used for each deprivation decile
 export function getDecileColor(decile?: number | null) {
   if (!decile) return "#1f2937";
 
@@ -66,21 +118,24 @@ export function getDecileColor(decile?: number | null) {
   return palette[decile] ?? "#1f2937";
 }
 
+// Converts a rank into one of ten display buckets
 function getRankBucket(rank?: number | null, maxRank = 268) {
   if (!rank) return null;
   return Math.min(10, Math.max(1, Math.ceil((rank / maxRank) * 10)));
 }
 
+// Converts a score into one of ten display buckets
 function getScoreBucket(score?: number | null, minScore = 0, maxScore = 75) {
   if (score == null || !Number.isFinite(score)) return null;
 
   const range = maxScore - minScore || 1;
   const normalised = Math.min(1, Math.max(0, (score - minScore) / range));
 
-  // Higher score = more deprived, so high scores should use low/most-deprived colour buckets.
+  // Higher score = more deprived, so high scores should use low/most-deprived colour buckets
   return Math.min(10, Math.max(1, 11 - Math.ceil(normalised * 10)));
 }
 
+// Returns a colour for a score value
 function getScoreColor(score?: number | null, minScore = 0, maxScore = 75) {
   if (score == null || !Number.isFinite(score)) return "#1f2937";
 
@@ -91,18 +146,22 @@ function getScoreColor(score?: number | null, minScore = 0, maxScore = 75) {
   return getDecileColor(bucket);
 }
 
+// Checks whether a metric is a decile value
 function isDecileMetric(metric: MapMetric) {
   return metric === "bristol_decile" || metric === "ons_bristol_decile" || metric === "ons_national_decile";
 }
 
+// Checks whether a metric is a rank value
 export function isRankMetric(metric: MapMetric) {
   return metric === "bristol_rank" || metric === "ons_bristol_rank" || metric === "ons_national_rank";
 }
 
+// Checks whether a metric is a score value
 export function isScoreMetric(metric: MapMetric) {
   return metric === "bristol_score" || metric === "ons_score";
 }
 
+// Checks whether two metrics can share the same highlight behaviour
 function isSameHighlightFamily(a: MapMetric, b: MapMetric) {
   if (isRankMetric(a) && isRankMetric(b)) return true;
   if (isScoreMetric(a) && isScoreMetric(b)) return true;
@@ -110,10 +169,12 @@ function isSameHighlightFamily(a: MapMetric, b: MapMetric) {
   return a === b;
 }
 
+// Returns the maximum rank used for each rank metric
 export function getRankMax(metric: MapMetric) {
   return metric === "ons_national_rank" ? 32844 : 268;
 }
 
+// Returns the score range used for each score metric
 export function getScoreRange(metric: MapMetric) {
   if (metric === "bristol_score") {
     return { min: -1, max: 43 };
@@ -122,6 +183,7 @@ export function getScoreRange(metric: MapMetric) {
   return { min: 0, max: 72 };
 }
 
+// Gets the selected metric value from one LSOA row
 function getMetricValue(row: LsoaCurrentRow | undefined, metric: MapMetric) {
   if (!row) return null;
 
@@ -147,6 +209,7 @@ function getMetricValue(row: LsoaCurrentRow | undefined, metric: MapMetric) {
   }
 }
 
+// Gives each metric a readable label for the tooltip
 function getMetricLabel(metric: MapMetric) {
   switch (metric) {
     case "bristol_rank":
@@ -170,6 +233,7 @@ function getMetricLabel(metric: MapMetric) {
   }
 }
 
+// Converts the selected metric value into a display bucket
 export function getMetricBucket(metric: MapMetric, value?: number | null) {
   if (value == null) return null;
 
@@ -189,11 +253,13 @@ export function getMetricBucket(metric: MapMetric, value?: number | null) {
   return null;
 }
 
+// Gets the map colour for the selected metric value
 function getMetricColor(metric: MapMetric, value?: number | null) {
   const bucket = getMetricBucket(metric, value);
   return bucket == null ? "#1f2937" : getDecileColor(bucket);
 }
 
+// Formats metric values for display in the map tooltip.
 function formatMetricValue(metric: MapMetric, value?: number | null) {
   if (value == null || !Number.isFinite(value)) return "N/A";
 
@@ -204,6 +270,7 @@ function formatMetricValue(metric: MapMetric, value?: number | null) {
   return Math.round(Number(value)).toString();
 }
 
+// Returns the legend title for the current metric type
 export function getLegendTitle(metric: MapMetric) {
   if (isDecileMetric(metric)) return "Decile";
   if (isRankMetric(metric)) return "Rank bucket";
@@ -211,6 +278,7 @@ export function getLegendTitle(metric: MapMetric) {
   return "Bucket";
 }
 
+// Returns the left-side legend label
 export function getLegendStartLabel(metric: MapMetric) {
   if (isDecileMetric(metric)) return "Most deprived";
   if (isRankMetric(metric)) return "Highest deprivation rank";
@@ -218,6 +286,7 @@ export function getLegendStartLabel(metric: MapMetric) {
   return "High";
 }
 
+// Returns the right-side legend label
 export function getLegendEndLabel(metric: MapMetric) {
   if (isDecileMetric(metric)) return "Least deprived";
   if (isRankMetric(metric)) return "Lowest deprivation rank";
@@ -225,6 +294,7 @@ export function getLegendEndLabel(metric: MapMetric) {
   return "Low";
 }
 
+// Builds the tooltip text for a legend bucket
 export function getLegendBucketTitle(metric: MapMetric, bucket: number) {
   if (isDecileMetric(metric)) {
     return `Decile ${bucket}`;
@@ -241,7 +311,7 @@ export function getLegendBucketTitle(metric: MapMetric, bucket: number) {
     const { min, max } = getScoreRange(metric);
     const step = (max - min) / 10;
 
-    // Bucket 1 is highest score / most deprived.
+    // Bucket 1 is highest score / most deprived
     const high = max - (bucket - 1) * step;
     const low = max - bucket * step;
 
@@ -258,10 +328,12 @@ export default function BristolComparisonMap({
   highlightedValue = null,
   onFeatureHover,
 }: BristolComparisonMapProps) {
+  // Stores the loaded map data, deprivation rows, and loading errors
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads the Bristol boundary and deprivation data files
   useEffect(() => {
     async function load() {
       try {
@@ -310,10 +382,12 @@ export default function BristolComparisonMap({
     load();
   }, []);
 
+  // Creates a lookup table for matching LSOA rows by code
   const lsoaByCode = useMemo(() => {
     return Object.fromEntries(lsoaRows.map((row) => [row.code, row]));
   }, [lsoaRows]);
 
+  // Joins the GeoJSON boundaries with the selected metric data
   const mergedGeojson = useMemo(() => {
     if (!geojson) return null;
 
@@ -367,11 +441,13 @@ export default function BristolComparisonMap({
           scrollWheelZoom={true}
           style={{ height: "100%", width: "100%" }}
         >
+          {/* Uses CARTO dark tiles as the map background. */}
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution="&copy; OpenStreetMap contributors &copy; CARTO"
           />
 
+          {/* Draws the LSOA shapes and colours them by the active metric. */}
           <GeoJSON
             key={metric}
             data={mergedGeojson as any}
@@ -409,6 +485,7 @@ export default function BristolComparisonMap({
               const props = feature.properties || {};
               const metricLabel = getMetricLabel(metric);
 
+              // Shows all key metric values when the user hovers over an area
               layer.bindTooltip(
                 `
                   <div style="font-size:12px;line-height:1.5;">
@@ -436,6 +513,7 @@ export default function BristolComparisonMap({
                 },
               );
 
+              // Handles feature hover highlighting and sends hover data to the parent
               layer.on({
                 mouseover: (e: any) => {
                   onFeatureHover?.({
@@ -484,9 +562,7 @@ export default function BristolComparisonMap({
             }}
           />
         </MapContainer>
-      </div>
-
-      
+      </div>      
     </div>
   );
 }

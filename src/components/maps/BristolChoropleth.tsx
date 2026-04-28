@@ -1,9 +1,57 @@
+/*
+  Bristol choropleth map component.
+
+  This component loads Bristol LSOA boundary and deprivation data, joins them together, and displays them as an interactive Leaflet map.
+
+  Provenance:
+  - React (no date) ‘useState’ [online]. Available from:
+    https://react.dev/reference/react/useState 
+    Used for storing loaded map data and loading errors.
+
+  - React (no date) ‘useEffect’ [online]. Available from:
+    https://react.dev/reference/react/useEffect 
+    Used for loading map data when the component mounts.
+
+  - React (no date) ‘useMemo’ [online]. Available from:
+    https://react.dev/reference/react/useMemo 
+    Used for preparing derived map data only when inputs change.
+
+  - React Leaflet (no date) ‘React Leaflet’ [online]. Available from:
+    https://react-leaflet.js.org/ 
+    Used for the MapContainer, TileLayer, and GeoJSON map components.
+
+  - Leaflet (no date) ‘Leaflet Documentation’ [online]. Available from:
+    https://leafletjs.com/reference.html 
+    Used for map layers, tooltips, and feature hover styling.
+
+  - MDN (no date) ‘Fetch API’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API 
+    Used for loading the local GeoJSON and JSON data files.
+
+  - MDN (no date) ‘Promise.all()’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all    
+    Used for loading both map data files at the same time.
+
+  - GeoJSON (no date) ‘GeoJSON’ [online]. Available from:
+    https://geojson.org/ 
+    Used for the FeatureCollection data structure.
+
+  - CARTO (no date) ‘Basemaps’ [online]. Available from:
+    https://carto.com/basemaps/ 
+    Used for the dark basemap tile layer.
+
+  - OpenStreetMap contributors (no date) ‘Copyright and License’ [online]. Available from:
+    https://www.openstreetmap.org/copyright
+    Used for the map attribution.
+*/
+
 import { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import type { LsoaCurrentRow } from "@/types/dashboard-data";
 
+// Defines the shape of the Bristol LSOA GeoJSON file
 type LsoaGeoJson = GeoJSON.FeatureCollection<
   GeoJSON.Geometry,
   {
@@ -25,6 +73,7 @@ type BristolChoroplethProps = {
   heightClassName?: string;
 };
 
+// Returns the colour used for each deprivation decile
 function getDecileColor(decile?: number | null) {
   if (!decile) return "#1f2937";
 
@@ -44,6 +93,7 @@ function getDecileColor(decile?: number | null) {
   return palette[decile] ?? "#1f2937";
 }
 
+// Formats numeric values for display in tooltips
 function formatNumber(value?: number | null, digits = 2) {
   if (value == null || !Number.isFinite(value)) return "N/A";
   return Number(value).toFixed(digits);
@@ -55,10 +105,12 @@ export default function BristolChoropleth({
   onLegendHoverChange,
   heightClassName = "h-[540px]",
 }: BristolChoroplethProps) {
+  // Stores the loaded map boundaries, deprivation rows, and any load error
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads the local GeoJSON boundaries and deprivation data
   useEffect(() => {
     async function load() {
       try {
@@ -107,10 +159,12 @@ export default function BristolChoropleth({
     load();
   }, []);
 
+  // Creates a quick lookup table so each LSOA row can be found by code
   const lsoaByCode = useMemo(() => {
     return Object.fromEntries(lsoaRows.map((row) => [row.code, row]));
   }, [lsoaRows]);
 
+  // Combines GeoJSON boundaries with the matching deprivation data
   const mergedGeojson = useMemo(() => {
     if (!geojson) return null;
 

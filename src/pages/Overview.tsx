@@ -10,30 +10,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  BarChart3,
-  MapPin,
-  RefreshCw,
-  Layers,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
+import { BarChart3, MapPin, RefreshCw, Layers, TrendingUp, TrendingDown} from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import { MetricCard } from "@/components/ui/metric-card";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import BristolChoropleth from "@/components/maps/BristolChoropleth";
 import type { LsoaCurrentRow, WardCurrentRow } from "@/types/dashboard-data";
+
 
 
 // Decile palette aligned with the dashboard legend.

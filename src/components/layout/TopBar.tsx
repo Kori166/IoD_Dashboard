@@ -1,19 +1,61 @@
+/*
+  Top bar component for the dashboard.
+
+  This component shows the sidebar toggle, dashboard title, LAD search menu, current LAD name, and display date.
+
+  Provenance:
+  - React (no date) ‘useState’ [online]. Available from:
+    https://react.dev/reference/react/useState 
+    Used for managing the search menu state, query text, and active result.
+
+  - React (no date) ‘useMemo’ [online]. Available from:
+    https://react.dev/reference/react/useMemo 
+    Used for filtering LAD search results only when the data or query changes.
+
+  - React (no date) ‘useEffect’ [online]. Available from:
+    https://react.dev/reference/react/useEffect 
+    Used for keyboard shortcuts and outside-click handling.
+
+  - React (no date) ‘useRef’ [online]. Available from:
+    https://react.dev/reference/react/useRef 
+    Used for checking clicks inside or outside the search menu.
+
+  - MDN (no date) ‘KeyboardEvent’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent 
+    Used for the Ctrl/Cmd + K shortcut and keyboard navigation.
+
+  - MDN (no date) ‘EventTarget: addEventListener() method’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener    
+    Used for adding and removing keyboard and mouse event listeners.
+
+  - Lucide (no date) ‘Lucide React’ [online]. Available from:
+    https://lucide.dev/guide/packages/lucide-react 
+    Used for the search, map pin, clock, and check icons.
+
+  - shadcn (no date) ‘Sidebar’ [online]. Available from:
+    https://ui.shadcn.com/docs/components/sidebar 
+    Used for the SidebarTrigger component.
+*/
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, MapPin, Clock, Check } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { useLad } from "@/context/lad-context";
 
 export function TopBar() {
+  // Gets the active LAD and LAD search data from shared context
   const { activeLad, allLads, setActiveLadBySlug } = useLad();
 
+  // Controls the search dropdown and selected search result
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Tracks the search button and dropdown for outside-click detection
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // Filters LADs by name, code, or slug
   const results = useMemo(() => {
     const term = query.trim().toLowerCase();
 
@@ -27,10 +69,12 @@ export function TopBar() {
     });
   }, [allLads, query]);
 
+  // Keeps the active result index within the result list
   useEffect(() => {
     setActiveIndex((current) => Math.min(current, Math.max(results.length - 1, 0)));
   }, [results]);
 
+  // Opens the search menu with Ctrl/Cmd + K
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -43,13 +87,16 @@ export function TopBar() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Closes the search menu when the user clicks outside it
   useEffect(() => {
     if (!open) return;
 
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
+
       if (anchorRef.current?.contains(target)) return;
       if (dropdownRef.current?.contains(target)) return;
+
       setOpen(false);
     };
 
@@ -57,6 +104,7 @@ export function TopBar() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
+  // Updates the selected LAD and closes the search menu
   function selectLad(slug: string) {
     setActiveLadBySlug(slug);
     setOpen(false);
@@ -67,6 +115,8 @@ export function TopBar() {
     <header className="h-14 flex items-center justify-between px-4 border-b border-border/50 bg-card/40 backdrop-blur-md">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+
+        {/* Shows the dashboard title on medium and larger screens. */}
         <div className="hidden md:block">
           <h1 className="text-sm font-semibold text-foreground">
             Replicating the UK Index of Deprivation
@@ -75,6 +125,7 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Search box for choosing a Local Authority District. */}
         <div className="relative hidden md:block" ref={anchorRef}>
           <button
             type="button"
@@ -83,7 +134,8 @@ export function TopBar() {
           >
             <Search className="h-3.5 w-3.5" />
             <span className="text-xs">Search LADs...</span>
-            <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/50">            
+            <kbd className="ml-4 text-[10px] bg-background/50 px-1.5 py-0.5 rounded border border-border/50">
+              Ctrl K
             </kbd>
           </button>
 
@@ -143,9 +195,12 @@ export function TopBar() {
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium text-foreground">{lad.name}</span>
+                          <span className="text-sm font-medium text-foreground">
+                            {lad.name}
+                          </span>
                           {selected ? <Check className="h-4 w-4 text-primary" /> : null}
                         </div>
+
                         <p className="text-xs text-muted-foreground">
                           {lad.code} · {lad.slug}
                         </p>
@@ -162,17 +217,17 @@ export function TopBar() {
           ) : null}
         </div>
 
+        {/* Shows the currently selected LAD on large screens. */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
           <MapPin className="h-3 w-3" />
           {activeLad.name}
         </div>
 
+        {/* Shows the dashboard date on large screens. */}
         <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
           <span>Apr 28, 2026</span>
         </div>
-
-        
       </div>
     </header>
   );
