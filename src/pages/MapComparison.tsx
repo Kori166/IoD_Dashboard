@@ -235,7 +235,7 @@ function SharedMapLegend({
   );
 }
 
-export default function MapExplorer() {
+export default function MapComparison() {
   const [selectedMeasure, setSelectedMeasure] = useState<MapMeasure>("decile");
   const [highlightedBucket, setHighlightedBucket] = useState<number | null>(null);
 
@@ -264,7 +264,7 @@ export default function MapExplorer() {
         className="space-y-4"
       >
         <h1 className="text-4xl md:text-4xl font-bold text-foreground tracking-tight">
-          Map Explorer
+          Map Comparison
         </h1>
 
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">

@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Overview from "./pages/Overview";
 import TimeSeries from "./pages/TimeSeries";
-import MapExplorer from "./pages/MapExplorer";
+import MapComparison from "./pages/MapComparison";
 import FeatureAnalysis from "./pages/FeatureAnalysis";
 import DataSources from "./pages/DataSources";
 import NotFound from "./pages/NotFound";
@@ -23,7 +23,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/time-series" element={<TimeSeries />} />
-            <Route path="/map" element={<MapExplorer />} />
+            <Route path="/map" element={<MapComparison />} />
             <Route path="/indicators" element={<FeatureAnalysis />} /> 
             <Route path="/sources" element={<DataSources />} />
             <Route path="/time" element={<NotFound />} />

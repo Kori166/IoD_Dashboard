@@ -279,7 +279,6 @@ This project uses:
 - **Framer Motion**
 - **Lucide React**
 - **Vitest**
-- **Playwright**
 
 ## Repository structure
 
@@ -458,9 +457,6 @@ The repository includes:
 
 - **ESLint** for linting
 - **Vitest** for unit and integration tests
-- **Playwright** support for end-to-end tests
-
-Generated test output, such as `test-results/.last-run.json` and `playwright-report/`, should not be committed unless there is a clear reason.
 
 ## Current status
 

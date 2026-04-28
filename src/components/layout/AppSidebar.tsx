@@ -33,7 +33,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 // Main sidebar links used to build the navigation menu
 const navItems = [
   { title: "Overview", url: "/", icon: LayoutDashboard },
-  { title: "Map Explorer", url: "/map", icon: Map },
+  { title: "Map Comparison", url: "/map", icon: Map },
   { title: "Time Series", url: "/time-series", icon: Clock },
   { title: "Feature Analysis", url: "/indicators", icon: BarChart3 },
   { title: "Data Sources", url: "/sources", icon: Database },
