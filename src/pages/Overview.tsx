@@ -36,7 +36,7 @@ import BristolChoropleth from "@/components/maps/BristolChoropleth";
 import type { LsoaCurrentRow, WardCurrentRow } from "@/types/dashboard-data";
 
 
-// Decile palette aligned with the dashboard legend.
+// Decile palette aligned with the dashboard legend
 const DECILE_COLORS: Record<number, string> = {
   1: "#F4EFFA",
   2: "#E6DAF6",
@@ -51,17 +51,17 @@ const DECILE_COLORS: Record<number, string> = {
 };
 
 export default function Overview() {
-  // Stores the full set of IMD rows used across the page.
+  // Stores the full set of IMD rows used across the page
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
   const [wardRows, setWardRows] = useState<WardCurrentRow[]>([]);
 
-  // Controls whether rankings are shown relative to Bristol or the whole UK.
+  // Controls whether rankings are shown relative to Bristol or the whole UK
   const [rankMode, setRankMode] = useState<"bristol" | "uk">("bristol");
 
-  // Shared hover state so the profile bars and map legend can both highlight the map.
+  // Shared hover state so the profile bars and map legend can both highlight the map
   const [hoveredDecile, setHoveredDecile] = useState<number | null>(null);
 
-  // Load the IMD data once when the page first renders.
+  // Load the IMD data once when the page first renders
   useEffect(() => {
     async function load() {
       const [lsoaRes, wardRes] = await Promise.all([
@@ -80,7 +80,7 @@ export default function Overview() {
   }, []);
 
   // Sort rows by the currently selected ranking mode so the top/bottom lists
-  // can be derived from one shared ordered dataset.
+  // can be derived from one shared ordered dataset
   const activeLsoaRows = lsoaRows;
   const sortedRows = useMemo(() => {
     return [...activeLsoaRows].sort((a, b) =>
@@ -91,7 +91,7 @@ export default function Overview() {
     );
   }, [activeLsoaRows, rankMode]);
 
-  // Top 5 most deprived areas based on the active sort mode.
+  // Top 5 most deprived areas based on the active sort mode
   const mostDeprived = sortedRows.slice(0, 5);
 
   const sortedWardRows = useMemo(() => {
@@ -105,10 +105,10 @@ export default function Overview() {
 const mostDeprivedWards = sortedWardRows.slice(0, 5);
 const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
 
-  // Bottom 5 least deprived areas, reversed so the least deprived shows first.
+  // Bottom 5 least deprived areas, reversed so the least deprived shows first
   const leastDeprived = [...sortedRows].slice(-5).reverse();
 
-  // Build the local authority profile showing the share of Bristol LSOAs in each decile.
+  // Build the local authority profile showing the share of Bristol LSOAs in each decile
   const localAuthorityProfileData = useMemo(() => {
     const total = lsoaRows.length;
 
@@ -401,6 +401,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
 </GlassCard>
 
 </div>
+{/* extra info cards*/}
       <GlassCard className="p-6">
         <SectionHeader title="Why This Matters" />
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-6">
