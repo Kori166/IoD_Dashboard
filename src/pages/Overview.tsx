@@ -186,36 +186,40 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
       </div>
 
       {/*Map, local authority information, and rankings*/}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,0.9fr)] gap-6 items-stretch xl:auto-rows-[720px]">
+      <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)_minmax(320px,0.9fr)] gap-6 items-stretch 2xl:auto-rows-[720px]">
 
-        <GlassCard className="p-6">
-          <div className="space-y-2">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">
-              Deprivation Across Bristol
-            </h2>
-            <p className="text-base md:text-m text-muted-foreground leading-relaxed">
-              Interactive LSOA-level map comparing Bristol’s deprivation locally and nationally.
-            </p>
-          </div>
+        <GlassCard className="p-6 h-full min-w-0 overflow-hidden">
+          <div className="flex h-full flex-col">
+            <div className="space-y-2 shrink-0">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                Deprivation Across Bristol
+              </h2>
+              <p className="text-base md:text-m text-muted-foreground break-words leading-relaxed">
+                Interactive LSOA-level map comparing Bristol’s deprivation locally and nationally.
+              </p>
+            </div>
 
-          {/* Embedded map component with a taller display area. */}
-          <div className="mt-4 min-h-[555px]">
-            <BristolChoropleth
-              mode={rankMode}
-              highlightedDecile={hoveredDecile}
-              onLegendHoverChange={setHoveredDecile}
-            />
+            <div className="mt-4 flex-1 min-h-0">
+              <BristolChoropleth
+                mode={rankMode}
+                highlightedDecile={hoveredDecile}
+                onLegendHoverChange={setHoveredDecile}
+                heightClassName="h-full"
+              />
+            </div>
           </div>
         </GlassCard>
 
         {/* Local Authority Profile card showing the share of LSOAs by Bristol decile. */}
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 h-full min-w-0 overflow-hidden">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Local Authority Profile
             </h2>
             <p className="text-base md:text-m text-muted-foreground leading-relaxed">
-              % of Bristol LSOAs in each Bristol-relative deprivation decile.
+              {rankMode === "bristol"
+                ? "% of Bristol LSOAs in each Bristol-relative deprivation decile."
+                : "% of Bristol LSOAs in each national deprivation decile."}
             </p>
           </div>
 
@@ -294,7 +298,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
         </GlassCard>
 
         {/* Rankings card remains the right-hand column. */}
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 h-full min-w-0 overflow-hidden">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Area Rankings

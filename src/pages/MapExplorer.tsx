@@ -3,36 +3,23 @@
 // - React (No Date) React. Available from: https://react.dev/
 // - Lucide (2026) Lucide. Available from: https://lucide.dev/
 
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { type MouseEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { Layers } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
-import BristolComparisonMap, { getDecileColor, getRankMax, isRankMetric, isScoreMetric, type MapMetric} from "@/components/maps/BristolComparisonMap";
+import BristolComparisonMap, { getDecileColor, getRankMax, isRankMetric, type MapMetric} from "@/components/maps/BristolComparisonMap";
 
-type LsoaCurrentRow = {
-  code: string;
-  label: string;
-  bristol_rank: number;
-  bristol_decile: number;
-  bristol_score: number;
-  ons_bristol_rank: number | null;
-  ons_bristol_decile: number | null;
-  ons_score: number | null;
-};
+type MapMeasure = "decile" | "rank";
 
-type MapMeasure = "decile" | "rank" | "score";
-
-const measureOptions: MapMeasure[] = ["decile", "rank", "score"];
+const measureOptions: MapMeasure[] = ["decile", "rank"];
 
 function toBristolMetric(measure: MapMeasure) {
   if (measure === "rank") return "bristol_rank";
-  if (measure === "score") return "bristol_score";
   return "bristol_decile";
 }
 
 function toOnsBristolMetric(measure: MapMeasure) {
   if (measure === "rank") return "ons_bristol_rank";
-  if (measure === "score") return "ons_score";
   return "ons_bristol_decile";
 }
 
@@ -68,7 +55,6 @@ function SharedMapLegend({
   highlightedBucket,
   highlightedValue,
   legendHover,
-  scoreRange,
   onHighlightBucket,
   onHighlightValue,
   onLegendHover,
@@ -76,15 +62,13 @@ function SharedMapLegend({
   metric: MapMetric;
   highlightedBucket: number | null;
   highlightedValue: { metric: MapMetric; value: number; mode: "exact" | "bucket" } | null;
-  legendHover: { metric: MapMetric; value: number; y: number; label?: string | null } | null;
-  scoreRange: { min: number; max: number };
+  legendHover: { metric: MapMetric; value: number; y: number } | null;
   onHighlightBucket: (bucket: number | null) => void;
   onHighlightValue: (value: { metric: MapMetric; value: number; mode: "exact" | "bucket" } | null) => void;
-  onLegendHover: (value: { metric: MapMetric; value: number; y: number; label?: string | null } | null) => void;
+  onLegendHover: (value: { metric: MapMetric; value: number; y: number } | null) => void;
 }) {
   const isDecile = metric.includes("decile");
   const isRank = isRankMetric(metric);
-  const isScore = isScoreMetric(metric);
   const rankMax = getRankMax(metric);
 
   const gradient = `linear-gradient(to bottom,
@@ -104,36 +88,22 @@ function SharedMapLegend({
     const rawRatio = (event.clientY - rect.top) / rect.height;
     const ratio = Math.min(1, Math.max(0, rawRatio));
 
-    if (isRank) {
-      const value = Math.round(1 + ratio * (rankMax - 1));
+    if (!isRank) return;
 
-      onLegendHover({
-        metric,
-        y: ratio * 100,
-        value,
-      });
-      
-      onHighlightValue({
-        metric,
-        value,
-        mode: "exact",
-      });
+    const value = Math.round(1 + ratio * (rankMax - 1));
 
-      return;
-    }
+    onLegendHover({
+      metric,
+      y: ratio * 100,
+      value,
+    });
 
-    if (isScore) {
-      const value = scoreRange.max - ratio * (scoreRange.max - scoreRange.min);
-
-      onLegendHover({
-        metric,
-        y: ratio * 100,
-        value,
-      });
-
-      onHighlightBucket(null);
-      onHighlightValue(null);
-    }
+    onHighlightBucket(null);
+    onHighlightValue({
+      metric,
+      value,
+      mode: "exact",
+    });
   }
 
   function clearGradientHover() {
@@ -202,12 +172,8 @@ function SharedMapLegend({
         ) : (
           <div className="mt-6 flex flex-1 flex-col">
             <div className="mb-4">
-              <p className="text-sm font-semibold text-foreground">
-                {isRank ? "Rank 1" : scoreRange.max.toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {isRank ? "Most deprived" : "Highest score · Most deprived"}
-              </p>
+              <p className="text-sm font-semibold text-foreground">Rank 1</p>
+              <p className="text-xs text-muted-foreground">Most deprived</p>
             </div>
 
             <div className="flex min-h-0 flex-1 gap-4">
@@ -228,46 +194,20 @@ function SharedMapLegend({
                       className="pointer-events-none absolute left-14 -translate-y-1/2 whitespace-nowrap rounded-md border border-cyan-300/40 bg-background/95 px-2 py-1 text-xs font-bold text-foreground shadow-xl"
                       style={{ top: `${shownHover.y}%` }}
                     >
-                      {isRank
-                        ? `Rank ${Math.round(shownHover.value)}`
-                        : `Score ${shownHover.value.toFixed(2)}`}
-
-                      {shownHover.label ? (
-                        <span className="block max-w-40 truncate text-[10px] font-medium text-muted-foreground">
-                          {shownHover.label}
-                        </span>
-                      ) : null}
+                      Rank {Math.round(shownHover.value)}
                     </div>
                   </>
                 ) : null}
               </div>
 
               <div className="relative flex-1">
-                {(isRank
-                  ? [
-                      { label: "1", top: "0%" },
-                      { label: String(Math.round(rankMax * 0.25)), top: "25%" },
-                      { label: String(Math.round(rankMax * 0.5)), top: "50%" },
-                      { label: String(Math.round(rankMax * 0.75)), top: "75%" },
-                      { label: String(rankMax), top: "100%" },
-                    ]
-                  : [
-                      { label: scoreRange.max.toFixed(2), top: "0%" },
-                      {
-                        label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.75).toFixed(2),
-                        top: "25%",
-                      },
-                      {
-                        label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.5).toFixed(2),
-                        top: "50%",
-                      },
-                      {
-                        label: (scoreRange.min + (scoreRange.max - scoreRange.min) * 0.25).toFixed(2),
-                        top: "75%",
-                      },
-                      { label: scoreRange.min.toFixed(2), top: "100%" },
-                    ]
-                ).map((tick) => (
+                {[
+                  { label: "1", top: "0%" },
+                  { label: String(Math.round(rankMax * 0.25)), top: "25%" },
+                  { label: String(Math.round(rankMax * 0.5)), top: "50%" },
+                  { label: String(Math.round(rankMax * 0.75)), top: "75%" },
+                  { label: String(rankMax), top: "100%" },
+                ].map((tick) => (
                   <div
                     key={tick.label}
                     className="absolute left-0 flex w-full -translate-y-1/2 items-center gap-2"
@@ -284,11 +224,9 @@ function SharedMapLegend({
 
             <div className="mt-4">
               <p className="text-sm font-semibold text-foreground">
-                {isRank ? `Rank ${rankMax}` : scoreRange.min.toFixed(2)}
+                Rank {rankMax}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {isRank ? "Least deprived" : "Lowest score · Least deprived"}
-              </p>
+              <p className="text-xs text-muted-foreground">Least deprived</p>
             </div>
           </div>
         )}
@@ -314,82 +252,8 @@ export default function MapExplorer() {
     label?: string | null;
   } | null>(null);
 
-  const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
-
   const leftMetric = toBristolMetric(selectedMeasure) as MapMetric;
   const rightMetric = toOnsBristolMetric(selectedMeasure) as MapMetric;
-
-  useEffect(() => {
-    async function loadRows() {
-      try {
-        const response = await fetch("/data/bristol_lsoa_current.json");
-        if (!response.ok) {
-          throw new Error(`Failed to load bristol_lsoa_current.json: ${response.status}`);
-        }
-
-        const data = (await response.json()) as LsoaCurrentRow[];
-        setLsoaRows(data);
-      } catch (error) {
-        console.error("Could not load LSOA current rows for legend ranges", error);
-        setLsoaRows([]);
-      }
-    }
-
-    loadRows();
-  }, []);
-
-  function getRowMetricValue(row: LsoaCurrentRow, metric: MapMetric) {
-    if (metric === "bristol_score") return row.bristol_score;
-    if (metric === "ons_score") return row.ons_score;
-    if (metric === "bristol_rank") return row.bristol_rank;
-    if (metric === "ons_bristol_rank") return row.ons_bristol_rank;
-    if (metric === "bristol_decile") return row.bristol_decile;
-    if (metric === "ons_bristol_decile") return row.ons_bristol_decile;
-    return null;
-  }
-
-  const scoreRange = useMemo(() => {
-    const values = lsoaRows
-      .flatMap((row) => [
-        getRowMetricValue(row, leftMetric),
-        getRowMetricValue(row, rightMetric),
-      ])
-      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-
-    if (!values.length) return { min: 0, max: 1 };
-
-    return {
-      min: Math.min(...values),
-      max: Math.max(...values),
-    };
-  }, [lsoaRows, leftMetric, rightMetric]);
-
-  function handleFeatureHover(payload: {
-  metric: MapMetric;
-  value: number | null;
-  bucket: number | null;
-  code: string | null;
-  label: string | null;
-} | null) {
-  if (!payload || payload.value == null) {
-    setLegendHover(null);
-    return;
-  }
-
-  if (!isScoreMetric(payload.metric)) return;
-
-  const ratio = Math.min(
-    1,
-    Math.max(0, (scoreRange.max - payload.value) / (scoreRange.max - scoreRange.min || 1)),
-  );
-
-  setLegendHover({
-    metric: leftMetric,
-    value: payload.value,
-    y: ratio * 100,
-    label: payload.label,
-  });
-}
 
   return (
     <div className="space-y-8 w-full max-w-none px-1 xl:px-2">
@@ -439,7 +303,6 @@ export default function MapExplorer() {
                 metric={leftMetric}
                 highlightedBucket={highlightedBucket}
                 highlightedValue={highlightedValue}
-                onFeatureHover={handleFeatureHover}
                 heightClassName="h-[750px]"
               />
             </div>
@@ -480,7 +343,6 @@ export default function MapExplorer() {
                 metric={rightMetric}
                 highlightedBucket={highlightedBucket}
                 highlightedValue={highlightedValue}
-                onFeatureHover={handleFeatureHover}
                 heightClassName="h-[750px]"
               />
             </div>
@@ -495,7 +357,6 @@ export default function MapExplorer() {
           highlightedBucket={highlightedBucket}
           highlightedValue={highlightedValue}
           legendHover={legendHover}
-          scoreRange={scoreRange}
           onHighlightBucket={setHighlightedBucket}
           onHighlightValue={setHighlightedValue}
           onLegendHover={setLegendHover}

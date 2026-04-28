@@ -22,7 +22,9 @@
       "description": "Current LSOA-level deprivation snapshot for Bristol used by Overview and map pages.",
       "grain": "LSOA",
       "required": true,
-      "primary_key": ["code"],
+      "primary_key": [
+        "code"
+      ],
       "fields": {
         "code": "string",
         "label": "string",
@@ -46,7 +48,9 @@
       "description": "GeoJSON boundaries for Bristol LSOAs joined to deprivation data in the frontend.",
       "grain": "LSOA",
       "required": true,
-      "primary_key": ["properties.lsoa_code"],
+      "primary_key": [
+        "properties.lsoa_code"
+      ],
       "fields": {
         "properties.lsoa_code": "string",
         "properties.lsoa_name": "string"
@@ -59,13 +63,15 @@
       "description": "LSOA-level time series for rank/decile trends.",
       "grain": "LSOA",
       "required": true,
-      "primary_key": ["code"],
+      "primary_key": [
+        "code"
+      ],
       "fields": {
         "code": "string",
         "label": "string",
         "points": "array<{date:string, rank:number, decile:number, score:number}>"
       },
-      "row_count": 267
+      "row_count": 268
     },
     "ward_timeseries": {
       "path": "/data/bristol_ward_timeseries.json",
@@ -73,7 +79,9 @@
       "description": "Ward-level time series aggregated from LSOA nowcast outputs.",
       "grain": "Ward",
       "required": true,
-      "primary_key": ["code"],
+      "primary_key": [
+        "code"
+      ],
       "fields": {
         "code": "string",
         "label": "string",
@@ -87,14 +95,16 @@
       "description": "Lookup linking Bristol LSOAs to wards for labels and search.",
       "grain": "LSOA",
       "required": true,
-      "primary_key": ["lsoa_code"],
+      "primary_key": [
+        "lsoa_code"
+      ],
       "fields": {
         "lsoa_code": "string",
         "lsoa_name": "string",
         "ward_code": "string",
         "ward_name": "string"
       },
-      "row_count": 267
+      "row_count": 268
     },
     "ward_current": {
       "path": "/data/bristol_ward_current.json",
@@ -102,7 +112,9 @@
       "description": "Current ward-level deprivation snapshot for Bristol used by Overview.",
       "grain": "Ward",
       "required": true,
-      "primary_key": ["code"],
+      "primary_key": [
+        "code"
+      ],
       "fields": {
         "code": "string",
         "label": "string",

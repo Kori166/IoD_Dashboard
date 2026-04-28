@@ -22,6 +22,7 @@ type BristolChoroplethProps = {
   mode: "bristol" | "uk";
   highlightedDecile?: number | null;
   onLegendHoverChange?: (decile: number | null) => void;
+  heightClassName = "h-[450px]",
 };
 
 function getDecileColor(decile?: number | null) {
@@ -52,6 +53,7 @@ export default function BristolChoropleth({
   mode,
   highlightedDecile = null,
   onLegendHoverChange,
+  heightClassName = "h-[540px]",
 }: BristolChoroplethProps) {
   const [geojson, setGeojson] = useState<LsoaGeoJson | null>(null);
   const [lsoaRows, setLsoaRows] = useState<LsoaCurrentRow[]>([]);
@@ -147,7 +149,7 @@ export default function BristolChoropleth({
 
   if (error) {
     return (
-      <div className="h-[420px] flex items-center justify-center text-sm text-destructive">
+      <div className="h-[540px] flex items-center justify-center text-sm text-destructive">
         Error loading map: {error}
       </div>
     );
@@ -155,7 +157,7 @@ export default function BristolChoropleth({
 
   if (!mergedGeojson) {
     return (
-      <div className="h-[420px] flex items-center justify-center text-sm text-muted-foreground">
+      <div className="h-[540px] flex items-center justify-center text-sm text-muted-foreground">
         Loading Bristol map...
       </div>
     );
@@ -163,7 +165,7 @@ export default function BristolChoropleth({
 
   return (
     <div className="space-y-3">
-      <div className="h-[450px] w-full overflow-hidden rounded-xl border border-border/40">
+      <div className="h-[540px] w-full overflow-hidden rounded-xl border border-border/40">
         <MapContainer
           center={[51.4545, -2.5879]}
           zoom={11}
