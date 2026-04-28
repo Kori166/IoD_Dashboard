@@ -22,7 +22,7 @@ type BristolChoroplethProps = {
   mode: "bristol" | "uk";
   highlightedDecile?: number | null;
   onLegendHoverChange?: (decile: number | null) => void;
-  heightClassName = "h-[450px]",
+  heightClassName?: string;
 };
 
 function getDecileColor(decile?: number | null) {
