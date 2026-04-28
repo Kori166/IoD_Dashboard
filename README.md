@@ -453,7 +453,7 @@ Current known state:
 - Map Explorer no longer exposes Score mode.
 - Time Series still supports both Rank and Score views.
 - Some copy, explanatory text, and lower-priority pages may still need final review.
-- Some older data files may remain in `public/data/` until the data contract is fully stabilized.
+- Some older data files may remain in `public/data/` until the data contract is fully stabilised.
 
 ## Next priorities
 
@@ -461,7 +461,7 @@ Suggested next development steps:
 
 - complete responsive layout polish across Overview and Map Explorer
 - remove stale synthetic data files once replacements are verified
-- standardize all page fetch paths against the consolidated data contract
+- standardise all page fetch paths against the consolidated data contract
 - add schema validation for dashboard-ready JSON files
 - document the pipeline export process in the pipeline repository
 - add screenshots to this README
@@ -488,4 +488,4 @@ git checkout -b docs/update-readme
 
 ## License
 
-License information has not yet been finalized.
+License information has not yet been finalised.

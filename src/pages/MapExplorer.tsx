@@ -126,7 +126,7 @@ function SharedMapLegend({
 
         {isDecile ? (
           <div className="mt-6 flex flex-1 flex-col">
-            <p className="mb-4 text-xs font-medium text-muted-foreground">
+            <p className="mb-4 text-m font-medium text-muted-foreground">
               Most deprived
             </p>
 
