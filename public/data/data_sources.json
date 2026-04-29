@@ -1,0 +1,83 @@
+[
+  {
+    "id": "dwp-stat-xplore",
+    "name": "DWP Stat-Xplore",
+    "category": "Socioeconomic",
+    "icon": "benefits",
+    "description": "Universal Credit and benefit claimant data.",
+    "used_for": "Understanding financial hardship, worklessness and benefit claimant patterns.",
+    "url": "https://stat-xplore.dwp.gov.uk/"
+  },
+  {
+    "id": "police-uk-open-data",
+    "name": "Police.UK Open Data",
+    "category": "Crime",
+    "icon": "crime",
+    "description": "Street-level crime and anti-social behaviour incidents.",
+    "used_for": "Measuring community safety, crime burden and local crime-related deprivation signals.",
+    "url": "https://data.police.uk/"
+  },
+  {
+    "id": "openstreetmap",
+    "name": "OpenStreetMap",
+    "category": "Geography & services",
+    "icon": "map",
+    "description": "Location data for amenities, shops, services, land use and highways.",
+    "used_for": "Measuring access to services, local infrastructure and neighbourhood environment.",
+    "url": "https://www.openstreetmap.org/"
+  },
+  {
+    "id": "hm-land-registry",
+    "name": "HM Land Registry",
+    "category": "Housing",
+    "icon": "housing",
+    "description": "House price and property transaction data.",
+    "used_for": "Capturing housing market conditions, affordability and transaction activity.",
+    "url": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads"
+  },
+  {
+    "id": "govuk-connectivity",
+    "name": "Gov.UK Connectivity",
+    "category": "Geography & services",
+    "icon": "connectivity",
+    "description": "Accessibility and journey-time data for key local services.",
+    "used_for": "Measuring access to services such as GP practices, green spaces and transport links.",
+    "url": "https://www.gov.uk/government/collections/journey-time-statistics"
+  },
+  {
+    "id": "population-lookup",
+    "name": "West of England Population Look-Up",
+    "category": "Demographics",
+    "icon": "population",
+    "description": "Population by age band and small-area geography.",
+    "used_for": "Creating population denominators and age-share indicators for Bristol LSOAs.",
+    "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates"
+  },
+  {
+    "id": "arcgis-lsoa-lookup",
+    "name": "ArcGIS LSOA Look-Up",
+    "category": "Geography",
+    "icon": "boundaries",
+    "description": "Boundary and lookup data for LSOAs, MSOAs, wards and local authorities.",
+    "used_for": "Joining model outputs to small-area geographies and supporting map views.",
+    "url": "https://geoportal.statistics.gov.uk/"
+  },
+  {
+    "id": "english-indices-of-deprivation",
+    "name": "English Indices of Deprivation",
+    "category": "Official reference",
+    "icon": "reference",
+    "description": "Official deprivation scores, ranks and deciles published by government.",
+    "used_for": "Training, benchmarking and comparing model outputs against official deprivation measures.",
+    "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019"
+  },
+  {
+    "id": "indices-of-deprivation-bristol",
+    "name": "Indices of Deprivation - Bristol",
+    "category": "Official reference",
+    "icon": "bristol",
+    "description": "Bristol-specific extract of official deprivation scores and ranks.",
+    "used_for": "Validating Bristol-focused outputs and supporting local comparison views.",
+    "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019"
+  }
+]
