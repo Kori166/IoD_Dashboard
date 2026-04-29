@@ -1,9 +1,48 @@
+/*
+  Data sources page for the dashboard.
+
+  This page loads a list of public datasets, lets users filter them by category or search term, and displays each dataset as a source card.
+
+  Provenance:
+  - React (no date) ‘Built-in React Hooks’ [online]. Available from:
+    https://react.dev/reference/react 
+    Used for useState, useEffect, useMemo, and ElementType typing.
+
+  - Motion (no date) ‘React animation’ [online]. Available from:
+    https://motion.dev/docs/react 
+    Used for the animated page heading and source card entrance effects.
+
+  - Lucide (no date) ‘Lucide React’ [online]. Available from:
+    https://lucide.dev/guide/packages/lucide-react 
+    Used for category, source, search, and empty-state icons.
+
+  - MDN (no date) ‘Fetch API’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API 
+    Used for loading the local data_sources.json file.
+
+  - MDN (no date) ‘Set’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+    Used for building the unique category list.
+
+  - MDN (no date) ‘Array.prototype.filter()’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+    Used for filtering sources by category and search text.
+
+  - MDN (no date) ‘Array.prototype.sort()’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+    Used for ordering source categories.
+
+  - MDN (no date) ‘<a>: The Anchor element’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a 
+    Used for the external source links.
+*/
 
 import { useEffect, useMemo, useState, type ElementType } from "react";
 import { motion } from "framer-motion";
 import { Banknote, Building2, Database, ExternalLink, FileText, Grid3X3, Home, Landmark, Map, MapPinned, Route, Search, Shield, Users} from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 
+// Defines the structure of each source in data_sources.json
 type DataSource = {
   id: string;
   name: string;
@@ -14,6 +53,7 @@ type DataSource = {
   url: string;
 };
 
+// Sets the preferred display order for source categories
 const CATEGORY_ORDER = [
   "All sources",
   "Official reference",
@@ -25,6 +65,7 @@ const CATEGORY_ORDER = [
   "Demographics",
 ];
 
+// Maps each category to an icon
 const CATEGORY_ICONS: Record<string, ElementType> = {
   "All sources": Grid3X3,
   "Official reference": FileText,
@@ -36,6 +77,7 @@ const CATEGORY_ICONS: Record<string, ElementType> = {
   Demographics: Users,
 };
 
+// Maps each source icon name from the JSON data to a Lucide icon
 const SOURCE_ICONS: Record<string, ElementType> = {
   benefits: Banknote,
   crime: Shield,
@@ -48,6 +90,7 @@ const SOURCE_ICONS: Record<string, ElementType> = {
   bristol: Building2,
 };
 
+// Returns the colour styling for each source category
 function getCategoryStyle(category: string) {
   switch (category) {
     case "Official reference":
@@ -103,6 +146,7 @@ function getCategoryStyle(category: string) {
   }
 }
 
+// Displays one dataset source card
 function SourceCard({
   source,
   featured = false,
@@ -121,6 +165,7 @@ function SourceCard({
       }`}
     >
       <div className="flex h-full flex-col">
+        {/* Source icon and main desription */}
         <div className="flex gap-4">
           <div
             className={`flex shrink-0 items-center justify-center rounded-full ${style.iconBg} ${style.iconText} ${style.glow} ${
@@ -143,6 +188,7 @@ function SourceCard({
           </div>
         </div>
 
+        {/* Explains how the dtaset is used in the project */}
         <div className="mt-5 rounded-2xl border border-border/40 bg-background/35 p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Used for
@@ -152,6 +198,7 @@ function SourceCard({
           </p>
         </div>
 
+        {/* External link to the original source */}
         <div className="mt-auto pt-4">
           <a
             href={source.url}
@@ -169,10 +216,12 @@ function SourceCard({
 }
 
 export default function DataSources() {
+  // Stores the source list, selected category, and search query
   const [sources, setSources] = useState<DataSource[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All sources");
   const [query, setQuery] = useState("");
 
+  // Loads the source metadata from the local JSON file.
   useEffect(() => {
     async function loadSources() {
       const response = await fetch("/data/data_sources.json");
@@ -191,6 +240,7 @@ export default function DataSources() {
     });
   }, []);
 
+  // Builds the category filter list from the loaded sources
   const categories = useMemo(() => {
     const availableCategories = Array.from(
       new Set(sources.map((source) => source.category)),
@@ -210,6 +260,7 @@ export default function DataSources() {
     return ["All sources", ...sortedCategories];
   }, [sources]);
 
+  // Filters sources by selected category and search text
   const filteredSources = useMemo(() => {
     const normalisedQuery = query.trim().toLowerCase();
 
@@ -237,6 +288,7 @@ export default function DataSources() {
 
   return (
     <div className="space-y-6 w-full max-w-none px-1 xl:px-2">
+      {/* Animated page title and summary */}
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -252,6 +304,7 @@ export default function DataSources() {
         </p>
       </motion.div>      
 
+      {/* Category buttons and source search box */}
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => {
@@ -287,6 +340,7 @@ export default function DataSources() {
         </label>
       </div>
 
+      {/* Displays matching source cards, or an empty state if none match */}
       {filteredSources.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
           {filteredSources.map((source, index) => (
