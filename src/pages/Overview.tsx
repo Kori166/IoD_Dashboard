@@ -1,11 +1,11 @@
 // Code Sources and Provenance:
- // - Meta OpenSource (no date) useEffect. Available from: https://react.dev/reference/react/useEffect
- // - Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState 
- // - Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
- // - npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
- // - React (No Date) React. Available from: https://react.dev/
- // - Lucide (2026) Lucide. Available from: https://lucide.dev/
- // - geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+ // - Meta OpenSource (no date) useEffect. [online] Available from: https://react.dev/reference/react/useEffect
+ // - Meta OpenSource (No Date) useState. [online] Available from: https://react.dev/reference/react/useState 
+ // - Meta OpenSource (No Date) useMemo. [online] Available from: https://react.dev/reference/react/useMemo
+ // - npm (2026) framer-motion. [online] Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. [online] Available from: https://react.dev/
+ // - Lucide (2026) Lucide. [online] Available from: https://lucide.dev/
+ // - Tailwind CSS (2025) [online] Documentation Available from: https://v2.tailwindcss.com/docs
 
 
 import { useEffect, useMemo, useState } from "react";
