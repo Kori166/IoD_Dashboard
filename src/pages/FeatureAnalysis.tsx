@@ -5,27 +5,27 @@
 
   Provenance:
   - React (no date) ‘Built-in React Hooks’ [online]. Available from:
-    https://react.dev/reference/react  
-    Used for useState, useEffect, and useMemo state and data handling.
+    https://react.dev/reference/react
+    Used for useState, useEffect, useMemo, and useRef state and data handling.
 
   - React (no date) ‘ElementType’ [online]. Available from:
-    https://react.dev/reference/react 
+    https://react.dev/reference/react
     Used for typing the icon component passed into SummaryCard.
 
   - Motion (no date) ‘React animation’ [online]. Available from:
-    https://motion.dev/docs/react 
+    https://motion.dev/docs/react
     Used for the animated page heading.
 
   - Recharts (no date) ‘API’ [online]. Available from:
-    https://recharts.org/en-US/api 
+    https://recharts.org/en-US/api
     Used for the scatter chart, trend line, axes, tooltip, and responsive container.
 
   - Lucide (no date) ‘Lucide React’ [online]. Available from:
-    https://lucide.dev/guide/packages/lucide-react 
+    https://lucide.dev/guide/packages/lucide-react
     Used for the page summary and information icons.
 
   - MDN (no date) ‘Fetch API’ [online]. Available from:
-    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API 
+    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
     Used for loading the feature importance JSON file.
 
   - MDN (no date) ‘Array.prototype.map()’ [online]. Available from:
@@ -41,18 +41,42 @@
     Used for the Spearman correlation calculation.
 
   - MathWorld (no date) ‘Least Squares Fitting’ [online]. Available from:
-    https://mathworld.wolfram.com/LeastSquaresFitting.html 
+    https://mathworld.wolfram.com/LeastSquaresFitting.html
     Used for the linear trend line calculation.
 */
 
-import { useEffect, useMemo, useState, type ElementType } from "react";
+import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import { motion } from "framer-motion";
-import { CartesianGrid, ComposedChart, Label, Line, ReferenceDot, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis} from "recharts";
-import { Activity, Grid3X3, Info, Layers, LineChart, ShieldCheck} from "lucide-react";
+import {
+  CartesianGrid,
+  ComposedChart,
+  Label,
+  Line,
+  ReferenceDot,
+  ResponsiveContainer,
+  Scatter,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Grid3X3,
+  Info,
+  Layers,
+  LineChart,
+  ShieldCheck,
+} from "lucide-react";
+
 import { GlassCard } from "@/components/ui/glass-card";
 
 // Defines the raw JSON structure loaded from feature_imp.json
 type RawFeatureImportance = Record<string, [number, [number, number][]]>;
+
+// Defines one scatter point in the selected feature chart
+type ScatterPoint = {
+  x: number;
+  y: number;
+};
 
 // Defines the cleaned feature data used by the page
 type FeatureRow = {
@@ -62,10 +86,22 @@ type FeatureRow = {
   absCoefficient: number;
   scaledImportance: number;
   direction: "positive" | "negative";
-  points: {
-    x: number;
-    y: number;
-  }[];
+  points: ScatterPoint[];
+};
+
+// Defines the props Recharts passes into the custom scatter point shape
+type ScatterShapeProps = {
+  cx?: number;
+  cy?: number;
+  fill?: string;
+  payload?: ScatterPoint;
+};
+
+// Stores both the data position and the rendered screen position for snapping
+type RenderedScatterPoint = ScatterPoint & {
+  cx: number;
+  cy: number;
+  key: string;
 };
 
 // Sets the shared tooltip styling for the Recharts chart
@@ -134,8 +170,13 @@ function formatNumber(value: number) {
   return value.toFixed(3);
 }
 
+// Creates a stable key for matching hovered points
+function getPointKey(point: ScatterPoint) {
+  return `${point.x}-${point.y}`;
+}
+
 // Calculates Spearman rank correlation for the selected feature points
-function calculateSpearman(data: { x: number; y: number }[]) {
+function calculateSpearman(data: ScatterPoint[]) {
   if (data.length < 2) return 0;
 
   const rank = (values: number[]) => {
@@ -161,7 +202,7 @@ function calculateSpearman(data: { x: number; y: number }[]) {
 }
 
 // Calculates a simple linear trend line for the scatter plot
-function calculateTrendLine(data: { x: number; y: number }[]) {
+function calculateTrendLine(data: ScatterPoint[]) {
   if (data.length < 2) return [];
 
   const n = data.length;
@@ -185,6 +226,29 @@ function calculateTrendLine(data: { x: number; y: number }[]) {
     { x: minX, y: slope * minX + intercept },
     { x: maxX, y: slope * maxX + intercept },
   ];
+}
+
+// Finds the nearest rendered scatter point to the mouse position
+function findNearestRenderedPoint(
+  renderedPoints: RenderedScatterPoint[],
+  mouseX: number,
+  mouseY: number,
+) {
+  let nearestPoint: RenderedScatterPoint | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  for (const point of renderedPoints) {
+    const dx = point.cx - mouseX;
+    const dy = point.cy - mouseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestPoint = point;
+    }
+  }
+
+  return nearestDistance <= 75 ? nearestPoint : null;
 }
 
 // Displays one summary statistic card at the top of the page
@@ -224,7 +288,7 @@ function FeatureImportanceListCompact({
   onSelectFeature: (feature: string) => void;
 }) {
   return (
-    <div className="mt-4">    
+    <div className="mt-4">
       <div className="mt-3 max-h-[500px] space-y-2 overflow-y-auto pr-1">
         {features.map((feature, index) => {
           const isSelected = feature.feature === selectedFeatureName;
@@ -248,7 +312,7 @@ function FeatureImportanceListCompact({
 
                 <div className="min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-foreground">
+                    <p className="truncate text-[15px] font-bold text-foreground">
                       {feature.label}
                     </p>
 
@@ -276,7 +340,7 @@ function FeatureImportanceListCompact({
                 <div className="text-right">
                   <p className="text-sm font-bold text-foreground">
                     {formatNumber(feature.coefficient)}
-                  </p>                  
+                  </p>
                 </div>
               </div>
             </button>
@@ -291,7 +355,11 @@ export default function FeatureAnalysis() {
   // Stores the loaded features, selected feature, and hovered chart point
   const [features, setFeatures] = useState<FeatureRow[]>([]);
   const [selectedFeatureName, setSelectedFeatureName] = useState<string>("");
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredPoint, setHoveredPoint] =
+    useState<RenderedScatterPoint | null>(null);
+
+  // Stores rendered point positions for nearest-point snapping
+  const renderedPointsRef = useRef<Map<string, RenderedScatterPoint>>(new Map());
 
   // Loads and prepares the feature importance data
   useEffect(() => {
@@ -354,12 +422,13 @@ export default function FeatureAnalysis() {
     [selectedFeature],
   );
 
-  // Clears the hovered point when the selected feature changes
+  // Clears the hovered point and rendered point cache when the selected feature changes
   useEffect(() => {
-  setHoveredPoint(null);
-}, [selectedFeatureName]);
+    setHoveredPoint(null);
+    renderedPointsRef.current.clear();
+  }, [selectedFeatureName]);
 
-// Calculates the trend line for the scatter plot
+  // Calculates the trend line for the scatter plot
   const trendLine = useMemo(
     () => calculateTrendLine(scatterData),
     [scatterData],
@@ -397,15 +466,19 @@ export default function FeatureAnalysis() {
         </h1>
 
         <p className="max-w-full text-muted-foreground text-lg md:text-xl leading-relaxed">
-          Exploration of which indicators most influence the deprivation estimate and
-          how they relate to deprivation across Bristol.
+          Exploration of which indicators most influence the deprivation estimate
+          and how they relate to deprivation across Bristol.
         </p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
         <SummaryCard icon={LineChart} label="Model" value="Linear Regression" />
         <SummaryCard icon={ShieldCheck} label="Validation" value="Spatial CV" />
-        <SummaryCard icon={Layers} label="Feature Set" value="Reduced Features & Rates Set" />
+        <SummaryCard
+          icon={Layers}
+          label="Feature Set"
+          value="Reduced Features & Rates Set"
+        />
         <SummaryCard
           icon={Grid3X3}
           label="Features Used"
@@ -424,9 +497,9 @@ export default function FeatureAnalysis() {
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground">
               The left chart ranks the indicators the model relied on most. The
-              right chart shows how the selected indicator varies against predicted
-              deprivation scores across Bristol LSOAs. Feature importance shows
-              model influence, not direct causation.
+              right chart shows how the selected indicator varies against
+              predicted deprivation scores across Bristol LSOAs. Feature
+              importance shows model influence, not direct causation.
             </p>
           </div>
         </div>
@@ -491,19 +564,31 @@ export default function FeatureAnalysis() {
               <ComposedChart
                 data={scatterData}
                 margin={{ top: 12, right: 28, left: 18, bottom: 48 }}
-                onMouseMove={(state) => {
-                  const activePayload = state?.activePayload?.[0]?.payload;
-
+                onMouseMove={(state: any) => {
                   if (
-                    activePayload &&
-                    typeof activePayload.x === "number" &&
-                    typeof activePayload.y === "number"
+                    typeof state?.chartX !== "number" ||
+                    typeof state?.chartY !== "number"
                   ) {
-                    setHoveredPoint({
-                      x: activePayload.x,
-                      y: activePayload.y,
-                    });
+                    return;
                   }
+
+                  const renderedPoints = Array.from(
+                    renderedPointsRef.current.values(),
+                  );
+
+                  const nearestPoint = findNearestRenderedPoint(
+                    renderedPoints,
+                    state.chartX,
+                    state.chartY,
+                  );
+
+                  setHoveredPoint((currentPoint) => {
+                    if (currentPoint?.key === nearestPoint?.key) {
+                      return currentPoint;
+                    }
+
+                    return nearestPoint;
+                  });
                 }}
                 onMouseLeave={() => setHoveredPoint(null)}
               >
@@ -518,7 +603,11 @@ export default function FeatureAnalysis() {
                   dataKey="x"
                   domain={["dataMin", "dataMax"]}
                   tickFormatter={(value) => formatNumber(Number(value))}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  tick={{
+                    fill: "hsl(var(--muted-foreground))",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
                   axisLine={{ stroke: "rgba(255,255,255,0.25)" }}
                   tickLine={false}
                 >
@@ -540,7 +629,11 @@ export default function FeatureAnalysis() {
                   dataKey="y"
                   domain={yDomain}
                   tickFormatter={(value) => formatNumber(Number(value))}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  tick={{
+                    fill: "hsl(var(--muted-foreground))",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
                   axisLine={{ stroke: "rgba(255,255,255,0.25)" }}
                   tickLine={false}
                 >
@@ -577,21 +670,54 @@ export default function FeatureAnalysis() {
                   data={scatterData}
                   fill="hsl(190, 95%, 55%)"
                   opacity={0.72}
-                  shape={(props: any) => {
-                    const { cx, cy, fill } = props;
+                  shape={(props: ScatterShapeProps) => {
+                    const { cx, cy, fill, payload } = props;
+
+                    if (
+                      typeof cx !== "number" ||
+                      typeof cy !== "number" ||
+                      !payload
+                    ) {
+                      return <g />;
+                    }
+
+                    const key = getPointKey(payload);
+
+                    renderedPointsRef.current.set(key, {
+                      ...payload,
+                      cx,
+                      cy,
+                      key,
+                    });
+
+                    const isHovered = hoveredPoint?.key === key;
 
                     return (
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={4}
-                        fill={fill}
-                        opacity={0.75}
+                        r={isHovered ? 7 : 4}
+                        fill={fill ?? "hsl(190, 95%, 55%)"}
+                        opacity={isHovered ? 1 : 0.75}
+                        stroke={isHovered ? "white" : "none"}
+                        strokeWidth={isHovered ? 2 : 0}
                       />
                     );
                   }}
                 />
-                
+
+                {hoveredPoint ? (
+                  <ReferenceDot
+                    x={hoveredPoint.x}
+                    y={hoveredPoint.y}
+                    r={8}
+                    fill="hsl(190, 95%, 55%)"
+                    stroke="white"
+                    strokeWidth={2}
+                    isFront
+                  />
+                ) : null}
+
                 {/* Trend line summarises the overall relationship */}
                 <Line
                   type="linear"
@@ -607,12 +733,14 @@ export default function FeatureAnalysis() {
           </div>
 
           {/* Short chart notes and selected coefficient value */}
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-m text-muted-foreground">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>Each point represents one Bristol LSOA</span>
             <span>
               Coefficient:{" "}
               <span className="font-semibold text-foreground">
-                {selectedFeature ? formatNumber(selectedFeature.coefficient) : "—"}
+                {selectedFeature
+                  ? formatNumber(selectedFeature.coefficient)
+                  : "—"}
               </span>
             </span>
           </div>
