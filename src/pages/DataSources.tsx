@@ -1,13 +1,13 @@
 // Code Sources and Provenance:
- //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
- // - React (No Date) React. Available from: https://react.dev/
- // - Lucide (2026) Lucide. Available from: https://lucide.dev/
- //- geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+ //- npm (2026) framer-motion. [online] Availble from: https://www.npmjs.com/package/framer-motion
+ // - React (No Date) React. [online] Available from: https://react.dev/
+ // - Lucide (2026) Lucide. [online] Available from: https://lucide.dev/
+ // - Tailwind CSS (2025) Documentation. [online] Available from: https://v2.tailwindcss.com/docs
 
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { sourceMetadata } from "@/data/mockData";
+import { sourceMetadata } from "@/data/data";
 import {
   ExternalLink,
   Database,

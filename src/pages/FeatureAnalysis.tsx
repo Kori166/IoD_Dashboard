@@ -3,7 +3,7 @@
  //- Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
  //- npm (2026) framer-motion. Availble from: https://www.npmjs.com/package/framer-motion
  //- Recharts (2026) Recharts. Available from: https://recharts.github.io/
- //- geeksforgeeks (2025) Introduction to Tailwind CSS. Available from: https://www.geeksforgeeks.org/css/introduction-to-tailwind-css/
+ // - Tailwind CSS (2025) Documentation. [online] Available from: https://v2.tailwindcss.com/docs
 
 // Import libraries 
 import { useState, useMemo } from "react";

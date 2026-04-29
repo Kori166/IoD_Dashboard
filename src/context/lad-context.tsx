@@ -1,3 +1,6 @@
+// Code Sources and Provenance:
+// - React (No Date) React. [online] Available from: https://react.dev/
+
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { LAD_OPTIONS, type LadOption } from "@/config/lads";
 
