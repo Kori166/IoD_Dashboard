@@ -1,28 +1,7 @@
-// Code Sources and Provenance:
-// - Meta OpenSource (No Date) useEffect. Available from: https://react.dev/reference/react/useEffect
-// - Meta OpenSource (No Date) useMemo. Available from: https://react.dev/reference/react/useMemo
-// - Meta OpenSource (No Date) useState. Available from: https://react.dev/reference/react/useState
-// - npm (2026) framer-motion. Available from: https://www.npmjs.com/package/framer-motion
-// - Lucide (2026) Lucide React. Available from: https://lucide.dev/
 
 import { useEffect, useMemo, useState, type ElementType } from "react";
 import { motion } from "framer-motion";
-import {
-  Banknote,
-  Building2,
-  Database,
-  ExternalLink,
-  FileText,
-  Grid3X3,
-  Home,
-  Landmark,
-  Map,
-  MapPinned,
-  Route,
-  Search,
-  Shield,
-  Users,
-} from "lucide-react";
+import { Banknote, Building2, Database, ExternalLink, FileText, Grid3X3, Home, Landmark, Map, MapPinned, Route, Search, Shield, Users} from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 
 type DataSource = {

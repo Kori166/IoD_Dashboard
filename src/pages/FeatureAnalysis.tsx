@@ -5,7 +5,7 @@
 
   Provenance:
   - React (no date) ‘Built-in React Hooks’ [online]. Available from:
-    https://react.dev/reference/react 
+    https://react.dev/reference/react  
     Used for useState, useEffect, and useMemo state and data handling.
 
   - React (no date) ‘ElementType’ [online]. Available from:
@@ -591,8 +591,7 @@ export default function FeatureAnalysis() {
                     );
                   }}
                 />
-                ) : null}
-
+                
                 {/* Trend line summarises the overall relationship */}
                 <Line
                   type="linear"
