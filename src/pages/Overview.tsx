@@ -7,7 +7,6 @@
  // - Lucide (2026) Lucide. [online] Available from: https://lucide.dev/
  // - Tailwind CSS (2025) [online] Documentation Available from: https://v2.tailwindcss.com/docs
 
-
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BarChart3, MapPin, RefreshCw, Layers, TrendingUp, TrendingDown} from "lucide-react";
@@ -17,8 +16,6 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import BristolChoropleth from "@/components/maps/BristolChoropleth";
 import type { LsoaCurrentRow, WardCurrentRow } from "@/types/dashboard-data";
-
-
 
 // Decile palette aligned with the dashboard legend.
 const DECILE_COLORS: Record<number, string> = {
@@ -63,8 +60,8 @@ export default function Overview() {
     load();
   }, []);
 
-  // Sort rows by the currently selected ranking mode so the top/bottom lists
-  // can be derived from one shared ordered dataset.
+  // Sort rows by the currently selected rankng mode so the top/bottom lists
+  // can be derived from one shared ordered dataset
   const activeLsoaRows = lsoaRows;
   const sortedRows = useMemo(() => {
     return [...activeLsoaRows].sort((a, b) =>
@@ -75,7 +72,7 @@ export default function Overview() {
     );
   }, [activeLsoaRows, rankMode]);
 
-  // Top 5 most deprived areas based on the active sort mode.
+  // Top 5 most deprived areas based on the active sort mode
   const mostDeprived = sortedRows.slice(0, 5);
 
   const sortedWardRows = useMemo(() => {
@@ -89,10 +86,10 @@ export default function Overview() {
 const mostDeprivedWards = sortedWardRows.slice(0, 5);
 const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
 
-  // Bottom 5 least deprived areas, reversed so the least deprived shows first.
+  // Bottom 5 least deprived areas, reversed so the least deprived shows first
   const leastDeprived = [...sortedRows].slice(-5).reverse();
 
-  // Build the local authority profile showing the share of Bristol LSOAs in each decile.
+  // Build the local authority profile showing the share of Bristol LSOAs in each decile
   const localAuthorityProfileData = useMemo(() => {
     const total = lsoaRows.length;
 
@@ -131,8 +128,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
           <span className="text-primary glow-text-cyan">Bristol</span>
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
-          Estimating the Index of Multiple Deprivation for Bristol using only
-          publicly available datasets to reduce reliance on expensive surveys
+          Estimating the Index of Multiple Deprivation for Bristol using only publicly available datasets to reduce reliance on expensive surveys
           while maintaining analytical fidelity.
         </p>
       </motion.div>
@@ -281,7 +277,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
           </div>
         </GlassCard>
 
-        {/* Rankings card remains the right-hand column. */}
+        {/* Rankings card remains the right-hand column */}
         <GlassCard className="p-6 h-full min-w-0 overflow-hidden">
           <div className="space-y-2">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -292,7 +288,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
             </p>
           </div>
 
-          {/* Toggle buttons for switching between Bristol and UK ranking views. */}
+          {/* Toggle buttons for switching between Bristol and UK ranking views */}
           <div className="mt-4 flex gap-2">
             <button
               type="button"
@@ -318,7 +314,7 @@ const leastDeprivedWards = [...sortedWardRows].slice(-5).reverse();
             </button>
           </div>
 
-          {/* Lists of the highest and lowest deprived areas under the selected mode. */}
+          {/* Lists of the highest and lowest deprived areas under the selected mode */}
 <div className="mt-5 space-y-6">
   <div>
     <p className="text-xl uppercase tracking-wider text-destructive font-bold mb-2 flex items-center gap-3">

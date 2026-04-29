@@ -50,7 +50,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="p-4">
-        {/* Shows the full title when the sidebar is expanded. */}
+        {/* Shows the full title when the sidebar is expanded */}
         {!collapsed && (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function AppSidebar() {
           </div>
         )}
 
-        {/* Shows only the icon when the sidebar is collapsed. */}
+        {/* Shows only the icon when the sidebar is collapsed */}
         {collapsed && (
           <div className="flex justify-center">
             <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -87,7 +87,7 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Builds each menu item from the navItems list. */}
+              {/* Builds each menu item from the navItems list */}
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

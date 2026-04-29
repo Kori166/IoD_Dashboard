@@ -116,7 +116,7 @@ export function TopBar() {
       <div className="flex items-center gap-3">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
 
-        {/* Shows the dashboard title on medium and larger screens. */}
+        {/* Shows the dashboard title on medium and larger screens */}
         <div className="hidden md:block">
           <h1 className="text-sm font-semibold text-foreground">
             Replicating the UK Index of Deprivation
@@ -125,7 +125,7 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Search box for choosing a Local Authority District. */}
+        {/* Search box for chosing a Local Authority District */}
         <div className="relative hidden md:block" ref={anchorRef}>
           <button
             type="button"
@@ -217,7 +217,7 @@ export function TopBar() {
           ) : null}
         </div>
 
-        {/* Shows the currently selected LAD on large screens. */}
+        {/* Shows the currently selected LAD on larg screens. */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
           <MapPin className="h-3 w-3" />
           {activeLad.name}

@@ -233,7 +233,7 @@ function getMetricLabel(metric: MapMetric) {
   }
 }
 
-// Converts the selected metric value into a display bucket
+// Converts the selected metric value into a display bucke
 export function getMetricBucket(metric: MapMetric, value?: number | null) {
   if (value == null) return null;
 
@@ -259,7 +259,7 @@ function getMetricColor(metric: MapMetric, value?: number | null) {
   return bucket == null ? "#1f2937" : getDecileColor(bucket);
 }
 
-// Formats metric values for display in the map tooltip.
+// Formats metric values for display in the map tooltip
 function formatMetricValue(metric: MapMetric, value?: number | null) {
   if (value == null || !Number.isFinite(value)) return "N/A";
 
@@ -311,7 +311,7 @@ export function getLegendBucketTitle(metric: MapMetric, bucket: number) {
     const { min, max } = getScoreRange(metric);
     const step = (max - min) / 10;
 
-    // Bucket 1 is highest score / most deprived
+    // bucket 1 is highest score / most depried
     const high = max - (bucket - 1) * step;
     const low = max - bucket * step;
 
@@ -441,13 +441,13 @@ export default function BristolComparisonMap({
           scrollWheelZoom={true}
           style={{ height: "100%", width: "100%" }}
         >
-          {/* Uses CARTO dark tiles as the map background. */}
+          {/* Uses CARTO dark tiles as the map background */}
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution="&copy; OpenStreetMap contributors &copy; CARTO"
           />
 
-          {/* Draws the LSOA shapes and colours them by the active metric. */}
+          {/* Draws the LSOA shapes and colours them by the active metric */}
           <GeoJSON
             key={metric}
             data={mergedGeojson as any}

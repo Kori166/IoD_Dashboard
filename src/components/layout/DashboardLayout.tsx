@@ -1,7 +1,7 @@
 /*
   Dashboard layout component.
 
-  This component wraps dashboard pages with the sidebar, top bar, and main content area.
+  This component wraps dashboard pages with the sidbar, top bar, and main content area.
 
   Provenance:
   - React (no date) ‘Passing JSX as children’ [online]. Available from:

@@ -47,26 +47,8 @@
 
 import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import { motion } from "framer-motion";
-import {
-  CartesianGrid,
-  ComposedChart,
-  Label,
-  Line,
-  ReferenceDot,
-  ResponsiveContainer,
-  Scatter,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  Grid3X3,
-  Info,
-  Layers,
-  LineChart,
-  ShieldCheck,
-} from "lucide-react";
-
+import { CartesianGrid, ComposedChart, Label, Line, ReferenceDot, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis} from "recharts";
+import { Grid3X3, Info, Layers, LineChart, ShieldCheck} from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 
 // Defines the raw JSON structure loaded from feature_imp.json
