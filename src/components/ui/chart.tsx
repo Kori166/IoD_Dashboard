@@ -1,11 +1,50 @@
+/*
+  Reusable chart UI helpers.
+
+  This file wraps Recharts components with shared styling, chart configuration, custom tooltip content, legend content, and theme-aware chart colours.
+
+  Provenance:
+  - shadcn (no date) ‘Chart’ [online]. Available from:
+    https://ui.shadcn.com/docs/components/chart
+    Used for the reusable chart wrapper, tooltip, legend, and config pattern.
+
+  - Recharts (no date) ‘Recharts API’ [online]. Available from:
+    https://recharts.org/en-US/api
+    Used for the ResponsiveContainer, Tooltip, Legend, and chart payload patterns.
+
+  - React (no date) ‘createContext’ [online]. Available from:
+    https://react.dev/reference/react/createContext
+    Used for sharing chart configuration with tooltip and legend components.
+
+  - React (no date) ‘useId’ [online]. Available from:
+    https://react.dev/reference/react/useId
+    Used for generating unique chart IDs.
+
+  - React (no date) ‘forwardRef’ [online]. Available from:
+    https://react.dev/reference/react/forwardRef
+    Used for forwarding refs to chart wrapper elements.
+
+  - React (no date) ‘useMemo’ [online]. Available from:
+    https://react.dev/reference/react/useMemo
+    Used for preparing tooltip label content efficiently.
+
+  - Tailwind Labs (no date) ‘Styling with utility classes’ [online]. Available from:
+    https://tailwindcss.com/docs/styling-with-utility-classes
+    Used for the chart container, tooltip, and legend styling classes.
+
+  - MDN (no date) ‘Using CSS custom properties’ [online]. Available from:
+    https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascading_variables/Using_CSS_custom_properties
+    Used for setting chart colour variables.
+*/
+
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
-
 import { cn } from "@/lib/utils";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
+// Defines the supported chart themes and their CSS selectors
 const THEMES = { light: "", dark: ".dark" } as const;
 
+// Defines the config object used to label and colour chart series
 export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode;
@@ -13,12 +52,15 @@ export type ChartConfig = {
   } & ({ color?: string; theme?: never } | { color?: never; theme: Record<keyof typeof THEMES, string> });
 };
 
+// Defines the chart context value
 type ChartContextProps = {
   config: ChartConfig;
 };
 
+// Stores chart config so nested tooltip and legend components can read it.
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+// Reads the chart config from context.
 function useChart() {
   const context = React.useContext(ChartContext);
 
@@ -29,6 +71,7 @@ function useChart() {
   return context;
 }
 
+// Wraps Recharts' ResponsiveContainer with shared styling and config context
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -58,6 +101,7 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Injects theme-aware CSS variables for chart colours
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -87,8 +131,10 @@ ${colorConfig
   );
 };
 
+// Re-exports Recharts' Tooltip component
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+// Custom tooltip content for Recharts charts
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -120,6 +166,7 @@ const ChartTooltipContent = React.forwardRef<
   ) => {
     const { config } = useChart();
 
+    // Builds the tooltip heading from the chart config or formatter
     const tooltipLabel = React.useMemo(() => {
       if (hideLabel || !payload?.length) {
         return null;
@@ -173,10 +220,12 @@ const ChartTooltipContent = React.forwardRef<
                   indicator === "dot" && "items-center",
                 )}
               >
+                {/* Uses a custom formatter if one is provided */}
                 {formatter && item?.value !== undefined && item.name ? (
                   formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
+                    {/* Shows a custom icon, or a small colour indicator */}
                     {itemConfig?.icon ? (
                       <itemConfig.icon />
                     ) : (
@@ -225,8 +274,10 @@ const ChartTooltipContent = React.forwardRef<
 );
 ChartTooltipContent.displayName = "ChartTooltip";
 
+// Re-exports Recharts' Legend component
 const ChartLegend = RechartsPrimitive.Legend;
 
+// Custom legend content for Recharts charts.
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
@@ -255,6 +306,7 @@ const ChartLegendContent = React.forwardRef<
             key={item.value}
             className={cn("flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground")}
           >
+            {/* Shows either a custom icon or the series colour square */}
             {itemConfig?.icon && !hideIcon ? (
               <itemConfig.icon />
             ) : (
@@ -274,7 +326,7 @@ const ChartLegendContent = React.forwardRef<
 });
 ChartLegendContent.displayName = "ChartLegend";
 
-// Helper to extract item config from a payload.
+// Gets the matching config entry for a Recharts payload item
 function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
   if (typeof payload !== "object" || payload === null) {
     return undefined;
@@ -300,4 +352,5 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
   return configLabelKey in config ? config[configLabelKey] : config[key as keyof typeof config];
 }
 
+// Exports the chart helpers for use across the app
 export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, ChartStyle };

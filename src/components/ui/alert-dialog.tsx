@@ -1,15 +1,42 @@
+/*
+  Reusable alert dialog UI component.
+
+  This component wraps Radix UI's alert dialog primitives with the app's shared Tailwind styling and button variants. It is used for confirmation dialogs or warnings that need a user decision.
+
+  Provenance:
+  - shadcn (no date) ‘Alert Dialog’ [online]. Available from:
+    https://ui.shadcn.com/docs/components/alert-dialog
+    Used for the reusable alert dialog component pattern and styling approach.
+
+  - Radix UI (no date) ‘Alert Dialog’ [online]. Available from:
+    https://www.radix-ui.com/primitives/docs/components/alert-dialog
+    Used for the accessible alert dialog root, trigger, portal, overlay,
+    content, title, description, action, and cancel primitives.
+
+  - React (no date) ‘forwardRef’ [online]. Available from:
+    https://react.dev/reference/react/forwardRef
+    Used for forwarding refs to the underlying Radix elements.
+
+  - Tailwind Labs (no date) ‘Styling with utility classes’ [online]. Available from:
+    https://tailwindcss.com/docs/styling-with-utility-classes
+    Used for the component styling classes.
+*/
+
 import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
+// Uses Radix's root component as the base alert dialog
 const AlertDialog = AlertDialogPrimitive.Root;
 
+// Opens the alert dialog when triggered
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
+// Renders the dialog outside the normal page layout
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
+// Adds the dark background overlay behind the dialog
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
@@ -25,6 +52,7 @@ const AlertDialogOverlay = React.forwardRef<
 ));
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 
+// Displays the main alert dialog panel in the centre of the screen
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
@@ -43,16 +71,19 @@ const AlertDialogContent = React.forwardRef<
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
+// Groups the dialog title and description
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
+// Groups the dialog action buttons.
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />
 );
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
+// Displays the main dialog heading
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
@@ -61,6 +92,7 @@ const AlertDialogTitle = React.forwardRef<
 ));
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
 
+// Displays supporting text below the dialog title
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
@@ -69,6 +101,7 @@ const AlertDialogDescription = React.forwardRef<
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
+// Displays the main confirmation action button
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
@@ -77,6 +110,7 @@ const AlertDialogAction = React.forwardRef<
 ));
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 
+// Displays the cancel button using the outline button style
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
@@ -89,6 +123,7 @@ const AlertDialogCancel = React.forwardRef<
 ));
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName;
 
+// Exports the styled alert dialog parts for use across the app
 export {
   AlertDialog,
   AlertDialogPortal,

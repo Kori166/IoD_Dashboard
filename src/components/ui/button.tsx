@@ -1,9 +1,36 @@
+/*
+  Reusable button UI component.
+
+  This component provides shared button styles, sizes, and variants. It can render as a normal button or pass its styling to another child element.
+
+  Provenance:
+  - shadcn (no date) ‘Button’ [online]. Available from:
+    https://ui.shadcn.com/docs/components/button
+    Used for the reusable button component pattern and styling approach.
+
+  - Radix UI (no date) ‘Slot’ [online]. Available from:
+    https://www.radix-ui.com/primitives/docs/utilities/slot
+    Used for the asChild composition pattern.
+
+  - class-variance-authority (no date) ‘Class Variance Authority’ [online]. Available from:
+    https://cva.style/docs
+    Used for managing button style and size variants.
+
+  - React (no date) ‘forwardRef’ [online]. Available from:
+    https://react.dev/reference/react/forwardRef
+    Used for forwarding refs to the rendered button element.
+
+  - Tailwind Labs (no date) ‘Styling with utility classes’ [online]. Available from:
+    https://tailwindcss.com/docs/styling-with-utility-classes
+    Used for the component styling classes.
+*/
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
 
+// Defines the base button styles, visual variants, and size options
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -30,12 +57,14 @@ const buttonVariants = cva(
   },
 );
 
+// Defines the props accepted by the Button component
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
+// Renders a styled button, or applies button styling to a child element
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
@@ -44,4 +73,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
+// Exports the button component and its variant styles
 export { Button, buttonVariants };
