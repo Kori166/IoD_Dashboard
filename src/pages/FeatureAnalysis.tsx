@@ -52,7 +52,13 @@ import { Grid3X3, Info, Layers, LineChart, ShieldCheck} from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 
 // Defines the raw JSON structure loaded from feature_imp.json
-type RawFeatureImportance = Record<string, [number, [number, number][]]>;
+type RawFeatureImportance = Record<
+  string,
+  {
+    coefficient: number;
+    values: [number, number][];
+  }
+>;
 
 // Defines one scatter point in the selected feature chart
 type ScatterPoint = {
@@ -355,15 +361,20 @@ export default function FeatureAnalysis() {
       const raw = (await response.json()) as RawFeatureImportance;
 
       const baseFeatures = Object.entries(raw)
-        .map(([feature, [coefficient, points]]) => ({
-          feature,
-          label: formatFeatureLabel(feature),
-          coefficient,
-          absCoefficient: Math.abs(coefficient),
-          scaledImportance: 0,
-          direction: coefficient >= 0 ? "positive" : "negative",
-          points: points.map(([x, y]) => ({ x, y })),
-        }))
+        .map(([feature, featureData]) => {
+          const coefficient = featureData.coefficient;
+          const points = featureData.values;
+
+          return {
+            feature,
+            label: formatFeatureLabel(feature),
+            coefficient,
+            absCoefficient: Math.abs(coefficient),
+            scaledImportance: 0,
+            direction: coefficient >= 0 ? "positive" : "negative",
+            points: points.map(([x, y]) => ({ x, y })),
+          };
+        })
         .sort((a, b) => b.absCoefficient - a.absCoefficient);
 
       const maxCoefficient = Math.max(
